@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smears and Stains | MicroLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="metab.css">
+<style>
+  .labtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .labtab{border:2px solid var(--line);background:#fff;color:var(--muted);font:700 .95rem var(--font);padding:9px 16px;border-radius:12px;cursor:pointer}
+  .labtab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .labwrap{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+  .labhead h2{margin:0 0 4px;font-size:1.3rem}
+  .labq{color:var(--muted);font-size:1rem;margin:0 0 12px}
+  .howbox{background:#f3effd;border:1px solid #d9cdf5;border-radius:12px;padding:8px 14px;margin:0 0 14px;color:#3d2a6b;font-size:.95rem}
+  .howbox summary{cursor:pointer;font-weight:700}
+  .howbox ul{margin:8px 0 4px;padding-left:20px;line-height:1.5}
+  .orgrow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+  .orgchip{border:2px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font:700 .92rem var(--font);cursor:pointer;text-align:left;color:var(--ink)}
+  .orgchip small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+  .orgchip.on{border-color:var(--accent);background:var(--accent-soft)}
+  .sect{font-size:.82rem;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 6px}
+  .benchsteps{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+  .bstep{font-size:.85rem;font-weight:700;border-radius:999px;padding:4px 11px;background:#eef1f5;color:var(--muted)}
+  .bstep.cur{background:var(--accent);color:#fff}
+  .bstep.ok{background:var(--good-soft);color:var(--good)}
+  .benchhint{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-size:1rem;color:#2c3796;min-height:1.5em;line-height:1.45}
+  .benchhint.warn{background:#fff3d6;color:#7a4b00}
+  .bench{background:#fff;border:1px solid var(--line);border-radius:18px;padding:6px;margin:8px 0 10px}
+  .bench svg{display:block;width:100%;height:auto}
+  .palette{display:flex;flex-wrap:wrap;gap:8px}
+  .act{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--line);background:#fff;border-radius:12px;padding:9px 13px;font:700 .92rem var(--font);color:var(--ink);cursor:pointer}
+  .act:hover:not(:disabled){border-color:var(--accent)}
+  .act:disabled{opacity:.4;cursor:not-allowed}
+  .act .dot{width:14px;height:14px;border-radius:50%;background:var(--dot,#9aa3b2);border:1px solid rgba(0,0,0,.25);flex:none}
+  .benchbtns{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 6px}
+  .btn{font:700 .96rem var(--font);border-radius:999px;padding:9px 20px;cursor:pointer;border:2px solid var(--accent)}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.secondary{background:#fff;color:var(--accent)}
+  .btn.hint{border-color:#e5c56a;background:#fff8e6;color:#8a5a00}
+  .scope{margin-top:16px;border-top:2px dashed var(--line);padding-top:14px}
+  .scope h3{margin:0 0 8px;font-size:1.1rem}
+  .scopegrid{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:18px;align-items:start}
+  @media (max-width:820px){.scopegrid{grid-template-columns:1fr}}
+  .fieldbox{background:#15171d;border-radius:18px;padding:10px}
+  .fieldbox svg{display:block;width:100%;height:auto;border-radius:50%}
+  .magrow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .magnote{font-size:.95rem;color:var(--muted);min-height:2.6em}
+  .recgrid{display:grid;grid-template-columns:1fr;gap:10px}
+  .recrow label{display:block;font-weight:700;font-size:.92rem;margin-bottom:4px}
+  .recrow select{width:100%;font:400 1rem var(--font);padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:#fff;color:var(--ink)}
+  .recrow.ok select{border-color:var(--good);background:var(--good-soft)}
+  .recrow.bad select{border-color:#eab3af;background:var(--bad-soft)}
+  .recfb{font-size:.88rem;margin-top:4px}
+  .recfb.ok{color:#14593a}
+  .recfb.bad{color:#7a2e28}
+  .summary{background:#f3f5f9;border:2px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:.98rem;line-height:1.55}
+  .why{background:#f3effd;border:1px solid #d9cdf5;border-radius:10px;padding:10px 14px;font-size:.92rem;color:#3d2a6b;margin-top:12px}
+  .quiz{margin-top:22px;border-top:2px dashed var(--line);padding-top:14px}
+  .quiz h3{margin:0 0 10px;font-size:1.1rem;color:var(--more)}
+  .qcard{background:#faf8ff;border:1px solid #e3dbf6;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+  .qq{margin:0 0 8px;font-weight:700}
+  .qopts{display:flex;flex-direction:column;gap:6px}
+  .qopt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font:400 .95rem var(--font);color:var(--ink);cursor:pointer}
+  .qopt:hover:not(:disabled){border-color:var(--more)}
+  .qopt.right{border-color:var(--good);background:var(--good-soft);font-weight:700}
+  .qopt.wrong{border-color:#eab3af;background:var(--bad-soft);opacity:.75;cursor:default}
+  .qcard.done .qopt:not(.right){opacity:.55}
+  .qfb{margin-top:8px;font-size:.92rem;border-radius:10px;padding:7px 12px}
+  .qfb.good{background:var(--good-soft);color:#14593a}
+  .qfb.bad{background:var(--bad-soft);color:#7a2e28}
+  .qscore{font-weight:700;color:var(--more)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const f1 = n => Math.round(n * 10) / 10;
+  const rnd = k => { const v = Math.sin(k * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+  const hash = s => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100003; return h; };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;"})[c]);
+
+  /* ---------------------------------------------------------------- organisms */
+  const ORG = {
+    se:{short:"S. epidermidis", name:"Staphylococcus epidermidis", shape:"coccus", gram:"pos"},
+    bm:{short:"B. megaterium", name:"Bacillus megaterium", shape:"bacillus", gram:"pos", L:46, W:16, chain:.35},
+    bs:{short:"B. subtilis", name:"Bacillus subtilis", shape:"bacillus", gram:"pos", L:32, W:11, chain:.3},
+    ec:{short:"E. coli", name:"Escherichia coli", shape:"bacillus", gram:"neg", L:24, W:10, chain:.08},
+    ea:{short:"E. aerogenes", name:"Enterobacter aerogenes", shape:"bacillus", gram:"neg", L:22, W:11, chain:.08}
+  };
+  const SHAPE = ["Coccus (sphere)", "Bacillus (rod)", "Spirillum (spiral)"];
+  const ARR = ["Pairs (diplo)", "Chains (strepto)", "Clusters (staphylo)", "Tetrads (4)", "Sarcinae (cube of 8)"];
+
+  /* ---------------------------------------------------------------- reagents and actions */
+  const ACT = {
+    water:{label:"Drop of water", g:"slide"}, cells:{label:"Add cells from the culture", g:"slide"}, dry:{label:"Air dry", g:"slide"},
+    flame:{label:"Pass through the flame", g:"slide"}, paper:{label:"Lay absorbent paper on the smear", g:"slide"},
+    steam:{label:"Steam over the boiling water bath", g:"slide"}, addstain:{label:"Add more stain", g:"slide"},
+    unpaper:{label:"Remove the paper", g:"slide"}, rinse:{label:"Rinse with water", g:"slide"}, blot:{label:"Blot dry", g:"slide"},
+    cv:{label:"Crystal violet", g:"stain", c:"#5a2a98"}, iodine:{label:"Gram's iodine", g:"stain", c:"#8a5a1a"},
+    etoh:{label:"95% ethanol", g:"stain", c:"#b9cfe6"}, safranin:{label:"Safranin", g:"stain", c:"#d8456b"},
+    mb:{label:"Methylene blue", g:"stain", c:"#2a4fb0"}, mg:{label:"Malachite green", g:"stain", c:"#2f9e4f"},
+    cf:{label:"Carbolfuchsin", g:"stain", c:"#c2185b"}, eosin:{label:"Eosin", g:"stain", c:"#e0507a"}
+  };
+  const DISTRACT = {
+    mb:"Methylene blue is a simple stain. It isn't part of this procedure.",
+    mg:"Malachite green is the endospore stain. It isn't part of this procedure.",
+    cf:"Carbolfuchsin is the acid-fast stain. It isn't part of this procedure.",
+    cv:"Crystal violet isn't part of this procedure.",
+    safranin:"Safranin isn't part of this procedure.",
+    eosin:"Eosin is an acidic dye. Acidic dyes are repelled by the negatively charged cell surface, so they don't stain the cells directly. Use a basic dye.",
+    iodine:"Gram's iodine isn't part of this procedure.",
+    etoh:"95% ethanol isn't part of this procedure.",
+    water:"Water isn't needed for this culture."
+  };
+
+  /* ---------------------------------------------------------------- the three stains */
+  const st = (id, stage, say, why, x) => Object.assign({id, stage, say, why:why || ""}, x || {});
+  const prep = c => {
+    const a = [], S1 = "Make the smear";
+    if (c.src === "slant") a.push(st("water", S1, "Place a drop of water on the slide.", "A slant is solid growth, so it needs a drop of water to make a light, milky suspension."));
+    a.push(st("cells", S1, c.src === "slant" ? "Scrape a SMALL amount of growth into the water and mix it into a light, milky suspension." : c.src === "broth" ? "Put 2 to 3 loopfuls of the broth directly on the slide. No water needed." : "Spread a thin smear of the culture on the slide.",
+      "Spread it in a thin circle. A thick smear hides the cells."));
+    a.push(st("dry", S1, "Let the smear air dry at room temperature.", "Dry it before fixing."));
+    a.push(st("flame", S1, "Heat-fix: pass the dried slide through the flame 3 to 5 times.", "Heat-fixing kills the bacteria and attaches them to the slide.", {min:3}));
+    return a;
+  };
+  const reagent = (id, stage, say, time, color) => [
+    st(id, stage, say, "", {wait:time, color}),
+    st("rinse", stage, "Rinse gently with water.", "Rinse after each reagent."),
+    st("blot", stage, "Blot dry with bibulous paper. Don't rub.", "Blot, don't rub.")];
+
+  const TABS = {
+    smear:{
+      tab:"Smear + simple stain", title:"Smear Preparation and Simple Staining", ex:"Exercise 5",
+      question:"How do you turn a culture into a smear, stain it, and read its shape and arrangement?",
+      how:["A stain is a salt with a colored ion (the chromophore). <b>Basic (cationic)</b> dyes like methylene blue carry a positive charge, and most bacterial cells carry a net negative charge, so the dye binds readily. <b>Acidic (anionic)</b> dyes are repelled by the cell surface.",
+        "A simple stain uses one dye: the <b>cells are colored</b> and the background is clear, which gives contrast so you can see <b>morphology</b> and <b>arrangement</b>.",
+        "A <b>smear</b> is a thin film of cells on a slide. <b>Fixation</b> kills the bacteria and attaches them to the slide. Heat-fixing means 3 to 5 passes through the flame."],
+      cultures:[{o:"se", src:"slant", sub:"slant (solid medium)"}, {o:"bm", src:"broth", sub:"broth (liquid medium)"}],
+      pal:{slide:["water", "cells", "dry", "flame", "rinse", "blot"], stain:["mb", "eosin"]},
+      seq:c => prep(c).concat(reagent("mb", "Methylene blue", "Flood the smear with methylene blue for 30 to 60 seconds.", "30 to 60 seconds", "#2a4fb0")),
+      film:{mb:"#7d97d8"},
+      quiz:[
+        q("Why does a basic (cationic) dye like methylene blue stain bacteria so well?", ["Bacterial cells are slightly negative, so a positively charged dye is attracted to them", "Bacterial cells are positive, so they attract the dye", "Basic dyes dissolve the cell wall", "Basic dyes are neutral"], 0, "Opposites attract: a positive dye binds the negatively charged cell surface."),
+        q("Why don't acidic (anionic) dyes stain bacterial cells directly?", ["They are negatively charged and repelled by the negatively charged cell surface", "They are too large", "They kill the cells", "They need heat"], 0, "Like charges repel, so the dye doesn't bind."),
+        q("What does heat-fixing do?", ["Kills the bacteria and attaches them to the slide", "Adds color to the cells", "Makes the cells bigger", "Dissolves the agar"], 0, "Fixation kills the cells and sticks them to the slide so they don't wash off."),
+        q("How do you make a smear from a slant culture?", ["Mix a small amount of growth into a drop of water on the slide", "Put 2 to 3 loopfuls of broth on the slide", "Flood the slant with stain", "Smear the whole slant"], 0, "A slant is solid, so it needs a drop of water. A broth culture goes straight on the slide."),
+        q("In a simple stain, what does the slide look like?", ["Cells are colored and the background is clear", "Cells are clear and the background is colored", "Everything is the same color", "Only the cell walls are colored"], 0, "That is the contrast that lets you see shape and arrangement."),
+        q("Which organism in this exercise is a bacillus?", ["B. megaterium", "S. epidermidis", "Both of them", "Neither"], 0, "B. megaterium is a large rod. S. epidermidis is a coccus in clusters."),
+        q("Which pair of choices matches S. epidermidis?", ["Cocci in clusters", "Large rods", "Spirals in chains", "Rods in tetrads"], 0, "Staphylococci form grape-like clusters.")]
+    },
+    gram:{
+      tab:"Gram stain", title:"Gram Staining", ex:"Exercise 7",
+      question:"Is this bacterium gram-positive or gram-negative?",
+      how:["<b>Crystal violet</b> (primary stain) stains every cell purple. <b>Gram's iodine</b> (mordant) forms a crystal violet-iodine complex. <b>95% ethanol</b> (decolorizer) removes that complex from gram-negative cells. <b>Safranin</b> (counterstain) stains the gram-negative cells pink.",
+        "<b>Gram-positive = purple.</b> The thick peptidoglycan traps the crystal violet-iodine complex. <b>Gram-negative = pink.</b> Ethanol dissolves the outer lipid membrane, and the complex washes out of the thin peptidoglycan.",
+        "Decolorizing is the <b>trickiest step</b>: ethanol until the runoff runs clear (about 10 seconds), and don't overdo it. It guides antibiotic choice before culture results are back."],
+      cultures:[{o:"se", src:"slant", sub:"slant"}, {o:"bs", src:"slant", sub:"slant"}, {o:"ec", src:"broth", sub:"broth"}],
+      pal:{slide:["water", "cells", "dry", "flame", "rinse", "blot"], stain:["cv", "iodine", "etoh", "safranin", "mb", "mg", "cf"]},
+      seq:c => prep(c)
+        .concat(reagent("cv", "Crystal violet", "Cover the smear with crystal violet (the primary stain) for 60 seconds.", "60 seconds", "#5a2a98"))
+        .concat(reagent("iodine", "Gram's iodine", "Cover the smear with Gram's iodine (the mordant) for 30 seconds.", "30 seconds", "#8a5a1a").map(x => x))
+        .concat([st("etoh", "Decolorize (ethanol)", "Drip 95% ethanol on the slide until the runoff runs clear (about 10 seconds). Don't overdo it.", "Decolorizing comes after the mordant.", {special:"decolor"}),
+          st("rinse", "Decolorize (ethanol)", "Stop the ethanol and rinse gently with water.", "Rinse to stop decolorizing."),
+          st("blot", "Decolorize (ethanol)", "Blot dry with bibulous paper. Don't rub.", "Blot, don't rub.")])
+        .concat(reagent("safranin", "Safranin", "Cover the smear with safranin (the counterstain) for 60 seconds.", "60 seconds", "#d8456b")),
+      quiz:[
+        q("What is the correct order of the Gram stain?", ["Crystal violet, Gram's iodine, 95% ethanol, safranin", "Safranin, ethanol, crystal violet, iodine", "Crystal violet, safranin, iodine, ethanol", "Iodine, crystal violet, safranin, ethanol"], 0, "Primary stain, mordant, decolorizer, counterstain."),
+        q("What does Gram's iodine do?", ["Acts as a mordant: it forms the crystal violet-iodine complex", "Decolorizes the cells", "Counterstains the cells", "Kills the cells"], 0, "The complex is what the thick peptidoglycan of gram-positive cells holds on to."),
+        q("Which step is the trickiest?", ["Decolorizing with 95% ethanol", "Air drying", "Blotting", "Rinsing the safranin"], 0, "Ethanol until it runs clear (about 10 seconds): too short or too long gives the wrong color."),
+        q("Why are gram-positive cells purple?", ["The thick peptidoglycan traps the crystal violet-iodine complex", "They absorb safranin", "They have no cell wall", "Iodine turns them purple"], 0, "The complex can't wash out of thick peptidoglycan."),
+        q("Why are gram-negative cells pink?", ["Ethanol dissolves the outer lipid membrane, the complex washes out of the thin peptidoglycan, and safranin stains them", "They absorb crystal violet", "They are killed by safranin", "Iodine turns them pink"], 0, "After decolorizing they are colorless until the safranin counterstain."),
+        q("You over-decolorize a gram-positive smear. What will the cells look like?", ["Pink, like gram-negative cells", "Even darker purple", "Blue", "Green"], 0, "Too much ethanol pulls the complex out of gram-positive cells too, so safranin colors them."),
+        q("Which of the three organisms in this exercise is a gram-negative rod?", ["E. coli", "S. epidermidis", "B. subtilis", "None of them"], 0, "S. epidermidis (cocci) and B. subtilis (rods) are gram-positive."),
+        q("Why does the Gram stain matter clinically?", ["It guides antibiotic choice before culture results are back", "It identifies the exact species", "It shows whether the patient is infected", "It measures cell size"], 0, "Gram-positive and gram-negative cells respond differently to antibiotics.")]
+    },
+    spore:{
+      tab:"Endospore stain", title:"Endospore Stain (Schaeffer-Fulton)", ex:"Exercise 9",
+      question:"Does this culture contain endospores, and how can you tell?",
+      how:["An <b>endospore</b> is a dormant, tough structure made by <b>Bacillus</b> and <b>Clostridium</b> when nutrients are scarce. It resists heat, desiccation, harsh chemicals, and UV light.",
+        "<b>Malachite green + steam</b> drives the stain into the endospore. A <b>water rinse</b> washes the stain out of the vegetative cells. <b>Safranin</b> then colors the vegetative cells.",
+        "<b>Endospores = green. Vegetative cells = pink/red.</b> A 72-hour culture has more endospores than a 24-hour culture."],
+      cultures:[{o:"bs", age:"24-hr", spore:"some", frac:.2}, {o:"bs", age:"72-hr", spore:"many", frac:.72}, {o:"bm", age:"24-hr", spore:"some", frac:.24},
+        {o:"ec", age:"24-hr", spore:"none", frac:0}, {o:"ec", age:"72-hr", spore:"none", frac:0}, {o:"ea", age:"24-hr", spore:"none", frac:0}],
+      pal:{slide:["cells", "dry", "flame", "paper", "steam", "addstain", "unpaper", "rinse", "blot"], stain:["mg", "safranin", "cv", "mb", "cf"]},
+      seq:c => prep(c).concat([
+        st("paper", "Malachite green + steam", "Lay a small piece of absorbent paper over the smear.", "The paper holds the stain on the smear while it steams."),
+        st("mg", "Malachite green + steam", "Cover the paper with malachite green.", "", {wait:"stain applied", color:"#2f9e4f"}),
+        st("steam", "Malachite green + steam", "Hold the slide over the boiling water bath and steam it for 5 minutes. Don't let it dry out: add more stain as needed.", "Steam drives the stain into the endospore.", {special:"steam"}),
+        st("unpaper", "Rinse", "Remove the paper.", "Take the paper off before rinsing."),
+        st("rinse", "Rinse", "Wash the smear with distilled water for 30 seconds.", "Water is the decolorizer: it washes the stain out of the vegetative cells.", {wait:"30 seconds"}),
+        st("safranin", "Safranin", "Counterstain with safranin for 30 seconds.", "", {wait:"30 seconds", color:"#d8456b"}),
+        st("rinse", "Safranin", "Wash with distilled water.", "Rinse after the counterstain."),
+        st("blot", "Safranin", "Blot gently dry.", "Blot, don't rub.")]),
+      quiz:[
+        q("What are the primary stain and the counterstain in the endospore stain?", ["Malachite green and safranin", "Crystal violet and safranin", "Carbolfuchsin and methylene blue", "Methylene blue and eosin"], 0, "Malachite green goes into the spores, and safranin colors the vegetative cells."),
+        q("Why is the slide steamed with malachite green?", ["Heat drives the stain into the endospore", "To kill the vegetative cells", "To dry the smear", "To remove the stain"], 0, "The spore coat is impermeable, so simple stains can't get in."),
+        q("What color are endospores and vegetative cells?", ["Endospores green, vegetative cells pink/red", "Endospores pink/red, vegetative cells green", "Both purple", "Both blue"], 0, "Malachite green stays in the spores. Safranin colors the vegetative cells."),
+        q("What are the red structures in an endospore stain?", ["Vegetative cells", "Endospores", "Capsules", "Flagella"], 0, "Vegetative cells take up the safranin counterstain."),
+        q("What does the water rinse do?", ["Acts as the decolorizer: it washes the stain out of the vegetative cells", "Stains the spores", "Fixes the smear", "Kills the bacteria"], 0, "Spores keep the green stain. Vegetative cells lose it."),
+        q("Which genera form endospores?", ["Bacillus and Clostridium", "Escherichia and Enterobacter", "Staphylococcus and Streptococcus", "Pseudomonas and Proteus"], 0, "They form spores in response to environmental stress."),
+        q("Why does a 72-hour culture usually show more endospores than a 24-hour culture?", ["Nutrients are depleted, which stresses the cells", "The cells are younger", "The stain works better", "The cells have more water"], 0, "Endospores form when nutrients are scarce."),
+        q("Endospores resist which of these?", ["Heat, chemicals, and desiccation", "Only cold", "Only light", "Nothing"], 0, "That is why a special stain and steam are needed.")]
+    }
+  };
+  function q(qq, opts, a, why){ return {q:qq, opts, a, why}; }
+
+  /* ---------------------------------------------------------------- state */
+  let tabKey = "smear", S = null, raf = null;
+  const T = () => TABS[tabKey];
+  const fresh = c => ({c, seq:T().seq(c), i:0, wrong:0, hints:0, passes:0, dec:0, steamLvl:1, mag:0, msg:"", warn:false, busy:null, checked:false,
+    L:{water:false, cells:false, dried:false, fixed:false, paper:false, stain:null, film:null, blotted:false, runoff:false, rinsing:false},
+    flags:{overheated:false, under:false, over:false, dried:false}, world:null});
+  const stages = () => { const out = []; T().seq(S.c).forEach(s => { if (!out.includes(s.stage)) out.push(s.stage); }); out.push("Examine"); return out; };
+
+  /* ---------------------------------------------------------------- acting on the bench */
+  function say(m, warn){ S.msg = m; S.warn = !!warn; ui(); drawSlide(); }
+  function finish(){ S.i++; S.msg = ""; S.warn = false; ui(); drawSlide(); }
+  function startWait(text, dur, done){
+    S.busy = {kind:"wait", text, t0:performance.now(), dur, done};
+    document.body.dataset.busy = "1"; loop();
+  }
+  function endBusy(){ if (S) S.busy = null; delete document.body.dataset.busy; }
+  function loop(){
+    cancelAnimationFrame(raf);
+    const frame = now => {
+      if (!S || !S.busy) { drawSlide(); return; }
+      const b = S.busy, k = (now - b.t0) / b.dur;
+      if (b.kind === "steam"){
+        const dt = b.last ? now - b.last : 0; b.last = now;
+        S.steamLvl = clamp(S.steamLvl - dt / 3600, 0, 1);
+        if (S.steamLvl <= 0 && !S.flags.dried){ S.flags.dried = true; S.msg = "The stain dried out! Add more malachite green while the slide steams."; S.warn = true; ui(); }
+      }
+      drawSlide();
+      if (k >= 1){ const d = b.done; endBusy(); d && d(); ui(); drawSlide(); return; }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+  }
+
+  function act(id){
+    if (!S) return;
+    const t = TABS[tabKey], cur = S.seq[S.i];
+    if (S.busy){
+      if (S.busy.kind === "steam" && id === "addstain"){ S.steamLvl = 1; S.msg = "More stain added. Keep the slide wet."; S.warn = false; ui(); }
+      return;
+    }
+    if (id === "addstain"){ say("There is nothing to top up right now. Add more stain only while the slide is steaming.", true); S.wrong++; return; }
+    /* extras that are allowed after their step */
+    if (id === "flame" && S.L.fixed){ S.passes++; if (S.passes > 5 && !S.flags.overheated){ S.flags.overheated = true; say("That is more than 5 passes. Too much heat can distort or destroy the cells.", true); } else say("Pass " + S.passes + ".", S.flags.overheated); drawSlide(); return; }
+    if (id === "etoh" && cur && cur.id === "rinse" && S.dec > 0){ S.dec += .25; ui(); drawSlide(); return; }
+    if (!cur){ say("Every step is done. Examine the slide under the microscope."); return; }
+    if (id !== cur.id){ wrong(id, cur); return; }
+    S.wrongRun = 0;
+    switch (id){
+      case "water": S.L.water = true; finish(); break;
+      case "cells": S.L.cells = true; finish(); break;
+      case "dry": startWait("Air drying…", 1300, () => { S.L.dried = true; finish(); }); break;
+      case "flame":
+        S.passes++;
+        if (S.passes < cur.min){ say("Pass " + S.passes + " of 3 to 5. Keep going.", false); drawSlide(); }
+        else { S.L.fixed = true; finish(); say(S.passes + " passes: fixed. You can do up to 5, but no more."); }
+        break;
+      case "etoh":
+        S.dec = .25; S.L.runoff = true; lastStain = "etoh"; finish(); say("Ethanol is running off. Drip more until the runoff runs clear, then rinse. Don't overdo it.");
+        break;
+      case "paper": S.L.paper = true; finish(); break;
+      case "mg": S.L.stain = {c:cur.color}; finish(); break;
+      case "steam": S.steamLvl = 1; S.busy = {kind:"steam", text:"Steaming (5 minutes, time-lapse)…", t0:performance.now(), dur:5200, last:0, done:() => { S.L.film = S.flags.dried ? "#4a7a52" : "#2f9e4f"; finish(); }};
+        document.body.dataset.busy = "1"; loop(); ui(); break;
+      case "unpaper": S.L.paper = false; S.L.stain = null; finish(); break;
+      case "rinse": {
+        const decolor = S.L.runoff;
+        startWait("Rinsing…", cur.wait ? 1500 : 900, () => {
+          S.L.stain = null; S.L.runoff = false;
+          if (decolor){ S.flags.under = S.dec < 1; S.flags.over = S.dec >= 1.75; }
+          setFilm(); finish();
+          if (decolor){ say(S.flags.under ? "You stopped before the runoff ran clear, so some gram-negative cells may still be purple." : S.flags.over ? "That was a long decolorizing. Gram-positive cells may have lost their color too." : "Decolorized just right: the runoff ran clear.", S.flags.under || S.flags.over); }
+        }); break; }
+      case "blot": startWait("Blotting…", 500, () => { S.L.blotted = true; finish(); }); break;
+      default: /* a stain */
+        S.L.stain = {c:cur.color}; startWait(cur.wait ? "Staining: " + cur.wait + " (time-lapse)…" : "Staining…", 1700, () => { setFilmAfter(id); finish(); });
+    }
+  }
+  let lastStain = null;
+  function setFilmAfter(id){ lastStain = id; }
+  function setFilm(){
+    const o = ORG[S.c.o], g = o.gram;
+    if (tabKey === "smear") S.L.film = "#7d97d8";
+    else if (tabKey === "gram"){
+      if (lastStain === "cv") S.L.film = "#6a3aa8";
+      else if (lastStain === "iodine") S.L.film = "#4a2a85";
+      else if (lastStain === "etoh") S.L.film = ((g === "pos" && !S.flags.over) || (g === "neg" && S.flags.under)) ? "#4a2a85" : "#efe6f3";
+      else if (lastStain === "safranin") S.L.film = gramShows() === "purple" ? "#6b3a8f" : "#e8678f";
+    } else if (tabKey === "spore"){
+      if (lastStain === "safranin") S.L.film = "#d4506c"; else S.L.film = "#9fd3ab";
+    }
+  }
+  /* rinse after etoh happens before lastStain is updated, so keep it correct */
+  const gramShows = () => { const g = ORG[S.c.o].gram; return g === "pos" ? (S.flags.over ? "pink" : "purple") : (S.flags.under ? "purple" : "pink"); };
+
+  function wrong(id, cur){
+    S.wrong++;
+    let m;
+    const inSeq = S.seq.some(s => s.id === id);
+    if (id === "water" && S.c.src === "broth") m = "A broth culture is liquid, so no water is needed. Put the loopfuls straight on the slide.";
+    else if (id === "cells" && cur.id === "water") m = "Put a drop of water on the slide first, then mix in the growth.";
+    else if (!inSeq && DISTRACT[id]) m = DISTRACT[id];
+    else if (cur.stage === "Make the smear" && ["cv", "iodine", "etoh", "safranin", "mb", "mg", "paper", "steam", "rinse", "blot"].includes(id)) m = "Not yet. Make and heat-fix the smear first: heat-fixing kills the bacteria and attaches them to the slide so they don't wash off.";
+    else if (id === "flame" && cur.id !== "flame") m = "Not yet. Let the smear air dry before heat-fixing.";
+    else if (id === "etoh") m = cur.id === "iodine" ? "Not yet. The mordant (Gram's iodine) goes on before the decolorizer." : "Not yet. 95% ethanol is the decolorizer, and it comes after the crystal violet and the iodine.";
+    else m = "Not yet. " + (cur.why ? cur.why + " " : "") + "You're on: <b>" + esc(cur.stage) + "</b>. Tap the hint button if you're stuck.";
+    say(m, true);
+  }
+
+  /* ---------------------------------------------------------------- drawing the slide */
+  function drawSlide(){
+    const svg = $("slideSvg"); if (!svg || !S) return;
+    const L = S.L, now = performance.now(), W = 640, H = 300, cx = 330, cy = 156;
+    let s = `<rect x="0" y="0" width="${W}" height="${H}" rx="16" fill="#f7f8fb"/><rect x="20" y="238" width="600" height="44" rx="10" fill="#ddd3bf"/>`;
+    /* burner */
+    const burning = S.busy ? false : false;
+    s += `<rect x="542" y="222" width="46" height="16" rx="4" fill="#8b93a3"/><rect x="558" y="196" width="14" height="28" fill="#a9b1bf"/>`;
+    s += `<path d="M565,196 C550,180 553,164 565,148 C577,164 580,180 565,196 Z" fill="#ff9a2e" opacity=".9"><animate attributeName="opacity" values=".7;1;.75" dur=".4s" repeatCount="indefinite"/></path><path d="M565,194 C557,184 559,174 565,164 C571,174 573,184 565,194 Z" fill="#ffe27a"/>`;
+    s += `<text x="565" y="262" font-size="11" font-weight="700" fill="#5a6376" text-anchor="middle">burner</text>`;
+    /* water bath while steaming */
+    if (S.busy && S.busy.kind === "steam"){
+      s += `<rect x="268" y="214" width="124" height="62" rx="8" fill="#cfe3f1" stroke="#8fb0c8" stroke-width="2"/><text x="330" y="270" font-size="11" font-weight="700" fill="#456" text-anchor="middle">boiling water bath</text>`;
+      for (let k = 0; k < 6; k++){ const px = 296 + k * 16 + (rnd(k) - .5) * 6, ph = ((now / 700) + k * .17) % 1; s += `<path d="M${f1(px)},${f1(212 - ph * 30)} q6,-8 0,-16" fill="none" stroke="#b7c7d4" stroke-width="3" stroke-linecap="round" opacity="${f1(1 - ph)}"/>`; }
+    }
+    /* slide */
+    s += `<rect x="110" y="96" width="390" height="116" rx="6" fill="#e9f1f6" stroke="#a9b8c6" stroke-width="2.5"/><rect x="110" y="96" width="62" height="116" rx="6" fill="#d9e5ee"/><text x="141" y="158" font-size="11" fill="#7a8896" text-anchor="middle">label</text>`;
+    if (L.water && !L.dried) s += `<ellipse cx="${cx}" cy="${cy}" rx="48" ry="27" fill="#cfe8f7" opacity=".85" stroke="#9fc6df" stroke-width="1.5"/>`;
+    if (L.cells && !L.dried) s += `<ellipse cx="${cx}" cy="${cy}" rx="${L.water ? 32 : 36}" ry="${L.water ? 18 : 22}" fill="#efe3c0" opacity=".9"/>`;
+    if (L.dried) s += `<ellipse cx="${cx}" cy="${cy}" rx="38" ry="22" fill="${L.fixed ? "#e6dcc2" : "#f1ead6"}" opacity=".95" stroke="${L.fixed ? "#cdbf99" : "#e0d6b8"}" stroke-width="1.5"/>`;
+    if (L.film && !L.stain) s += `<ellipse cx="${cx}" cy="${cy}" rx="38" ry="22" fill="${L.film}" opacity=".9"/>`;
+    if (L.paper) s += `<rect x="${cx - 52}" y="${cy - 34}" width="104" height="68" fill="#fbfaf4" stroke="#d9cfa6" stroke-width="2" opacity=".96"/>`;
+    if (L.stain){
+      const lvl = S.busy && S.busy.kind === "steam" ? S.steamLvl : 1;
+      s += `<ellipse cx="${cx}" cy="${cy}" rx="${L.paper ? 48 : 64}" ry="${L.paper ? 30 : 38}" fill="${L.stain.c}" opacity="${f1(.25 + .6 * lvl)}"/>`;
+    }
+    /* decolorizer runoff */
+    if (L.runoff){
+      const col = S.dec < .5 ? "#5a2a98" : S.dec < 1 ? "#b89ad6" : "#dfeaf5";
+      for (let k = 0; k < 5; k++) s += `<ellipse cx="${f1(cx - 24 + k * 12)}" cy="${cy + 26}" rx="3.4" ry="5" fill="${col}"><animate attributeName="cy" values="${cy + 26};${cy + 96}" dur="0.9s" begin="${f1(k * .18)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.2" dur="0.9s" begin="${f1(k * .18)}s" repeatCount="indefinite"/></ellipse>`;
+      s += `<text x="${cx}" y="${cy + 112}" font-size="13" font-weight="800" fill="#2c3796" text-anchor="middle">Runoff: ${S.dec < .5 ? "deep purple" : S.dec < 1 ? "pale purple" : "clear"}</text>`;
+    }
+    /* overlay for timed steps */
+    if (S.busy){
+      const b = S.busy, k = clamp((now - b.t0) / b.dur, 0, 1);
+      s += `<rect x="150" y="14" width="340" height="52" rx="14" fill="#fff" stroke="#3f4cc0" stroke-width="2"/><text x="320" y="36" font-size="14" font-weight="800" fill="#2c3796" text-anchor="middle">${esc(b.text)}</text><rect x="170" y="46" width="300" height="9" rx="4.5" fill="#e4e8f5"/><rect x="170" y="46" width="${f1(300 * k)}" height="9" rx="4.5" fill="#3f4cc0"/>`;
+      if (b.kind === "steam"){ s += `<text x="520" y="110" font-size="12" font-weight="800" fill="#2c3796" text-anchor="middle">stain level</text><rect x="506" y="116" width="28" height="86" rx="6" fill="#e4e8f5"/><rect x="506" y="${f1(116 + 86 * (1 - S.steamLvl))}" width="28" height="${f1(86 * S.steamLvl)}" rx="6" fill="${S.steamLvl < .25 ? "#d9443a" : "#2f9e4f"}"/>`; }
+    }
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = s;
+  }
+
+  /* ---------------------------------------------------------------- the microscope field */
+  function buildWorld(){
+    const c = S.c, o = ORG[c.o], seed = hash(c.o + (c.age || "") + tabKey) * 17, cells = [];
+    if (o.shape === "coccus"){
+      for (let i = 0; i < 190; i++){
+        const x = rnd(seed + i * 3) * 1600, y = rnd(seed + i * 3 + 1) * 1600, n = 5 + Math.floor(rnd(seed + i * 3 + 2) * 8), pts = [];
+        for (let j = 0; j < n; j++){ const a = rnd(seed + i * 31 + j) * 6.283, r = Math.sqrt(rnd(seed + i * 37 + j * 5)) * (12 + n * 1.6); pts.push([x + Math.cos(a) * r, y + Math.sin(a) * r]); }
+        cells.push({k:"cluster", pts});
+      }
+    } else {
+      for (let i = 0; i < 430; i++){
+        const x = rnd(seed + i * 3) * 1600, y = rnd(seed + i * 3 + 1) * 1600, a = rnd(seed + i * 3 + 2) * 180, roll = rnd(seed + i * 7 + 4);
+        const n = roll < o.chain ? 3 + Math.floor(rnd(seed + i) * 2) : roll < o.chain + .22 ? 2 : 1, group = [];
+        for (let j = 0; j < n; j++){ const off = (j - (n - 1) / 2) * (o.L + 3), rad = a * Math.PI / 180;
+          group.push({x:x + Math.cos(rad) * off, y:y + Math.sin(rad) * off, a, spore:rnd(seed + i * 13 + j) < (c.frac || 0)}); }
+        cells.push({k:"rods", group});
+      }
+      for (let i = 0; i < Math.round((c.frac || 0) * 300); i++) cells.push({k:"free", x:rnd(seed + 900 + i * 3) * 1600, y:rnd(seed + 901 + i * 3) * 1600, a:rnd(seed + 902 + i) * 180});
+    }
+    return cells;
+  }
+  function fieldSVG(mag){
+    if (!S.world) S.world = buildWorld();
+    const o = ORG[S.c.o], vb = mag === 100 ? 400 : mag === 40 ? 800 : 1600, vx = mag === 100 ? 600 : mag === 40 ? 400 : 0, sw = f1(1.8 * vb / 400);
+    const heat = S.flags.overheated;
+    const pal = tabKey === "smear" ? {bg:"#f5f7fc", veg:"#3858b8", vs:"#243f8f"} :
+      tabKey === "gram" ? {bg:"#f7f2f3", veg:gramShows() === "purple" ? "#5a2a98" : "#e5588a", vs:gramShows() === "purple" ? "#3c1a70" : "#b83a66"} :
+      {bg:"#f2f6f1", veg:"#e0506c", vs:"#a83048"};
+    let s = `<clipPath id="fc"><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2 - 1}"/></clipPath><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2}" fill="${pal.bg}"/><g clip-path="url(#fc)">`;
+    S.world.forEach(w => {
+      if (w.k === "cluster"){ const r = heat ? 6.4 : 8.6; w.pts.forEach(p => { s += `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="${r}" fill="${pal.veg}" stroke="${pal.vs}" stroke-width="${sw}"/>`; }); }
+      else if (w.k === "free"){ s += `<ellipse cx="${f1(w.x)}" cy="${f1(w.y)}" rx="6" ry="4.2" fill="#35a34f" stroke="#1f7a37" stroke-width="${sw}" transform="rotate(${f1(w.a)} ${f1(w.x)} ${f1(w.y)})"/>`; }
+      else w.group.forEach((g, j) => {
+        const L = o.L * (heat ? .78 : 1), W = o.W * (heat ? .72 : 1), wob = heat ? (rnd(j * 7 + g.x) - .5) * 14 : 0;
+        s += `<rect x="${f1(g.x - L / 2)}" y="${f1(g.y - W / 2)}" width="${f1(L)}" height="${f1(W)}" rx="${f1(W / 2)}" fill="${pal.veg}" stroke="${pal.vs}" stroke-width="${sw}" transform="rotate(${f1(g.a + wob)} ${f1(g.x)} ${f1(g.y)})"/>`;
+        if (g.spore) s += `<ellipse cx="${f1(g.x)}" cy="${f1(g.y)}" rx="${f1(L * .2)}" ry="${f1(W * .3)}" fill="#35a34f" stroke="#1f7a37" stroke-width="${sw}" transform="rotate(${f1(g.a)} ${f1(g.x)} ${f1(g.y)})"/>`;
+      });
+    });
+    if (S.flags.dried){ for (let k = 0; k < 60; k++) s += `<polygon points="0,0 7,2 3,7" fill="#2a5a38" opacity=".75" transform="translate(${f1(vx + rnd(k + 5) * vb)} ${f1(vx + rnd(k + 9) * vb)}) rotate(${f1(rnd(k) * 360)})"/>`; }
+    s += `</g><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2 - 1}" fill="none" stroke="#0c0d11" stroke-width="${f1(vb / 40)}" opacity=".85"/>`;
+    return `<svg viewBox="${vx} ${vx} ${vb} ${vb}" role="img" aria-label="Microscope field at ${mag}x">${s}</svg>`;
+  }
+
+  /* ---------------------------------------------------------------- record form */
+  function fields(){
+    const o = ORG[S.c.o], c = S.c, out = [];
+    out.push({k:"mag", label:"Total magnification", opts:["100x", "400x", "1000x"], ans:"1000x", why:"The ocular is 10x and the oil objective is 100x: 10 x 100 = 1000x."});
+    out.push({k:"shape", label:"Morphology (shape)", opts:SHAPE, ans:o.shape === "coccus" ? SHAPE[0] : SHAPE[1], why:o.shape === "coccus" ? "Round cells are cocci." : "Rod-shaped cells are bacilli."});
+    if (o.shape === "coccus") out.push({k:"arr", label:"Arrangement", opts:ARR, ans:ARR[2], why:"Staphylococci form grape-like clusters."});
+    if (tabKey === "gram"){
+      const shown = gramShows() === "purple" ? "Purple" : "Pink";
+      out.push({k:"color", label:"Color of the cells on your slide", opts:["Purple", "Pink", "Blue", "Green"], ans:shown, why:"That is the color your technique produced."});
+      out.push({k:"gram", label:"Gram reaction", opts:["Gram-positive", "Gram-negative"], ans:o.gram === "pos" ? "Gram-positive" : "Gram-negative",
+        why:o.gram === "pos" ? "S. epidermidis, B. subtilis, and B. megaterium are gram-positive: purple when the stain is done correctly." : "E. coli and E. aerogenes are gram-negative: pink when the stain is done correctly."});
+    }
+    if (tabKey === "spore"){
+      out.push({k:"spores", label:"Endospores present?", opts:["None", "Some", "Many"], ans:c.spore === "none" ? "None" : c.spore === "some" ? "Some" : "Many",
+        why:c.spore === "none" ? "E. coli and E. aerogenes don't form endospores." : c.spore === "many" ? "A 72-hour culture is nutrient-depleted, so it has more endospores." : "At 24 hours there are some endospores, but most cells are still vegetative."});
+      if (c.spore !== "none") out.push({k:"scolor", label:"Endospores look…", opts:["Green", "Pink/red", "Purple", "Blue"], ans:"Green", why:"Malachite green stays inside the endospores."});
+      out.push({k:"vcolor", label:"Vegetative cells look…", opts:["Pink/red", "Green", "Purple", "Blue"], ans:"Pink/red", why:"The water rinse removes the green, and safranin colors the vegetative cells."});
+    }
+    return out;
+  }
+
+  /* ---------------------------------------------------------------- UI */
+  function ui(){
+    if (!S) return;
+    const t = T(), cur = S.seq[S.i], done = S.i >= S.seq.length, stg = stages();
+    const curStage = done ? "Examine" : cur.stage;
+    $("stages").innerHTML = stg.map(n => {
+      const idxs = S.seq.map((x, k) => x.stage === n ? k : -1).filter(k => k >= 0);
+      const ok = n === "Examine" ? S.mag === 100 : idxs.length && idxs.every(k => k < S.i), now = n === curStage;
+      return `<span class="bstep ${ok ? "ok" : now ? "cur" : ""}">${ok ? "✓ " : ""}${esc(n)}</span>`;
+    }).join("");
+    const hint = $("hint");
+    hint.className = "benchhint" + (S.warn ? " warn" : "");
+    hint.innerHTML = S.msg || (done ? "Every step is done! Tap <b>Examine under the microscope</b>." : S.i === 0 ? "Choose each step from the buttons below. The order matters, and wrong turns are counted." : "Stage: <b>" + esc(cur.stage) + "</b>. What comes next?");
+    const busy = !!S.busy, steaming = busy && S.busy.kind === "steam";
+    document.querySelectorAll(".act").forEach(b => {
+      const id = b.dataset.act;
+      b.disabled = busy ? !(steaming && id === "addstain") : false;
+    });
+    $("hintBtn").disabled = busy || done;
+    $("scopeBtn").hidden = !done;
+    $("scopeBtn").disabled = busy;
+    if (done && !$("scope").dataset.open) { /* opened by button */ }
+  }
+  function showHint(){
+    if (!S || S.busy) return;
+    const cur = S.seq[S.i]; if (!cur) return;
+    S.hints++; say("Hint: " + cur.say + (cur.id === "etoh" ? " Each tap of the button is about 2.5 seconds." : ""));
+  }
+
+  function renderTab(){
+    const t = T(); S = null; endBusy(); lastStain = null;
+    $("app").innerHTML = `
+      <header><div><a class="backlink" href="index.html">Lab review</a><h1>Smears and Stains<span class="chap">Exercises 5, 7, and 9</span></h1></div></header>
+      <div class="labtabs" id="labTabs">${Object.keys(TABS).map(k => `<button class="labtab ${k === tabKey ? "on" : ""}" data-tab="${k}">${TABS[k].tab}</button>`).join("")}</div>
+      <div class="labwrap">
+        <div class="labhead"><h2>${t.title} <span class="chap" style="background:#e7e9fb;color:#2c3796">${t.ex}</span></h2></div>
+        <p class="labq"><b>Question:</b> ${t.question}</p>
+        <details class="howbox" open><summary>How it works</summary><ul>${t.how.map(x => `<li>${x}</li>`).join("")}</ul></details>
+        <div class="sect">1. Pick a culture</div>
+        <div class="orgrow" id="orgrow">${t.cultures.map((c, i) => `<button class="orgchip" data-c="${i}"><i>${esc(ORG[c.o].name)}</i>${c.age ? " " + c.age : ""}<small>${c.sub || "culture tube"}</small></button>`).join("")}</div>
+        <div class="sect">2. Do each step in order</div>
+        <div class="benchsteps" id="stages"></div>
+        <div class="benchhint" id="hint"></div>
+        <div class="bench"><svg id="slideSvg" role="img" aria-label="Slide on the bench"></svg></div>
+        <div class="sect">On the slide</div><div class="palette">${t.pal.slide.map(a => `<button class="act" data-act="${a}">${ACT[a].label}</button>`).join("")}</div>
+        <div class="sect">Stains and reagents</div><div class="palette">${t.pal.stain.map(a => `<button class="act" data-act="${a}" style="--dot:${ACT[a].c}"><span class="dot"></span>${ACT[a].label}</button>`).join("")}</div>
+        <div class="benchbtns"><button class="btn hint" id="hintBtn">💡 Show me the next step</button><button class="btn primary" id="scopeBtn" hidden>🔬 Examine under the microscope</button><button class="btn secondary" id="againBtn">↺ Start over</button></div>
+        <div class="scope" id="scope" hidden></div>
+        <div id="quizBox">${quizHTML(t)}</div>
+      </div>`;
+    $("labTabs").onclick = e => { const b = e.target.closest("[data-tab]"); if (!b) return; tabKey = b.dataset.tab; history.replaceState(null, "", "#" + tabKey); renderTab(); };
+    $("orgrow").onclick = e => { const b = e.target.closest("[data-c]"); if (!b) return; choose(+b.dataset.c); };
+    document.querySelectorAll(".act").forEach(b => b.addEventListener("click", () => act(b.dataset.act)));
+    $("hintBtn").onclick = showHint;
+    $("againBtn").onclick = () => { if (S) choose(t.cultures.indexOf(S.c)); };
+    $("scopeBtn").onclick = openScope;
+    bindQuiz(t);
+    choose(0);
+  }
+  function choose(i){
+    endBusy(); lastStain = null; cancelAnimationFrame(raf);
+    const t = T(); S = fresh(t.cultures[i]);
+    document.querySelectorAll(".orgchip").forEach((b, k) => b.classList.toggle("on", k === i));
+    $("scope").hidden = true; $("scope").innerHTML = "";
+    drawSlide(); ui();
+  }
+
+  function openScope(){
+    const box = $("scope"); box.hidden = false;
+    box.innerHTML = `<h3>Microscope</h3><div class="scopegrid"><div><div class="fieldbox" id="fieldBox"></div>
+      <div class="magrow"><button class="btn secondary" data-mag="10">10x</button><button class="btn secondary" data-mag="40">40x</button><button class="btn secondary" data-mag="100">Add oil, then 100x</button></div>
+      <div class="magnote" id="magNote">Always start on low power and work up: 10x, then 40x, then oil immersion (100x).</div></div>
+      <div id="record"></div></div>`;
+    $("fieldBox").innerHTML = `<svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="198" fill="#1b1d25"/></svg>`;
+    box.querySelectorAll("[data-mag]").forEach(b => b.onclick = () => setMag(+b.dataset.mag));
+    box.scrollIntoView({behavior:"smooth", block:"start"});
+    S.mag = 0;
+  }
+  function setMag(m){
+    const order = [10, 40, 100], want = order[order.indexOf(S.mag) + 1] || 10;
+    const note = $("magNote");
+    if (S.mag === 100){ note.textContent = "You're already at oil immersion. Record what you see."; return; }
+    if (m !== want){ note.innerHTML = want === 10 ? "Start on <b>low power (10x)</b> first." : want === 40 ? "Work up to <b>high-dry (40x)</b> before adding oil." : "Add immersion oil, then use the <b>100x</b> objective. Always focus at 40x before adding oil."; return; }
+    S.mag = m;
+    $("fieldBox").innerHTML = fieldSVG(m);
+    note.textContent = m === 10 ? "10x: you can see the smear, but not the shapes. Move to 40x." : m === 40 ? "40x: the cells are still small. Add oil and move to 100x." : "100x with oil (total 1000x): now you can see shape and arrangement.";
+    if (m === 100) showRecord();
+    ui();
+  }
+  function showRecord(){
+    const fs = fields();
+    $("record").innerHTML = `<h3>Record your observations</h3><div class="recgrid">${fs.map(f => `<div class="recrow" data-k="${f.k}"><label>${f.label}</label><select><option value="">Choose…</option>${f.opts.map(o => `<option>${esc(o)}</option>`).join("")}</select><div class="recfb"></div></div>`).join("")}</div>
+      <div class="benchbtns"><button class="btn primary" id="checkBtn">Check my answers</button></div><div id="sum"></div>`;
+    $("checkBtn").onclick = () => {
+      let right = 0;
+      fs.forEach(f => {
+        const row = document.querySelector(`.recrow[data-k="${f.k}"]`), v = row.querySelector("select").value, ok = v === f.ans;
+        if (ok) right++;
+        row.className = "recrow " + (v ? (ok ? "ok" : "bad") : "");
+        row.querySelector(".recfb").className = "recfb " + (ok ? "ok" : "bad");
+        row.querySelector(".recfb").textContent = !v ? "Choose an answer." : ok ? "Yes. " + f.why : "Not quite. " + f.why;
+      });
+      const o = ORG[S.c.o], notes = [];
+      if (S.flags.overheated) notes.push("You gave the slide more than 5 passes through the flame, so the cells look shrunken and distorted. Heat-fix with 3 to 5 passes.");
+      if (tabKey === "gram" && S.flags.under) notes.push("You stopped decolorizing before the runoff ran clear, so " + (o.gram === "neg" ? "the gram-negative cells stayed purple (a false gram-positive)." : "the decolorizing was incomplete.") );
+      if (tabKey === "gram" && S.flags.over) notes.push("You decolorized too long, so " + (o.gram === "pos" ? "the gram-positive cells lost their purple and look pink (a false gram-negative)." : "the cells are fully decolorized."));
+      if (S.flags.dried) notes.push("The stain dried out while steaming, so the slide has dark stain crystals. Add more stain as needed.");
+      $("sum").innerHTML = `<div class="summary"><b>${right} of ${fs.length}</b> observations correct. Wrong turns while staining: <b>${S.wrong}</b>. Hints used: <b>${S.hints}</b>.${notes.length ? "<br>" + notes.join("<br>") : (S.wrong === 0 ? "<br>Clean technique!" : "")}</div>`;
+    };
+  }
+
+  /* ---------------------------------------------------------------- quiz */
+  function quizHTML(t){
+    return `<section class="quiz"><h3>Test yourself</h3>` + t.quiz.map((qq, i) => {
+      const order = qq.opts.map((_, k) => k).sort((a, b) => rnd(i * 7 + a + tabKey.length) - rnd(i * 7 + b + tabKey.length));
+      return `<div class="qcard" data-q="${i}"><p class="qq">${i + 1}. ${qq.q}</p><div class="qopts">${order.map(k => `<button class="qopt" data-k="${k}">${qq.opts[k]}</button>`).join("")}</div><div class="qfb" hidden></div></div>`;
+    }).join("") + `<p class="qscore" id="qScore"></p></section>`;
+  }
+  function bindQuiz(t){
+    const box = $("quizBox"), got = {};
+    box.querySelectorAll(".qcard").forEach(card => card.addEventListener("click", e => {
+      const b = e.target.closest(".qopt"); if (!b || card.classList.contains("done")) return;
+      const qq = t.quiz[+card.dataset.q], ok = +b.dataset.k === qq.a, fb = card.querySelector(".qfb");
+      if (ok){ card.classList.add("done"); b.classList.add("right"); fb.className = "qfb good"; fb.innerHTML = `<b>Yes!</b> ${qq.why}`; if (!(card.dataset.q in got)) got[card.dataset.q] = true; }
+      else { b.classList.add("wrong"); b.disabled = true; fb.className = "qfb bad"; fb.innerHTML = "Not quite. Try another answer."; if (!(card.dataset.q in got)) got[card.dataset.q] = false; }
+      fb.hidden = false;
+      if (box.querySelectorAll(".qcard.done").length === t.quiz.length) $("qScore").textContent = `Finished! ${Object.values(got).filter(Boolean).length} of ${t.quiz.length} right on the first try.`;
+    }));
+  }
+
+  /* ---------------------------------------------------------------- start */
+  const h = location.hash.slice(1); if (TABS[h]) tabKey = h;
+  window.addEventListener("hashchange", () => { const k = location.hash.slice(1); if (TABS[k] && k !== tabKey){ tabKey = k; renderTab(); window.scrollTo({top:0, behavior:"smooth"}); } });
+  renderTab();
+})();
+</script>
+</body>
+</html>

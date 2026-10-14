@@ -54,7 +54,7 @@
 <script>
 (function(){
   /* To make a page live, give its tile an href. Tiles without one show as "Coming soon". */
-  const T = "biochem-tests.html";
+  const T = "biochem-tests.html", ST = "stains.html";
   const GROUPS = [
     {title:"Microscopy and growth", items:[
       {ex:"Exercise 1", name:"Parts of the Microscope", desc:"Parts, magnification, resolution, and oil immersion"},
@@ -62,9 +62,9 @@
       {ex:"Exercise 3", name:"Microbes in the Environment", desc:"Media, colonies, and describing growth"},
       {ex:"Exercise 4", name:"Aseptic Technique", desc:"Transfers into broth, slants, and deeps"}]},
     {title:"Staining", items:[
-      {ex:"Exercise 5", name:"Smears and Simple Staining", desc:"Heat fixing, morphology, and arrangement"},
-      {ex:"Exercise 7", name:"Gram Stain", desc:"Gram-positive versus gram-negative"},
-      {ex:"Exercise 9", name:"Endospore Stain", desc:"Schaeffer-Fulton: green spores, pink cells"}]},
+      {ex:"Exercise 5", name:"Smears and Simple Staining", desc:"Heat fixing, morphology, and arrangement", href:ST + "#smear"},
+      {ex:"Exercise 7", name:"Gram Stain", desc:"Gram-positive versus gram-negative", href:ST + "#gram"},
+      {ex:"Exercise 9", name:"Endospore Stain", desc:"Schaeffer-Fulton: green spores, pink cells", href:ST + "#spore"}]},
     {title:"Isolation and special media", items:[
       {ex:"Exercise 11", name:"Streak Plate", desc:"Isolating a pure culture"},
       {ex:"Exercise 12", name:"Mannitol Salt Agar (MSA)", desc:"Selective and differential for staph", href:T + "#msa"},
