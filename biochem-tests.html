@@ -130,7 +130,8 @@
      orgs:[
        {name:"Staphylococcus aureus", short:"S. aureus", cap:"#e0a020", growth:true, man:true},
        {name:"Staphylococcus epidermidis", short:"S. epidermidis", cap:"#9a6212", growth:true, man:false},
-       {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", growth:false}
+       {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", growth:false},
+       {name:"Alcaligenes faecalis", short:"A. faecalis", cap:"#5a6376", growth:false}
      ],
      reagents:[],
      outcome:o => !o.growth
@@ -147,8 +148,9 @@
      setup:"Eosin Y and methylene blue dyes inhibit gram-positives and double as lactose-fermentation indicators.",
      orgs:[
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", growth:true, kind:"sheen"},
-       {name:"Salmonella enterica", short:"Salmonella", cap:"#c4532f", growth:true, kind:"none"},
-       {name:"Staphylococcus aureus", short:"S. aureus", cap:"#e0a020", growth:false}
+       {name:"Alcaligenes faecalis", short:"A. faecalis", cap:"#5a6376", growth:true, kind:"none"},
+       {name:"Staphylococcus aureus", short:"S. aureus", cap:"#e0a020", growth:false},
+       {name:"Staphylococcus epidermidis", short:"S. epidermidis", cap:"#9a6212", growth:false}
      ],
      reagents:[],
      outcome:o => !o.growth
@@ -167,7 +169,7 @@
        {name:"Bacillus subtilis", short:"B. subtilis", cap:"#2f9e63", pos:true},
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", pos:false}
      ],
-     reagents:[{name:"Gram's iodine", drops:"flood", liquid:"#7a4a1f", bottle:"#5a3a1a", note:"Flood the plate, wait a few seconds, then pour off the extra."}],
+     reagents:[{name:"Gram's iodine", drops:"flood", liquid:"#7a4a1f", bottle:"#5a3a1a", note:"Flood the whole plate, then wait about 30 seconds."}],
      outcome:o => o.pos
        ? {vis:{colonies:{fill:"#f4ecd6", stroke:"#c9b98f"}, iodine:true, halo:true}, cls:"pos", tag:"Starch hydrolyzed", text:`Iodine turns the starch <b>blue-black</b>, but there's a <b>clear zone</b> around the growth. <i>${o.short}</i> secreted amylase, which broke the starch down before the iodine could stain it.`}
        : {vis:{colonies:{fill:"#f4ecd6", stroke:"#c9b98f"}, iodine:true, halo:false}, cls:"neg", tag:"No hydrolysis", text:`The whole plate turns <b>blue-black</b> right up to the growth. <i>${o.short}</i> didn't break down the starch.`},
@@ -175,16 +177,37 @@
      quiz:[q("What does the starch test detect?", ["Amylase secreted outside the cell", "Urease", "Lactose fermentation", "Nitrate reductase"], 0, "Amylase breaks starch into smaller sugars."),
        q("What reagent is added and what does it stain?", ["Gram's iodine: stains intact starch blue-black", "Methyl red: stains acid red", "Kovac's: stains indole red", "Phenol red: stains acid yellow"], 0, "Iodine binds starch, not the broken-down sugars."),
        q("A clear zone around the growth means…", ["The starch there was broken down (amylase positive)", "No growth", "The iodine didn't work", "The organism is gram-negative"], 0, "No starch left to stain = clear.")]},
+    {key:"of", tab:"OF-Dextrose", title:"OF-Dextrose (Hugh-Leifson) Test", medium:"of", tools:["needle", "loop"], incubate:true, base:{},
+     step:{when:"pre", label:"Add mineral oil", name:"Add mineral oil", title:"Adding mineral oil", sub:"about 1 cm on the right-hand tube", dur:1800,
+       hint:"Inoculated both tubes! Now tap <b>Add mineral oil</b>: about 1 cm goes on <b>one</b> tube. The other tube stays open to the air.", need:"Add the mineral oil to one tube first, then tap Incubate."},
+     question:"Does this bacterium use dextrose (glucose) with oxygen, without oxygen, or not at all?",
+     setup:"Two tubes of OF-dextrose medium: low peptone, high dextrose, and phenol red. Inoculate both tubes, cover one with about 1 cm of mineral oil to keep air out, and leave the other open. Yellow means acid was made.",
+     orgs:[
+       {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", r:"F"},
+       {name:"Pseudomonas aeruginosa", short:"P. aeruginosa", cap:"#2f9e63", r:"O"},
+       {name:"Alcaligenes faecalis", short:"A. faecalis", cap:"#5a6376", r:"N"}
+     ],
+     reagents:[],
+     outcome:o => o.r === "F"
+       ? {vis:{open:{top:C_YEL, bot:C_YEL}, sealed:{top:C_YEL, bot:C_YEL}, oil:true, growth:true}, cls:"pos", tag:"Fermentative", text:`<b>Both tubes are yellow.</b> <i>${o.short}</i> made acid from dextrose even in the oil-sealed tube, where there is no oxygen. It uses dextrose without O₂, so it is fermentative.`}
+       : o.r === "O"
+       ? {vis:{open:{top:C_YEL, bot:"#e9923a"}, sealed:{top:C_RED, bot:C_RED}, oil:true, growth:true}, cls:"pos", tag:"Oxidative", text:`<b>The open tube is yellow, the sealed tube is not.</b> <i>${o.short}</i> only makes acid from dextrose when oxygen is available, so it is oxidative.`}
+       : {vis:{open:{top:C_RED, bot:C_RED}, sealed:{top:C_RED, bot:C_RED}, oil:true, growth:true}, cls:"neg", tag:"Neither", text:`<b>Neither tube changed.</b> <i>${o.short}</i> is not using dextrose. It is breaking down the peptone instead, so no acid builds up.`},
+     why:"Open tube = air, oil tube = no air. Low peptone keeps alkaline waste from hiding the weak acid made from dextrose, and yellow means acid.",
+     quiz:[q("What does the mineral oil do?", ["Keeps oxygen out of that tube", "Adds more sugar", "Kills the bacteria", "Changes the pH"], 0, "The oil layer blocks air, so the sealed tube shows what the organism can do without oxygen."),
+       q("The open tube is yellow and the sealed tube is not. The organism is…", ["Oxidative", "Fermentative", "Neither", "Contaminated"], 0, "Acid only with oxygen means it needs O₂ to use dextrose."),
+       q("Both tubes are yellow. The organism is…", ["Fermentative", "Oxidative", "Neither", "Gram-positive"], 0, "Acid even without oxygen means it ferments dextrose."),
+       q("Neither tube changes color. What does that mean?", ["It uses peptone, not dextrose", "It ferments dextrose", "It needs oxygen to use dextrose", "Phenol red failed"], 0, "No acid from dextrose in either tube: the organism is using the peptone."),
+       q("Why does OF medium have low peptone and high dextrose?", ["So alkaline waste from peptone doesn't hide a weak acid from dextrose", "To make the medium solid", "To kill gram-positives", "To stop gas"], 0, "Less peptone means less alkaline waste, so a weak acid still turns phenol red yellow.")]},
     {key:"durham", tab:"Durham sugar", title:"Durham Sugar Fermentation Test", medium:"broth", tools:["loop"], durham:true, incubate:true,
      base:{fill:C_RED}, sugars:true,
      question:"Can this bacterium ferment the sugar in the tube, and does it make gas?",
      setup:"Phenol red broth with one sugar (0.5–1%) and a small upside-down Durham tube inside to trap gas. Pick a sugar, then inoculate.",
      orgs:[
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", sug:{glucose:"AG", lactose:"AG", sucrose:"-"}, note:{sucrose:"Most lab strains of <i>E. coli</i> can't ferment sucrose (a few strains can)."}},
-       {name:"Klebsiella pneumoniae", short:"K. pneumoniae", cap:"#8e5bd0", sug:{glucose:"AG", lactose:"AG", sucrose:"AG"}},
-       {name:"Shigella flexneri", short:"S. flexneri", cap:"#2f9e63", sug:{glucose:"A", lactose:"-", sucrose:"-"}},
-       {name:"Staphylococcus aureus", short:"S. aureus", cap:"#e0a020", sug:{glucose:"A", lactose:"A", sucrose:"A"}},
-       {name:"Alcaligenes faecalis", short:"A. faecalis", cap:"#5a6376", sug:{glucose:"-", lactose:"-", sucrose:"-"}, alk:true}
+       {name:"Enterobacter aerogenes", short:"E. aerogenes", cap:"#c4532f", sug:{glucose:"AG", lactose:"AG", sucrose:"AG"}},
+       {name:"Alcaligenes faecalis", short:"A. faecalis", cap:"#5a6376", sug:{glucose:"-", lactose:"-", sucrose:"-"}, alk:true},
+       {name:"Proteus vulgaris", short:"P. vulgaris", cap:"#9a6212", sug:{glucose:"AG", lactose:"-", sucrose:"AG"}}
      ],
      outcome:(o, c) => {
        const r = o.sug[c.sugar], sugar = SUGAR_LABEL[c.sugar].toLowerCase(), extra = o.note && o.note[c.sugar] ? " " + o.note[c.sugar] : "";
@@ -201,47 +224,45 @@
        q("After incubation, what do you add before reading it?", ["Nothing: read it directly", "4 drops of methyl red", "Kovac's reagent", "Zinc dust"], 0, "The indicator is already in the broth and the Durham tube is already inside, so you just read the color and look for a bubble.")]},
     {key:"mr", tab:"Methyl Red", title:"Methyl Red (MR) Test", medium:"broth", tools:["loop"], incubate:true, base:{fill:C_BROTH},
      question:"Does this bacterium make lots of stable acid (mixed-acid fermentation)?",
-     setup:"MR-VP broth (glucose broth). Incubate 48 hours, then add methyl red.",
+     setup:"MRVP broth (glucose broth). After incubation, add 5 drops of methyl red and read the color right away.",
      orgs:[
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", pos:true},
-       {name:"Klebsiella pneumoniae", short:"K. pneumoniae", cap:"#8e5bd0", pos:false},
        {name:"Enterobacter aerogenes", short:"E. aerogenes", cap:"#c4532f", pos:false},
-       {name:"Shigella flexneri", short:"S. flexneri", cap:"#2f9e63", pos:true},
-       {name:"Proteus mirabilis", short:"P. mirabilis", cap:"#9a6212", pos:true}
+       {name:"Alcaligenes faecalis", short:"A. faecalis", cap:"#5a6376", pos:false, nofer:true},
+       {name:"Proteus vulgaris", short:"P. vulgaris", cap:"#9a6212", pos:true}
      ],
-     reagents:[{name:"Methyl red", drops:4, liquid:"#d9443a", bottle:"#7a2b1f"}],
+     reagents:[{name:"Methyl red", drops:5, liquid:"#d9443a", bottle:"#7a2b1f"}],
      outcome:o => o.pos
        ? {vis:{fill:C_RED, turbid:true}, cls:"pos", tag:"MR positive", text:`<b>Red</b> right away. <i>${o.short}</i> uses mixed-acid fermentation, which piles up enough stable acid (lactic, acetic, succinic, formic) to push the pH below 4.4, where methyl red is red.`}
-       : {vis:{fill:C_YEL, turbid:true}, cls:"neg", tag:"MR negative", text:`<b>Yellow.</b> <i>${o.short}</i> still fermented glucose, but through the butanediol pathway, which makes much less acid, so the pH stays above about 6. Check its VP test: it's probably positive.`},
+       : {vis:{fill:C_YEL, turbid:true}, cls:"neg", tag:"MR negative", text:o.nofer ? `<b>Yellow.</b> <i>${o.short}</i> does not ferment glucose, so no stable acid builds up and the pH stays above about 6.` : `<b>Yellow.</b> <i>${o.short}</i> still fermented glucose, but through the butanediol pathway, which makes much less acid, so the pH stays above about 6. Check its VP test: it's probably positive.`},
      why:"MR and VP use the same broth and usually give opposite results: the mixed-acid pathway (MR+) and the butanediol pathway (VP+) both start at pyruvate.",
      quiz:[q("What does the MR test detect?", ["Lots of stable acid from mixed-acid fermentation", "Acetoin from the butanediol pathway", "Gas from fermentation", "Urease"], 0, "A positive means so much stable acid that the pH drops below 4.4."),
        q("What is the pH indicator?", ["Methyl red", "Phenol red", "Bromothymol blue", "Neutral red"], 0, "Methyl red is the indicator: red below pH 4.4, yellow above about 6.2."),
-       q("After incubation, how do you finish the test?", ["Add about 4 drops of methyl red and read right away", "Add 18 drops of α-naphthol then KOH and wait", "Flood with iodine", "Add zinc dust"], 0, "Just a few drops of methyl red; the color shows up immediately."),
+       q("After incubation, how do you finish the test?", ["Add 5 drops of methyl red and read right away", "Add 18 drops of α-naphthol then KOH and wait", "Flood with iodine", "Add zinc dust"], 0, "Just a few drops of methyl red; the color shows up immediately."),
        q("A tube is yellow after adding methyl red. That organism most likely…", ["Fermented glucose with the butanediol pathway (less acid)", "Didn't grow", "Made lots of stable acid", "Is urease positive"], 0, "Yellow means the pH stayed above ~6: less acid, typical of the butanediol (VP+) pathway.")]},
     {key:"vp", tab:"Voges-Proskauer", title:"Voges-Proskauer (VP) Test", medium:"broth", tools:["loop"], incubate:true, base:{fill:C_BROTH},
      question:"Does this bacterium use the butanediol pathway (making acetoin)?",
-     setup:"The same MR-VP broth, tested for acetoin instead of acid.",
+     setup:"The second MRVP tube, tested for acetoin instead of acid. Add 12 drops of VP reagent I, then 3 drops of VP reagent II, shake, then let it sit 15 to 30 minutes.",
      orgs:[
-       {name:"Enterobacter aerogenes", short:"E. aerogenes", cap:"#c4532f", pos:true},
-       {name:"Klebsiella pneumoniae", short:"K. pneumoniae", cap:"#8e5bd0", pos:true},
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", pos:false},
-       {name:"Shigella flexneri", short:"S. flexneri", cap:"#2f9e63", pos:false}
+       {name:"Enterobacter aerogenes", short:"E. aerogenes", cap:"#c4532f", pos:true},
+       {name:"Alcaligenes faecalis", short:"A. faecalis", cap:"#5a6376", pos:false, nofer:true},
+       {name:"Proteus vulgaris", short:"P. vulgaris", cap:"#9a6212", pos:false}
      ],
-     reagents:[{name:"VP I: α-naphthol", drops:18, liquid:"#f1ead0", bottle:"#6b5a2f"}, {name:"VP II: KOH", drops:18, liquid:"#eef1f5", bottle:"#3b4250", wait:"Shake · wait 15–30 min"}],
+     reagents:[{name:"VP reagent I", drops:12, liquid:"#f1ead0", bottle:"#6b5a2f"}, {name:"VP reagent II", drops:3, liquid:"#eef1f5", bottle:"#3b4250", wait:"Shake, then let it sit 15 to 30 min"}],
      outcome:o => o.pos
        ? {vis:{fill:"#d0455d", turbid:true}, cls:"pos", tag:"VP positive", text:`<b>Pink-red</b> after shaking and waiting. <i>${o.short}</i> made acetoin through the butanediol pathway; the reagents react with acetoin (with oxygen from shaking) to form the red color.`}
-       : {vis:{fill:C_COPPER, turbid:true}, cls:"neg", tag:"VP negative", text:`<b>Copper-brown</b> (no pink). <i>${o.short}</i> made no acetoin, so it isn't using the butanediol pathway. Its MR test is probably positive.`},
+       : {vis:{fill:C_COPPER, turbid:true}, cls:"neg", tag:"VP negative", text:o.nofer ? `<b>Copper-brown</b> (no pink). <i>${o.short}</i> does not ferment glucose, so it made no acetoin.` : `<b>Copper-brown</b> (no pink). <i>${o.short}</i> made no acetoin, so it isn't using the butanediol pathway. Its MR test is probably positive.`},
      why:"VP has no pH indicator: the color comes from a chemical reaction with acetoin. Waiting long enough matters, or you can get a false negative.",
      quiz:[q("What does the VP test detect?", ["Acetoin, made by the butanediol pathway", "Mixed acids", "Indole", "Hydrogen sulfide"], 0, "Acetoin is the clue that an organism uses the 2,3-butanediol pathway."),
        q("Is there a pH indicator in the VP test?", ["No: the color comes from acetoin reacting with the reagents", "Yes, phenol red", "Yes, methyl red", "Yes, bromothymol blue"], 0, "The pink-red is a chemical reaction product, not a pH change."),
-       q("After incubation, how do you finish the test?", ["Add 18 drops of VP reagent I (α-naphthol), then 18 drops of VP reagent II (KOH), shake, and wait", "Add 4 drops of methyl red", "Add Kovac's reagent", "Read it directly"], 0, "Two reagents, I then II, then shake and give it time to develop."),
+       q("After incubation, how do you finish the test?", ["Add 12 drops of VP reagent I, then 3 drops of VP reagent II, shake, and let it sit 15 to 30 minutes", "Add 4 drops of methyl red", "Add Kovac's reagent", "Read it directly"], 0, "Two reagents, I then II, then shake and give it time to develop."),
        q("Which other test is run in the same MR-VP broth?", ["Methyl red (MR)", "Indole", "Citrate", "Nitrate reduction"], 0, "MR and VP share one broth: split the culture into two tubes, add methyl red to one and the VP reagents to the other.")]},
     {key:"citrate", tab:"Citrate", title:"Citrate Utilization (Simmons Citrate Slant)", medium:"slant", tools:["needle", "loop"], incubate:true, base:{slant:"#4f9a4a", butt:"#4f9a4a"},
      question:"Can this bacterium use citrate as its only carbon source?",
      setup:"A Simmons citrate agar slant: citrate is the only carbon source, with bromothymol blue as the pH indicator. Streak the slant.",
      orgs:[
        {name:"Enterobacter aerogenes", short:"E. aerogenes", cap:"#c4532f", pos:true},
-       {name:"Klebsiella pneumoniae", short:"K. pneumoniae", cap:"#8e5bd0", pos:true},
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", pos:false}
      ],
      reagents:[],
@@ -253,17 +274,56 @@
        q("What is the pH indicator?", ["Bromothymol blue", "Phenol red", "Methyl red", "Neutral red"], 0, "Green at neutral pH, Prussian blue when alkaline."),
        q("Why does a positive turn blue?", ["Using citrate makes alkaline byproducts that raise the pH", "Acid from fermentation", "Oxygen bubbles", "Iron sulfide"], 0, "Alkaline = blue for bromothymol blue."),
        q("How do you inoculate it?", ["Streak the slant surface (a light inoculum), then incubate; nothing is added", "Swirl in broth and add methyl red", "Flood with iodine", "Add zinc"], 0, "A light streak on the slant, then just read the color.")]},
+    {key:"gel", tab:"Gelatin", title:"Gelatin Hydrolysis Test", medium:"slant", deep:true, tools:["needle"], incubate:true, base:{slant:"#ead9a0", butt:"#ead9a0"},
+     incTitle:"On the back bench", incSub:"room temperature, never the incubator", incMsg:"Resting on the back bench at room temperature…",
+     step:{when:"post", label:"Chill in crushed ice", name:"Chill in ice (if liquid)", title:"Chilling in crushed ice", sub:"a few minutes", dur:2000,
+       hint:"It looks liquid. Tap <b>Chill in crushed ice</b> for a few minutes, then tilt it again (gently, do not shake)."},
+     question:"Can this bacterium break down gelatin with an exoenzyme (gelatinase)?",
+     setup:"A tube of nutrient gelatin. Stab straight down the middle with your needle and pull it back out the same path. Gelatin melts above about 28°C, so it stays at room temperature on the back bench, not in the incubator.",
+     orgs:[
+       {name:"Bacillus subtilis", short:"B. subtilis", cap:"#2f9e63", pos:true},
+       {name:"Pseudomonas aeruginosa", short:"P. aeruginosa", cap:"#e0a020", pos:true},
+       {name:"Proteus vulgaris", short:"P. vulgaris", cap:"#9a6212", pos:true}
+     ],
+     reagents:[],
+     outcome:(o, c) => !o.pos
+       ? {vis:{slant:"#ead9a0", butt:"#ead9a0", gel:"solid", growth:true}, cls:"neg", tag:"Gelatinase negative", text:`The gelatin is still <b>solid</b>. <i>${o.short}</i> grew along the stab but did not break the gelatin down.`}
+       : !c.step
+       ? {vis:{slant:"#dcb95f", butt:"#dcb95f", gel:"liquid", growth:true}, cls:"", tag:"Looks liquid…", text:`The gelatin looks <b>liquid</b>. That could be gelatinase, or the tube could just be warm. Chill it in crushed ice for a few minutes, then tilt it again.`, needStep:true}
+       : {vis:{slant:"#dcb95f", butt:"#dcb95f", gel:"liquid", growth:true}, cls:"pos", tag:"Gelatinase positive", text:`Still <b>liquid</b> after chilling. <i>${o.short}</i> secreted gelatinase (an exoenzyme) that broke the gelatin down, so it can no longer solidify.`},
+     why:"Gelatin is a protein too large to enter the cell, so gelatinase is secreted outside. If the tube looks liquid, chill it first: only gelatin that was truly broken down stays liquid in ice.",
+     quiz:[q("What does the gelatin test detect?", ["Gelatinase, an exoenzyme that breaks gelatin down", "Acid from a sugar", "H₂S", "Urease"], 0, "Gelatinase breaks gelatin down so it can no longer solidify."),
+       q("Why does the gelatin tube stay on the back bench?", ["Gelatin melts above about 28°C, so the incubator would ruin the test", "Bacteria grow faster there", "It needs light", "It needs to stay sterile"], 0, "In a warm incubator even intact gelatin would melt."),
+       q("The tube looks liquid. What do you do next?", ["Chill it in crushed ice, then tilt it again", "Shake it hard", "Add iodine", "Add Kovac's reagent"], 0, "Chilling tells you whether it is really broken down or just warm."),
+       q("After chilling, the gelatin is still liquid. The result is…", ["Positive: gelatinase broke it down", "Negative: the gelatin is intact", "The test failed", "Acid was made"], 0, "Gelatin that can no longer solidify has been broken down.")]},
+    {key:"urea", tab:"Urease", title:"Urease Test (Urea Agar)", medium:"slant", tools:["loop"], incubate:true, base:{slant:"#f4c9a0", butt:"#f4c9a0"},
+     question:"Can this bacterium break down urea with urease?",
+     setup:"A urea agar slant with phenol red. Use your loop to streak up the slanted surface. No reagents are added: compare the slant to an uninoculated control.",
+     orgs:[
+       {name:"Staphylococcus epidermidis", short:"S. epidermidis", cap:"#9a6212", pos:true},
+       {name:"Bacillus subtilis", short:"B. subtilis", cap:"#2f9e63", pos:false},
+       {name:"Proteus vulgaris", short:"P. vulgaris", cap:"#c4532f", pos:true}
+     ],
+     reagents:[],
+     outcome:o => o.pos
+       ? {vis:{slant:"#d62a76", butt:"#d62a76", growth:true}, cls:"pos", tag:"Urease positive", text:`The slant turns <b>bright pink (magenta)</b>. <i>${o.short}</i> has urease: it split urea and released ammonia, which raised the pH and turned phenol red pink.`}
+       : {vis:{slant:"#f4c9a0", butt:"#f4c9a0", growth:true}, cls:"neg", tag:"Urease negative", text:`<b>Peach, unchanged.</b> <i>${o.short}</i> has no urease, so no ammonia was released and the pH did not rise.`},
+     why:"Phenol red is yellow at pH 6.8 and below, and fuchsia at pH 8.4 and above. Urease releases ammonia, so a positive slant turns bright pink.",
+     quiz:[q("What does the urease test detect?", ["Urease splitting urea and releasing ammonia", "Acid from a sugar", "Gelatinase", "H₂S"], 0, "Urease releases ammonia from urea."),
+       q("Why does a positive slant turn bright pink?", ["Ammonia raises the pH, and phenol red turns pink", "Acid lowers the pH", "Iron reacts with H₂S", "The bacteria are red"], 0, "Alkaline pH turns phenol red fuchsia."),
+       q("What color is a negative urea slant?", ["Peach, unchanged", "Bright pink", "Blue", "Black"], 0, "No urease means no color change."),
+       q("How do you inoculate a urea slant?", ["Streak up the slanted surface with a loop; add no reagents", "Stab a deep with a needle", "Add 5 drops of methyl red", "Flood with iodine"], 0, "A loop streak on the slant, then compare it to the uninoculated control.")]},
     {key:"phe", tab:"Phenylalanine", title:"Phenylalanine Deaminase Test", medium:"slant", tools:["loop"], incubate:true, base:{slant:"#f1e6b8", butt:"#f1e6b8"},
      question:"Does this bacterium have phenylalanine deaminase, an enzyme that removes the amine group from phenylalanine?",
-     setup:"A phenylalanine agar slant. Streak the slant, incubate, then add ferric chloride to the growth.",
+     setup:"A phenylalanine agar slant. Streak the slant, incubate, then add 4 to 5 drops of ferric chloride directly onto the slant and read it immediately, because the color fades within minutes.",
      orgs:[
        {name:"Proteus mirabilis", short:"P. mirabilis", cap:"#9a6212", pos:true},
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", pos:false}
      ],
-     reagents:[{name:"Ferric chloride", drops:4, liquid:"#d9b34a", bottle:"#7a5a1f"}],
+     reagents:[{name:"Ferric chloride", drops:5, liquid:"#d9b34a", bottle:"#7a5a1f", note:"4 to 5 drops. Tip the tube to wash it over the slant, and read right away."}],
      outcome:o => o.pos
-       ? {vis:{slant:"#2f6b3a", butt:"#f1e6b8", growth:true}, cls:"pos", tag:"Deaminase positive", text:`The slant turns <b>dark green</b>. <i>${o.short}</i> removed the amine group from phenylalanine, making phenylpyruvic acid, and ferric chloride reacts with phenylpyruvic acid to give the green color.`}
-       : {vis:{slant:"#f1e6b8", butt:"#f1e6b8", growth:true}, cls:"neg", tag:"Deaminase negative", text:`<b>No green.</b> <i>${o.short}</i> grew but did not make phenylpyruvic acid, so ferric chloride has nothing to react with.`},
+       ? {vis:{slant:"#2f6b3a", butt:"#f1e6b8", growth:true}, cls:"pos", tag:"Deaminase positive", text:`The slant turns <b>dark green or brown-green</b>. <i>${o.short}</i> removed the amine group from phenylalanine, making phenylpyruvic acid, and ferric chloride reacts with phenylpyruvic acid to give the green color.`}
+       : {vis:{slant:"#f1e6b8", butt:"#f1e6b8", growth:true}, cls:"neg", tag:"Deaminase negative", text:`<b>Yellow only, no color change.</b> <i>${o.short}</i> grew but did not make phenylpyruvic acid, so ferric chloride has nothing to react with.`},
      why:"The reagent is added after incubation. Ferric chloride only turns green if phenylalanine was deaminated to phenylpyruvic acid.",
      quiz:[q("What does the phenylalanine test detect?", ["Phenylalanine deaminase activity (phenylpyruvic acid)", "H₂S", "Acid from glucose", "Indole"], 0, "Deaminase removes the amine group from phenylalanine, making phenylpyruvic acid."),
        q("What reagent do you add after incubation?", ["Ferric chloride", "Methyl red", "Kovac's reagent", "Gram's iodine"], 0, "Ferric chloride is added to the growth on the slant."),
@@ -271,29 +331,49 @@
        q("Which organism is the classic positive?", ["Proteus mirabilis", "Escherichia coli", "Staphylococcus epidermidis", "Bacillus subtilis"], 0, "P. mirabilis deaminates phenylalanine.")]},
     {key:"h2s", tab:"Peptone Iron Deep", title:"Peptone Iron Deep (H₂S)", medium:"slant", deep:true, tools:["needle"], incubate:true, base:{slant:"#ecdcab", butt:"#ecdcab"},
      question:"Does this bacterium break down sulfur-containing amino acids and release hydrogen sulfide (H₂S)?",
-     setup:"A peptone iron deep: the peptone supplies sulfur amino acids and the iron traps any H₂S. There is no sugar and no pH indicator. Stab straight down into the deep with a needle, then incubate.",
+     setup:"A peptone iron deep: the peptone supplies sulfur amino acids and the iron traps any H₂S. There is no sugar and no pH indicator. Stab straight down into the deep with a needle, incubate, then just look: no reagent is added.",
      orgs:[
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", h2s:false},
        {name:"Proteus mirabilis", short:"P. mirabilis", cap:"#9a6212", h2s:true}
      ],
      reagents:[],
      outcome:o => o.h2s
-       ? {vis:{slant:"#ecdcab", butt:"#ecdcab", black:true, growth:true}, cls:"pos", tag:"H₂S positive", text:`A <b>black precipitate</b> forms along the stab. <i>${o.short}</i> broke down sulfur-containing amino acids and released H₂S, which reacted with the iron to make black iron sulfide.`}
+       ? {vis:{slant:"#ecdcab", butt:"#ecdcab", black:true, growth:true}, cls:"pos", tag:"H₂S positive", text:`A <b>black precipitate</b> forms in the tube. <i>${o.short}</i> broke down sulfur-containing amino acids and released H₂S, which reacted with the iron to make black iron sulfide.`}
        : {vis:{slant:"#ecdcab", butt:"#ecdcab", black:false, growth:true}, cls:"neg", tag:"H₂S negative", text:`<b>No black.</b> <i>${o.short}</i> grew along the stab but did not release H₂S, so no iron sulfide formed.`},
      why:"H₂S is a colorless gas, so the iron in the deep is what makes it visible. Black along the stab means H₂S was made.",
      quiz:[q("What are you reading a peptone iron deep for?", ["H₂S production (black iron sulfide)", "Acid from a sugar", "Indole", "Citrate use"], 0, "Black precipitate along the stab = H₂S positive."),
        q("How do you inoculate it?", ["Stab straight down into the deep with a needle", "Swirl a loop in broth", "Streak the surface with a loop", "Smear on a slide"], 0, "A needle stab carries the cells down into the deep."),
        q("What makes the black color?", ["H₂S reacting with iron to make iron sulfide", "Too much acid", "Dead bacteria", "Gas bubbles"], 0, "Black = FeS precipitate = H₂S positive."),
        q("Which amino acids supply the sulfur?", ["Sulfur-containing amino acids in the peptone", "Glucose", "Citrate", "Starch"], 0, "The peptone is the sulfur source; there is no sugar in this deep.")]},
-    {key:"nitrate", tab:"Nitrate Reduction", title:"Nitrate Reduction Test", medium:"broth", tools:["loop"], incubate:true, base:{fill:"#f3ecd2"},
+    {key:"mio", tab:"MIO", title:"MIO Medium (Motility, Indole, Ornithine)", medium:"slant", deep:true, tools:["needle"], incubate:true, early:true, base:{slant:"#7d55a8", butt:"#7d55a8"},
+     question:"From one stab: is this bacterium motile, does it make indole, and does it have ornithine decarboxylase?",
+     setup:"MIO is a semisolid medium that answers three questions from one tube. Stab straight down with your needle and incubate. Read the motility and the medium color first, then add 5 drops of Kovac's reagent last, without shaking.",
+     orgs:[
+       {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", mot:true, ind:true, odc:true},
+       {name:"Proteus mirabilis", short:"P. mirabilis", cap:"#9a6212", mot:true, ind:false, odc:true},
+       {name:"Proteus vulgaris", short:"P. vulgaris", cap:"#c4532f", mot:true, ind:true, odc:false},
+       {name:"Klebsiella pneumoniae", short:"K. pneumoniae", cap:"#8e5bd0", mot:false, ind:false, odc:false}
+     ],
+     reagents:[{name:"Kovac's", drops:5, liquid:"#f0dc7a", bottle:"#8a6d1a", note:"Do not shake it. Let it layer on top.", wait:"Wait 1 to 2 minutes"}],
+     outcome:o => ({vis:{slant:o.odc ? "#7d55a8" : "#e6d23a", butt:o.odc ? "#7d55a8" : "#e6d23a", growth:true, haze:o.mot, ring:o.ind ? "#d0243a" : "#efd35a"}, cls:"",
+       tag:`${o.mot ? "Motile" : "Non-motile"} · indole ${o.ind ? "+" : "−"} · ornithine ${o.odc ? "+" : "−"}`,
+       text:`<b>Motility:</b> ${o.mot ? `growth spreads out from the stab line, so <i>${o.short}</i> is motile (+).` : `growth stays along the stab line only, so <i>${o.short}</i> is non-motile (−).`} `
+         + `<b>Indole:</b> ${o.ind ? "a cherry-red ring forms at the top after Kovac's reagent, so tryptophanase made indole (+)." : "the ring at the top stays yellow, so no indole was made (−)."} `
+         + `<b>Ornithine decarboxylase:</b> ${o.odc ? "the medium stays purple. Glucose was fermented first, then the decarboxylase made alkaline amines (+)." : "the medium is yellow. Glucose was fermented, but there is no decarboxylase to raise the pH again (−)."}`}),
+     why:"One stab, three tests. Motility and the medium color need no reagent. Add Kovac's last, on top and without shaking, and read the top layer after 1 to 2 minutes.",
+     quiz:[q("How do you read motility in MIO?", ["Diffuse growth spreading out from the stab line means motile", "A red ring at the top", "A purple medium", "A black precipitate"], 0, "Growth only along the stab line means non-motile."),
+       q("What do you add to test for indole, and how?", ["5 drops of Kovac's reagent, without shaking, so it layers on top", "5 drops of methyl red, then shake", "Ferric chloride on the slant", "Zinc dust"], 0, "Kovac's reagent layers on top; a cherry-red ring at the top is positive."),
+       q("The MIO medium is purple. What does that show?", ["Ornithine decarboxylase positive", "Ornithine decarboxylase negative", "The organism is motile", "Indole positive"], 0, "Glucose is fermented first (yellow), then the decarboxylase makes alkaline amines and the medium returns to purple."),
+       q("A yellow medium in MIO means…", ["Ornithine decarboxylase negative", "Ornithine decarboxylase positive", "Indole positive", "Non-motile"], 0, "Yellow means the acid from glucose was never reversed.")]},
+    {key:"nitrate", tab:"Nitrate Reduction", title:"Nitrate Reduction Test", medium:"broth", tools:["loop"], incubate:true, incTitle:"Incubating at 37°C", incSub:"you read it two weeks later", base:{fill:"#f3ecd2"},
      question:"Can this bacterium use nitrate as its final electron acceptor?",
-     setup:"Nitrate broth. After incubation, add Nitrate A and Nitrate B. If nothing happens, add zinc dust.",
+     setup:"Nitrate broth. After incubation, add 5 drops of Nitrate A (sulfanilic acid), then 5 drops of Nitrate B (α-naphthylamine), and wait 1 minute. If there is no color, add a tiny amount of zinc dust and wait 5 minutes.",
      orgs:[
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", res:"nitrite"},
        {name:"Pseudomonas aeruginosa", short:"P. aeruginosa", cap:"#2f9e63", res:"gas"},
        {name:"Micrococcus luteus", short:"M. luteus", cap:"#e0a020", res:"none"}
      ],
-     reagents:[{name:"Nitrate A", drops:3, liquid:"#f4f0e0", bottle:"#5a6376"}, {name:"Nitrate B", drops:3, liquid:"#f4f0e0", bottle:"#3b4250"}],
+     reagents:[{name:"Nitrate A", drops:5, liquid:"#f4f0e0", bottle:"#5a6376"}, {name:"Nitrate B", drops:5, liquid:"#f4f0e0", bottle:"#3b4250", wait:"Wait 1 minute"}],
      zinc:true,
      outcome:(o, c) => {
        if (o.res === "nitrite") return {vis:{fill:C_RED, turbid:true}, cls:"pos", tag:"Positive (nitrite)", text:`<b>Red</b> right after A + B. <i>${o.short}</i> reduced nitrate (NO₃⁻) to nitrite (NO₂⁻), and the reagents turn nitrite red. It can run anaerobic respiration with nitrate as the final electron acceptor. No zinc needed.`};
@@ -305,14 +385,14 @@
      why:"No color after A + B is the tricky case. Zinc settles it: red after zinc = negative (nitrate still there); still no color = positive (reduced past nitrite).",
      quiz:[q("What does the nitrate test ask?", ["Can the organism use nitrate as a final electron acceptor (nitrate reductase)?", "Can it ferment lactose?", "Does it make indole?", "Does it have urease?"], 0, "Nitrate stands in for O₂ in anaerobic respiration."),
        q("What do Nitrate A and B detect?", ["Nitrite (NO₂⁻): it turns red", "Nitrate (NO₃⁻)", "Acid", "Ammonia"], 0, "A + B react with nitrite to make the red color."),
-       q("After incubation, how do you finish the test?", ["Add 3 drops each of Nitrate A and B; if no color, add zinc dust", "Add 4 drops of methyl red", "Flood with iodine", "Read it directly"], 0, "A + B first; zinc only when there's no color."),
+       q("After incubation, how do you finish the test?", ["Add 5 drops each of Nitrate A and B and wait 1 minute; if no color, add zinc dust and wait 5 minutes", "Add 4 drops of methyl red", "Flood with iodine", "Read it directly"], 0, "A + B first; zinc only when there's no color."),
        q("No color after A + B, and it turns red after zinc. The result is…", ["Negative: the nitrate was never reduced", "Positive: reduced to nitrite", "Positive: reduced to N₂ gas", "The test failed"], 0, "Zinc reduced the leftover nitrate itself, so the bacteria never touched it.")]}
   ];
 
   const MNAME = {durham:s => `Phenol red ${s} broth`, mr:() => "MR-VP broth", vp:() => "MR-VP broth", nitrate:() => "Nitrate broth",
     emb:() => "EMB agar", msa:() => "Mannitol salt agar", citrate:() => "Simmons citrate slant", starch:() => "Starch agar plate",
-    phe:() => "Phenylalanine slant", h2s:() => "Peptone iron deep"};
-  const HOURS = {mr:"48 hours", vp:"48 hours"};
+    phe:() => "Phenylalanine slant", h2s:() => "Peptone iron deep", of:() => "OF-dextrose tubes", gel:() => "Nutrient gelatin deep",
+    urea:() => "Urea agar slant", mio:() => "MIO medium"};
   const CULTURE = "#efe3c0";
   const f1 = n => Math.round(n * 10) / 10;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -347,12 +427,14 @@
   }
 
   /* ---------------- run state ---------------- */
-  function reset(){ S = {loaded:null, inoc:false, inocTool:null, streak:1, incubated:false, rIdx:0, filled:null, zinc:false, done:false, overlay:null}; anim = null; drag = null; msgOverride = ""; }
+  function reset(){ S = {loaded:null, inoc:false, inocTool:null, streak:1, incubated:false, rIdx:0, filled:null, zinc:false, stepDone:false, done:false, overlay:null}; anim = null; drag = null; msgOverride = ""; }
   const needsIncubate = () => T().incubate;
   const reagentPhase = () => S.inoc && (S.incubated || !needsIncubate()) && S.rIdx < T().reagents.length;
-  const ctx = () => ({sugar, zinc:S.zinc});
+  const ctx = () => ({sugar, zinc:S.zinc, step:S.stepDone});
   const outcome = () => S.loaded ? T().outcome(T().orgs[S.loaded.org], ctx()) : null;
   const needZinc = () => S.done && T().zinc && !S.zinc && outcome() && outcome().needZinc;
+  const stepPre = () => !!T().step && T().step.when === "pre";
+  const needStep = () => S.done && !!T().step && T().step.when === "post" && !S.stepDone && outcome() && outcome().needStep;
   const orgName = () => S.loaded ? T().orgs[S.loaded.org].short : "";
 
   /* ---------------- drawing: glassware ---------------- */
@@ -385,6 +467,7 @@
     const t = T();
     if (t.medium === "plate") return {x0:L.plate.x - L.plate.r, x1:L.plate.x + L.plate.r, y0:L.plate.y - L.plate.r, y1:L.plate.y + L.plate.r};
     if (t.medium === "strip" || t.medium === "slide") return {x0:L.med.x - 120, x1:L.med.x + 120, y0:L.plate.y - 60, y1:L.plate.y + 60};
+    if (t.medium === "of") return {x0:L.med.x - 110, x1:L.med.x + 110, y0:L.med.top - 30, y1:L.med.top + L.med.h};
     return {x0:L.med.x - 50, x1:L.med.x + 50, y0:L.med.top - 30, y1:L.med.top + L.med.h};
   }
   function streakPts(){
@@ -449,6 +532,12 @@
       if (vis.gas) s += `<path d="M${g.l},${g.b - 50} l14,-6 l10,8 l16,-10 M${g.cx - 6},${g.b - 104} l9,10 l-5,9 l11,7 M${g.cx + 8},${g.b - 30} l12,-4 l6,7" fill="none" stroke="#fdfcf8" stroke-width="3" stroke-linecap="round"/><rect x="${g.l - 4}" y="${g.b - 16}" width="${g.w}" height="14" fill="#fdfcf8" opacity=".9"/>`;
       if (vis.bubbles) s += Array.from({length:26}, (_, k) => { const q = rnd(k + 5), bx = lerp(g.l + 8, g.r - 8, q) + (rnd(k) - .5) * 8, by = lerp(g.yHigh + 4, g.yLow, q) - 2 - rnd(k + 2) * 18, br = 3.5 + rnd(k + 9) * 5;
         return `<circle cx="${f1(bx)}" cy="${f1(by)}" r="${f1(br)}" fill="#fff" fill-opacity=".6" stroke="#6fa8cc" stroke-width="1.4"><animate attributeName="r" values="${f1(br * .6)};${f1(br * 1.2)};${f1(br * .6)}" dur="${f1(.7 + rnd(k + 3) * .8)}s" repeatCount="indefinite"/></circle>`; }).join("");
+      if (t.deep && vis.gel === "solid") s += `<path d="M${g.l - 4},${g.yHigh} L${g.r + 4},${g.yHigh} L${g.r + 4},${g.b + 4} L${g.l - 4},${g.b + 4} Z" fill="#fff" opacity=".34"/>`;
+      if (t.deep && vis.gel === "liquid") s += `<path d="M${g.l - 4},${g.yHigh} L${g.r + 4},${g.yHigh} L${g.r + 4},${g.b + 4} L${g.l - 4},${g.b + 4} Z" fill="#c8861a" opacity=".3"/><path d="M${g.l - 4},${g.yHigh + 4} Q${g.cx},${g.yHigh - 6} ${g.r + 4},${g.yHigh + 4}" fill="none" stroke="#fff" stroke-width="3" opacity=".8"/>`
+        + Array.from({length:7}, (_, k) => `<circle cx="${f1(lerp(g.l + 8, g.r - 8, rnd(k + 2)))}" cy="${f1(lerp(g.yHigh + 20, g.b - 30, rnd(k + 7)))}" r="${f1(2 + rnd(k + 4) * 2)}" fill="#fff" fill-opacity=".5"/>`).join("");
+      if (vis.haze) s += `<ellipse cx="${g.cx}" cy="${f1((g.yHigh + g.b - 24) / 2)}" rx="${f1(g.w / 2 - 12)}" ry="${f1((g.b - 24 - g.yHigh) / 2)}" fill="#fff" opacity=".42" filter="url(#soft)"/>`;
+      if (t.deep && vis.growth && !vis.black) s += `<line x1="${g.cx}" y1="${g.yHigh + 6}" x2="${g.cx}" y2="${g.b - 24}" stroke="#f6efd8" stroke-width="3.5" opacity=".95"/>`;
+      if (vis.ring) s += `<rect x="${g.l - 4}" y="${g.yHigh - 12}" width="${g.r - g.l + 8}" height="16" fill="${vis.ring}" opacity=".95"/>`;
       if (opts.stab) s += `<line x1="${g.cx}" y1="${g.yLow + 10}" x2="${g.cx}" y2="${g.b - 24}" stroke="${vis.growth ? "#f6efd8" : "#fff7df"}" stroke-width="${vis.growth ? 3.5 : 2}" opacity=".9"/>`;
       if (opts.streak){
         let z = `M${g.l + 6},${g.yHigh + 6}`; const n = 8;
@@ -457,6 +546,17 @@
       }
       s += `</g>` + glass(g.cx, g.top, g.w, L.med.h);
       if (!t.deep) s += txt(g.cx + 52, g.yHigh + 30, "slant", {fs:11 * L.fs, a:"start", col:"#5a6376"}) + txt(g.cx + 52, g.b - 50, "butt", {fs:11 * L.fs, a:"start", col:"#5a6376"});
+    } else if (t.medium === "of"){
+      const w = 64, top = L.med.top, h = L.med.h, b = top + h, y0 = top + 70;
+      [[-70, vis.open, false, "Open to air"], [70, vis.sealed, true, "Oil layer"]].forEach(([dx, c, isOil, lab], n) => {
+        const cx = L.med.x + dx;
+        s += `<linearGradient id="ofg${n}" x1="0" y1="${y0}" x2="0" y2="${b}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${c.top}"/><stop offset="1" stop-color="${c.bot}"/></linearGradient>`;
+        s += `<clipPath id="ofc${n}"><path d="${tubePath(cx, top, w, h, 3)}"/></clipPath><g clip-path="url(#ofc${n})">`;
+        s += `<rect x="${cx - w}" y="${y0}" width="${w * 2}" height="${h}" fill="url(#ofg${n})"/><rect x="${cx - w}" y="${y0}" width="${w * 2}" height="${h}" fill="url(#liqShade)"/>`;
+        if (isOil && vis.oil) s += `<rect x="${cx - w}" y="${y0 - 28}" width="${w * 2}" height="30" fill="#f3e7a6" opacity=".92"/><line x1="${cx - w / 2}" y1="${y0 - 28}" x2="${cx + w / 2}" y2="${y0 - 28}" stroke="#d9c46a" stroke-width="2"/>`;
+        if (opts.stab || vis.growth) s += `<line x1="${cx}" y1="${y0 + 4}" x2="${cx}" y2="${b - 26}" stroke="${vis.growth ? "#f6efd8" : "#fff7df"}" stroke-width="${vis.growth ? 4 : 2}" opacity=".9"/>`;
+        s += `</g>` + glass(cx, top, w, h) + txt(cx, top - 10, lab, {fs:12 * L.fs, col:"#5a6376"});
+      });
     } else if (t.medium === "plate"){
       const {x, y, r} = L.plate;
       s += `<circle cx="${x}" cy="${y + 6}" r="${r + 12}" fill="#d9dee7" opacity=".6"/><circle cx="${x}" cy="${y}" r="${r + 10}" fill="#f2f5f9" stroke="#b9c2cf" stroke-width="3"/>`;
@@ -542,6 +642,8 @@
       if (t.medium === "plate"){ v.agar = base.fill; if (v.colonies && v.colonies.halo){ v.coloniesHalo = v.colonies.halo; } }
       if (t.medium === "slide" && v.bubbles !== undefined) v.puddle = true;
       return v; }
+    if (t.medium === "of") return {open:{top:C_RED, bot:C_RED}, sealed:{top:C_RED, bot:C_RED}, oil:S.stepDone, growth:S.incubated};
+    if (t.early && S.incubated && S.loaded) return Object.assign({}, outcome().vis, {ring:null});
     if (t.medium === "broth") return {fill:base.fill, turbid:S.incubated};
     if (t.medium === "slant") return {slant:base.slant, butt:base.butt, growth:false};
     if (t.medium === "plate"){ const r = S.incubated && S.loaded ? outcome() : null;
@@ -570,6 +672,7 @@
     if (S.inoc || (a && a.kind === "inoc")){
       const kk = a && a.kind === "inoc" ? k : 1;
       if (t.medium === "slant"){ opts.stab = t.stab && kk > .3; opts.streak = !t.deep && kk > (t.stab ? .55 : .1); }
+      if (t.medium === "of") opts.stab = kk > .3;
       if (t.medium === "plate") opts.streakK = a && a.kind === "inoc" ? clamp(k / .9, 0, 1) : 1;
       if (t.medium === "strip" || t.medium === "slide") opts.smear = kk > .3;
     }
@@ -690,11 +793,13 @@
         : t.stab
         ? k => k < .3 ? [cx, lerp(top, g.b - 24, ease(k / .3))] : k < .45 ? [cx, lerp(g.b - 24, g.yLow + 4, ease((k - .3) / .15))] : k < .9 ? zz((k - .45) / .45) : [lerp(g.l + 8, cx, (k - .9) / .1), lerp(g.yHigh, top, (k - .9) / .1)]
         : k => k < .15 ? [lerp(cx, g.r - 8, k / .15), lerp(top, g.yLow, ease(k / .15))] : k < .9 ? zz((k - .15) / .75) : [lerp(g.l + 8, cx, (k - .9) / .1), lerp(g.yHigh, top, (k - .9) / .1)]; }
+    else if (t.medium === "of"){ const top = L.med.top - 30, bot = L.med.top + L.med.h - 24;
+      path = k => { const first = k < .5, kk = first ? k / .5 : (k - .5) / .5; return [cx + (first ? -70 : 70), kk < .5 ? lerp(top, bot, ease(kk / .5)) : lerp(bot, top, ease((kk - .5) / .5))]; }; }
     else if (t.medium === "plate"){ const pts = streakPts(); path = k => k < .9 ? polyAt(pts, k / .9).pop() : (p => [p[0], p[1] - 60 * (k - .9) / .1])(pts[pts.length - 1]); }
     else { const x = t.medium === "slide" ? cx + 20 : cx, y = t.medium === "slide" ? L.plate.y : L.plate.y - 4;
       path = k => k < .2 ? [x, lerp(y - 80, y, k / .2)] : k < .85 ? (q => [x + 14 * Math.cos(q * Math.PI * 6), y + 7 * Math.sin(q * Math.PI * 6)])((k - .2) / .65) : [x, lerp(y, y - 80, (k - .85) / .15)]; }
     msgOverride = "";
-    startAnim({kind:"inoc", tool, dur:t.medium === "plate" ? 2400 : 1900, path, done:() => { S.inoc = true; S.inocTool = tool; if (!needsIncubate() && !t.reagents.length) S.done = true; }});
+    startAnim({kind:"inoc", tool, dur:t.medium === "plate" ? 2400 : t.medium === "of" ? 2800 : 1900, path, done:() => { S.inoc = true; S.inocTool = tool; if (!needsIncubate() && !t.reagents.length) S.done = true; }});
   }
   function startDrop(j){
     const r = T().reagents[j], n = r.drops === "flood" ? 1 : r.drops;
@@ -708,7 +813,16 @@
   }
   function incubate(){
     if (!S.inoc || S.incubated || S.overlay || anim) return;
-    S.overlay = {kind:"inc", t0:performance.now(), dur:2000, title:"Incubating at 37°C", sub:HOURS[active] || "24–48 hours", done:() => { S.incubated = true; if (!T().reagents.length) S.done = true; }};
+    const t = T();
+    if (stepPre() && !S.stepDone){ say(t.step.need); return; }
+    S.overlay = {kind:"inc", t0:performance.now(), dur:2000, title:t.incTitle || "Incubating", sub:t.incSub || "until your next lab period", msg:t.incMsg, done:() => { S.incubated = true; if (!t.reagents.length) S.done = true; }};
+    updateUI(); tick();
+  }
+  function doStep(){
+    const st = T().step;
+    if (!st || S.overlay || anim) return;
+    if (!(st.when === "pre" ? (S.inoc && !S.stepDone) : needStep())) return;
+    S.overlay = {kind:"wait", t0:performance.now(), dur:st.dur || 1800, title:st.title, sub:st.sub, msg:st.msg || st.title + "…", done:() => { S.stepDone = true; }};
     updateUI(); tick();
   }
 
@@ -744,21 +858,24 @@
 
   /* ---------------- page ---------------- */
   function stepList(){
-    const t = T(), out = [["Pick up bacteria", !!S.loaded], [t.medium === "plate" ? "Streak the plate" : t.medium === "slant" ? (t.deep ? "Stab the deep" : t.stab ? "Stab + streak" : "Streak the slant") : t.medium === "broth" ? "Inoculate the broth" : "Smear the cells", S.inoc]];
+    const t = T(), out = [["Pick up bacteria", !!S.loaded], [t.medium === "plate" ? "Streak the plate" : t.medium === "slant" ? (t.deep ? "Stab the deep" : t.stab ? "Stab + streak" : "Streak the slant") : t.medium === "broth" ? "Inoculate the broth" : t.medium === "of" ? "Stab both tubes" : "Smear the cells", S.inoc]];
+    if (t.step && t.step.when === "pre") out.push([t.step.name, S.stepDone]);
     if (t.incubate) out.push(["Incubate", S.incubated]);
+    if (t.step && t.step.when === "post") out.push([t.step.name, S.stepDone || (S.done && !needStep())]);
     if (t.reagents.length) out.push([t.reagents.map(r => r.name).join(" → "), S.rIdx >= t.reagents.length]);
     if (t.zinc) out.push(["Zinc (if needed)", S.zinc || (S.done && !needZinc())]);
-    out.push(["Read it", S.done && !needZinc()]);
+    out.push(["Read it", S.done && !needZinc() && !needStep()]);
     return out;
   }
   function hint(){
     if (msgOverride) return msgOverride;
     const t = T(), tool = t.tools[0], held = drag && drag.item;
-    if (S.overlay) return S.overlay.kind === "inc" ? "Incubating…" : "Waiting for the color to develop…";
+    if (S.overlay) return S.overlay.msg || (S.overlay.kind === "inc" ? "Incubating…" : "Waiting for the color to develop…");
     if (!S.inoc){
       if (!S.loaded) return held ? `Touch the ${held} to a bacteria tube.` : `Drag the ${tool} to one of the bacteria tubes to pick up some cells.`;
       return `Got some <i>${orgName()}</i>. Now carry the ${S.loaded.tool} to the ${t.medium === "plate" ? "plate" : t.medium === "strip" ? "test strip" : t.medium === "slide" ? "slide" : "tube"}.`;
     }
+    if (stepPre() && !S.stepDone) return t.step.hint;
     if (needsIncubate() && !S.incubated) return "Inoculated! Now tap <b>Incubate</b>.";
     if (reagentPhase()){
       const r = t.reagents[S.rIdx];
@@ -766,13 +883,16 @@
       return `Now drag the dropper over the ${t.medium === "plate" ? "plate" : t.medium === "strip" ? "strip" : t.medium === "slide" ? "slide" : "tube"} to add ${r.drops === "flood" ? "enough to flood it" : r.drops + " drop" + (r.drops > 1 ? "s" : "")}.` + (r.note ? ` <span class="muted">${r.note}</span>` : "");
     }
     if (needZinc()) return "No color yet. Drag the <b>zinc dust</b> into the tube.";
+    if (needStep()) return t.step.hint;
     return "Done! Read your result below.";
   }
   function updateUI(){
     const t = T();
     $("benchHint").innerHTML = hint();
     $("benchSteps").innerHTML = stepList().map(([n, ok], i, arr) => { const cur = !ok && arr.slice(0, i).every(x => x[1]); return `<span class="bstep ${ok ? "ok" : cur ? "cur" : ""}">${ok ? "✓" : i + 1}. ${n}</span>`; }).join("");
-    const ib = $("incBtn"); ib.hidden = !t.incubate; ib.disabled = !(S.inoc && !S.incubated && !S.overlay);
+    const ib = $("incBtn"); ib.hidden = !t.incubate; ib.disabled = !(S.inoc && !S.incubated && !S.overlay && !(stepPre() && !S.stepDone));
+    const sb = $("stepBtn"); sb.hidden = !t.step;
+    if (t.step){ sb.textContent = t.step.label; sb.disabled = !!(S.overlay || anim) || !(t.step.when === "pre" ? (S.inoc && !S.stepDone) : needStep()); }
     const res = $("benchResult");
     if (S.done){
       const r = outcome();
@@ -814,13 +934,14 @@
       <div class="benchsteps" id="benchSteps"></div>
       <div class="benchhint" id="benchHint"></div>
       <div class="bench" id="bench"><svg id="benchSvg" role="img" aria-label="Lab bench: bacteria tubes, tools, and the test medium"></svg></div>
-      <div class="benchbtns"><button class="btn primary" id="incBtn">🌡️ Incubate</button><button class="btn secondary" id="againBtn" hidden>↺ Try another organism</button></div>
+      <div class="benchbtns"><button class="btn secondary" id="stepBtn" hidden></button><button class="btn primary" id="incBtn">🌡️ Incubate</button><button class="btn secondary" id="againBtn" hidden>↺ Try another organism</button></div>
       <div id="benchResult"></div>
       <div class="why">${t.why}</div>
       ${t.link ? `<div style="margin-top:12px"><a class="btn secondary sm" href="${t.link[1]}">${t.link[0]}</a></div>` : ""}
       <div id="quizBox">${quizHTML(t)}</div>`;
     layout(); bindBench(); bindQuiz(t);
     $("incBtn").addEventListener("click", incubate);
+    $("stepBtn").addEventListener("click", doStep);
     $("theoryBtn").addEventListener("click", openTheory);
     if ($("theoryBtn2")) $("theoryBtn2").addEventListener("click", openTheory);
     $("againBtn").addEventListener("click", () => { reset(); draw(); updateUI(); });
@@ -888,6 +1009,15 @@
       why:"After incubation, flood the plate with Gram's iodine. Wherever starch is still intact, it turns <b>blue-black</b>. A <b>clear zone</b> around the growth means amylase diffused out and digested the starch there.",
       reads:[{k:"plate", agar:"#efe2bf", col:"#f4ecd6", iodine:true, clear:true, single:true, tag:"+", lab:"clear zone"}, {k:"plate", agar:"#efe2bf", col:"#f4ecd6", iodine:true, single:true, tag:"−", lab:"dark to the edge"}],
       extra:"Amylase is a hydrolase, a catabolic enzyme: it uses water to break one big polymer into small sugars the cell can actually absorb."},
+    of:{
+      asks:"Does this organism use dextrose with <b>oxygen</b> (oxidative), <b>without oxygen</b> (fermentative), or <b>not at all</b>?",
+      flow:[{label:"Two identical tubes: one open to air, one sealed under mineral oil", items:[N("Dextrose", SUG, "low peptone, high dextrose"), "used by the organism",
+        FORK({a:"with O₂ (open tube)", n:N("Oxidative", OKC, "only the open tube turns yellow")}, {a:"without O₂ (oil tube)", n:N("Fermentative", ACID, "both tubes turn yellow")})]}],
+      eq:[["open tube yellow only → oxidative", "needs O₂ to use dextrose"], ["both tubes yellow → fermentative", "makes acid without O₂"], ["neither tube yellow → neither", "uses peptone, not dextrose"]],
+      ind:"phenol",
+      used:["dextrose", "oxygen (open tube only)"], made:["acid (→ yellow)"],
+      why:"The medium has <b>low peptone and high dextrose</b>, so alkaline waste from peptone doesn't hide a weak acid made from dextrose. Mineral oil keeps air out of one tube. <b>Yellow</b> means acid was produced, and comparing the two tubes tells you how the organism uses dextrose.",
+      reads:[{k:"deep", fill:"#f2d23c", tag:"Ferm.", lab:"both tubes yellow"}, {k:"deep", fill:"#f2d23c", tag:"Ox.", lab:"open tube only"}, {k:"deep", fill:"#d9443a", tag:"Neither", lab:"no yellow"}]},
     durham:{
       asks:"Can this organism ferment <b>this one sugar</b>, and does its fermentation pathway release <b>gas</b>?",
       flow:[{label:"Ferment the sugar, then restore NAD⁺", items:[N("Sugar", SUG), "glycolysis", N("Pyruvate", PYR, "3C"), "fermentation",
@@ -908,7 +1038,7 @@
       used:["the sugar in the broth"], made:["a pile of stable acid (pH < 4.4)"],
       why:"MR-VP broth holds <b>both sugar and peptone</b>: the bacteria burn through the sugar first, then switch to peptones (or die out). Mixed-acid fermenters flood themselves with so much stable acid that the pH drops below 4.4, where methyl red stays <b>red</b>. Butanediol fermenters (VP +) make neutral products instead, so their pH stays above 6.2 and methyl red goes <b>yellow</b>.",
       reads:[{k:"tube", fill:"#d9443a", tag:"MR +", lab:"red"}, {k:"tube", fill:"#f2d23c", tag:"MR −", lab:"yellow"}],
-      readNote:"Add <b>3–5 drops</b> of methyl red and read <b>right away</b>: the color is immediate, no waiting.",
+      readNote:"Add <b>5 drops</b> of methyl red and read <b>right away</b>: the color is immediate, no waiting.",
       extra:"Same broth as VP: split one culture into two tubes."},
     vp:{
       asks:"After eating the sugar, does this organism ferment through the <b>neutral</b> 2,3-butanediol pathway instead of flooding itself with acid?",
@@ -930,6 +1060,22 @@
       why:"Simmons citrate agar has no sugar, only citrate. A cell with <b>citrate permease</b> can pull it in and live on it, and its alkaline byproducts push the pH above 7.6, turning bromothymol blue <b>Prussian blue</b>. No permease = no food = no growth, so the slant stays <b>green</b>.",
       reads:[{k:"slant", fill:"#2f5fbf", tag:"+", lab:"blue + growth"}, {k:"slant", fill:"#4f9a4a", tag:"−", lab:"green, no growth"}],
       extra:"Citrate is the first molecule of the Krebs cycle. This test asks whether a bacterium can grab it from <i>outside</i> the cell. The pH climbs for two reasons: using citrate for energy releases CO₂ that becomes alkaline carbonate, and the cell strips nitrogen from the ammonium salts (its only N source), releasing ammonia. Both push bromothymol blue past 7.6 to blue."},
+    gel:{
+      asks:"Does this organism secrete <b>gelatinase</b>, an exoenzyme that breaks gelatin down so it can no longer solidify?",
+      flow:[{label:"Gelatin is too big to enter the cell: break it down outside", items:[N("Gelatin", SUG, "a protein, solid when cool"), "gelatinase (secreted)", N("Smaller pieces", PYR, "can't re-solidify")]}],
+      eq:[["gelatin → smaller pieces", "gelatinase, an exoenzyme"]],
+      ind:null, noInd:"No indicator. The readout is whether the gelatin is <b>liquid or solid</b>.",
+      used:["gelatin (a protein)"], made:["smaller pieces that stay liquid"],
+      why:"Nutrient gelatin is solid when cool and melts above about <b>28°C</b>, so the tube stays at room temperature on the back bench and never goes in the incubator. If it looks liquid, chill it in <b>crushed ice</b> for a few minutes and tilt it gently (do not shake). Still liquid after chilling = gelatinase positive. Solid again = negative.",
+      reads:[{k:"deep", fill:"#dcb95f", tag:"+", lab:"stays liquid"}, {k:"deep", fill:"#ead9a0", tag:"−", lab:"solid again"}]},
+    urea:{
+      asks:"Does this organism make <b>urease</b>, which splits urea and releases ammonia?",
+      flow:[{label:"Split urea, raise the pH, change the indicator", items:[N("Urea", SUG), "urease", N("Ammonia", NC, "released"), "raises the pH", N("Bright pink", "#c4327a", "phenol red")]}],
+      eq:[["urea → ammonia", "urease"], ["ammonia raises the pH → phenol red turns bright pink", "the readout"]],
+      ind:"phenol",
+      used:["urea"], made:["ammonia (→ bright pink)"],
+      why:"Urea agar contains urea and phenol red. Urease releases <b>ammonia</b>, the pH rises, and the slant turns <b>bright pink or magenta</b>. Phenol red is yellow at pH 6.8 and below and fuchsia at pH 8.4 and above. A negative slant stays <b>peach</b>.",
+      reads:[{k:"slant", fill:"#d62a76", tag:"+", lab:"bright pink"}, {k:"slant", fill:"#f4c9a0", tag:"−", lab:"peach, unchanged"}]},
     phe:{
       asks:"Does this organism make <b>phenylalanine deaminase</b>, an enzyme that removes the amine group from the amino acid phenylalanine?",
       flow:[{label:"Deaminate phenylalanine, then detect the product with ferric chloride", items:[N("Phenylalanine", SUG, "amino acid"), "phenylalanine deaminase", N("Phenylpyruvic acid", PYR, "amine group removed"), "+ ferric chloride", N("Green color", OKC, "positive")]}],
@@ -946,6 +1092,16 @@
       used:["sulfur-containing amino acids (peptone)", "iron salts"], made:["H₂S → black iron sulfide"],
       why:"H₂S is a colorless gas, so the deep contains <b>iron</b>. H₂S reacts with the iron to form <b>black iron sulfide</b> along the stab line. No black means no H₂S.",
       reads:[{k:"deep", fill:"#ecdcab", black:true, tag:"H₂S +", lab:"black along stab"}, {k:"deep", fill:"#ecdcab", tag:"H₂S −", lab:"no black"}]},
+    mio:{
+      asks:"One stab, three answers: is the organism <b>motile</b>, does it make <b>indole</b>, and does it have <b>ornithine decarboxylase</b>?",
+      flow:[{label:"Motility", items:[N("Motile cells", NC, "swim away from the stab"), "gives", N("Diffuse growth", OKC, "cloudy, spreading out")]},
+        {label:"Indole", items:[N("Tryptophan", SUG), "tryptophanase", N("Indole", ACID, "+ Kovac's reagent → red ring")]},
+        {label:"Ornithine decarboxylase", items:[N("Glucose fermented first", "#c98a0e", "medium turns yellow"), "decarboxylase", N("Alkaline amines", NEU, "pH rises: back to purple")]}],
+      eq:[["tryptophan → indole", "tryptophanase; add Kovac's reagent"], ["glucose → acid (yellow), then ornithine → alkaline amines", "decarboxylase turns it back to purple"]],
+      ind:null, noInd:"The medium has a pH indicator: <b>purple</b> when the ornithine reaction raises the pH, <b>yellow</b> when acid is left. Indole has its own reagent, Kovac's.",
+      used:["tryptophan", "glucose", "ornithine"], made:["indole (→ red ring)", "alkaline amines (→ purple)"],
+      why:"Read all three from one tube. Motility and medium color need no reagent. Add <b>5 drops of Kovac's reagent</b> last, <b>without shaking</b>, so it layers on top, and read the top layer after 1 to 2 minutes.",
+      reads:[{k:"deep", fill:"#7d55a8", ring:"#d0243a", tag:"+", lab:"purple, red ring, cloudy"}, {k:"deep", fill:"#e6d23a", ring:"#efd35a", tag:"−", lab:"yellow, yellow ring"}]},
     nitrate:{
       asks:"Can this organism do <b>anaerobic respiration</b>, using nitrate as its final electron acceptor instead of O₂?",
       flow:[{label:"Nitrate takes the place of oxygen at the end of the ETC", items:[N("Nitrate (NO₃⁻)", NC), "nitrate reductase", N("Nitrite (NO₂⁻)", ACID), "reduced further", N("N₂ gas", GAS, "all the way down")]}],
