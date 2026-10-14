@@ -99,6 +99,14 @@
   .bstep.cur{background:var(--accent);color:#fff}
   .bstep.ok{background:var(--good-soft);color:var(--good)}
   .pgpic svg{max-height:270px;margin:0 auto}
+  .rulebox{border:2px solid var(--accent);border-radius:16px;padding:14px 16px;margin:4px 0 6px;background:#fbfbff}
+  .rulehead{font-size:1.15rem;font-weight:700;color:#2c3796;margin:0 0 10px}
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .rule{background:#fff;border:1px solid var(--line);border-radius:14px;padding:8px 10px;text-align:center}
+  .rule svg{width:100%;max-width:130px;height:auto;display:block;margin:0 auto}
+  .rule p{margin:4px 0 0;font-size:1rem;line-height:1.35}
+  .rulelist{margin:12px 0 0;padding-left:20px;font-size:1.02rem;line-height:1.55}
+  .rulelist li{margin-bottom:4px}
   .hdbench{padding:6px;max-width:none;max-height:none}
   .hdbench svg{touch-action:none;user-select:none;-webkit-user-select:none}
   .hdbench [data-item]{cursor:grab}
@@ -245,8 +253,7 @@
       <p class="labq" style="margin:0 0 6px">The field diameter at low power is 2 mm. Remember: 1 mm = 1000 μm.</p>
       <div class="numrow"><label for="n1">A <i>Bacillus</i> cell is 2 μm long. How many fit end to end across the field?</label><input id="n1" type="number" inputmode="numeric"><button class="btn primary" data-chk="n1">Check</button></div><div class="qfb" id="n1fb" hidden></div>
       <div class="numrow"><label for="n2">A yeast cell is 10 μm. How many fit across the field?</label><input id="n2" type="number" inputmode="numeric"><button class="btn primary" data-chk="n2">Check</button></div><div class="qfb" id="n2fb" hidden></div>
-      <div class="sect">4. Using the microscope: put the steps in order</div>
-      <div id="useGame"></div>`;
+`;
     /* parts game */
     let mode = "explore", sel = null, qi = 0, qorder = [], wrongs = 0, firstTry = 0, missed = false;
     const info = $("partInfo"), msg = $("partMsg"), svg = body.querySelector(".mpart").closest("svg");
@@ -290,17 +297,6 @@
       const ok = v === ans; fb.className = "qfb " + (ok ? "good" : "bad");
       fb.innerHTML = ok ? `<b>Yes!</b> 2 mm = 2000 μm, and 2000 ÷ ${id === "n1" ? 2 : 10} = ${ans}.` : `Not quite. Convert first: 2 mm = 2000 μm. Then divide by the cell length.`;
     });
-    orderGame($("useGame"), [
-      {id:"a", cue:"setting up the scope", text:"Place the scope squarely on the bench: flat, stable, cord behind.", why:"Always carry it with two hands."},
-      {id:"b", cue:"loading the slide", text:"Load your slide in the stage clips.", why:""},
-      {id:"c", cue:"the eyepieces", text:"Adjust the eyepieces (binocular) until you see one circle of light.", why:"Write your setting down."},
-      {id:"d", cue:"the condenser", text:"Focus the condenser: close the iris, lower the condenser until the light forms a circle, center it, raise it back, then open the iris until the light just fills the field.", why:""},
-      {id:"e", cue:"low power", text:"Focus at low power (10x) and center the specimen.", why:"Start low, always."},
-      {id:"f", cue:"high-dry", text:"Switch to high-dry (40x). Use the fine adjustment only, and open the iris for more light.", why:"The scope is parfocal: it stays nearly in focus."},
-      {id:"g", cue:"oil", text:"Swing the 40x out of the way, then put one drop of immersion oil on the slide.", why:"Do not rotate the 40x through the oil."},
-      {id:"h", cue:"oil immersion", text:"Click the 100x into the oil and fine-adjust.", why:""},
-      {id:"i", cue:"recording", text:"Record the magnification and sketch what you see.", why:"Label the total magnification under every sketch."},
-      {id:"j", cue:"cleaning up", text:"Clean up: swing back to low power, remove the slide, and wipe the oil off the objective with lens paper only.", why:"Never leave the 100x aimed at the stage."}]);
   }
 
   /* ================================================================= EXERCISE 2: living microorganisms */
@@ -641,8 +637,8 @@
     const l = 20, r = 60, top = 14, b = 118, id = `tc${kind}${g}${path ? "p" : ""}`;
     let s = `<defs><linearGradient id="gl${id}" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".1"/></linearGradient></defs><clipPath id="${id}"><path d="M${l} ${top} L${l} ${b - 20} A20 20 0 0 0 ${r} ${b - 20} L${r} ${top} Z"/></clipPath><g clip-path="url(#${id})">`;
     if (kind === "broth"){
-      s += `<rect x="${l}" y="38" width="40" height="90" fill="${g === "turbid" ? "#e3d29a" : "#f3e6bc"}"/>`;
-      if (g === "turbid") s += Array.from({length:44}, (_, k) => `<circle cx="${f1(24 + rnd(k) * 32)}" cy="${f1(42 + rnd(k + 9) * 72)}" r="${f1(1 + rnd(k + 3) * 1.6)}" fill="#fff" opacity=".6"/>`).join("");
+      s += `<rect x="${l}" y="38" width="40" height="90" fill="${g === "turbid" ? "#d8cba4" : "#f6ecc8"}"${g === "turbid" ? "" : ` opacity=".7"`}/>`;
+      if (g === "turbid") s += `<rect x="${l}" y="38" width="40" height="90" fill="#fbf7ea" opacity=".6"/>`;
       if (g === "pellicle") s += `<path d="M${l} 38 Q30 34 40 39 T${r} 38 L${r} 45 Q50 49 40 44 T${l} 45 Z" fill="#fffdf4" stroke="#cdb977" stroke-width="1.5"/>`;
       if (g === "flocculent") s += [[30, 60, 6], [46, 74, 7], [36, 90, 6], [50, 52, 5], [28, 104, 5]].map(([x, y, rr]) => `<path d="M${x - rr} ${y} q${rr / 2} ${-rr} ${rr} ${-rr / 2} q${rr} ${rr / 2} ${rr / 2} ${rr} q${-rr / 2} ${rr} ${-rr} ${rr / 2} z" fill="#fffdf4" stroke="#cdb977" stroke-width="1.2"/>`).join("");
       if (g === "sediment") s += `<path d="M${l} ${b - 16} Q40 ${b - 32} ${r} ${b - 16} L${r} ${b + 4} L${l} ${b + 4} Z" fill="#fffdf4" stroke="#cdb977" stroke-width="1.5"/>`;
@@ -697,16 +693,32 @@
 
   /* ================================================================= EXERCISE 4: aseptic technique */
   const TECH = {
-    broth:{name:"Broth to broth", tool:"loop", how:"Dip the sterile loop into the stock broth, then swirl it into your new broth tube to mix in the sample.", grow:"Turbidity (cloudiness), a pellicle, or sediment.", kind:"broth", g:"turbid"},
-    slant:{name:"Stock to slant", tool:"loop", how:"Starting at the bottom of the slant, drag your loop in a tight zigzag up the surface of the agar.", grow:"Growth on the surface.", kind:"slant", g:"streak"},
-    deep:{name:"Stock to deep", tool:"needle", how:"Insert a straight needle down the center of the agar, almost to the bottom, then withdraw it along the same path.", grow:"Growth along the stab line.", kind:"deep", g:"stab"}
+    broth:{tr:"Swirl the loop in the new broth tube to mix in the sample.", name:"Broth to broth", tool:"loop", how:"Dip the sterile loop into the stock broth, then swirl it into your new broth tube to mix in the sample.", grow:"Turbidity (cloudiness), a pellicle, or sediment.", kind:"broth", g:"turbid"},
+    slant:{tr:"Starting at the bottom of the slant, drag the loop in a tight zigzag up the surface of the agar.", name:"Stock to slant", tool:"loop", how:"Starting at the bottom of the slant, drag your loop in a tight zigzag up the surface of the agar.", grow:"Growth on the surface.", kind:"slant", g:"streak"},
+    deep:{tr:"Stab the needle straight down the center of the agar, almost to the bottom, then pull it back out along the same path.", name:"Stock to deep", tool:"needle", how:"Insert a straight needle down the center of the agar, almost to the bottom, then withdraw it along the same path.", grow:"Growth along the stab line.", kind:"deep", g:"stab"}
   };
+  /* the golden rules of aseptic technique, as four picture cards */
+  const RULEPICS = [
+    [`<path d="M66,96 C46,80 52,56 66,28 C80,56 86,80 66,96Z" fill="#7fb2ff" opacity=".55"/><path d="M66,96 C58,86 60,70 66,56 C72,70 74,86 66,96Z" fill="#2f5fd0"/><rect x="2" y="44" width="22" height="12" rx="4" fill="#3f4cc0"/><line x1="24" y1="50" x2="60" y2="60" stroke="#9aa3b2" stroke-width="3"/><line x1="40" y1="54.5" x2="60" y2="60" stroke="#e8452c" stroke-width="4"/><circle cx="66" cy="62" r="7" fill="none" stroke="#ff5a2a" stroke-width="3.5"/><circle cx="66" cy="62" r="11" fill="#ff7a3a" opacity=".25"/>`, "Flame the loop or needle <b>red-hot</b>, before <b>and</b> after"],
+    [`<rect x="2" y="44" width="22" height="12" rx="4" fill="#3f4cc0"/><line x1="24" y1="50" x2="70" y2="58" stroke="#9aa3b2" stroke-width="3"/><circle cx="77" cy="59" r="7" fill="none" stroke="#9aa3b2" stroke-width="3"/><path d="M70,40 q4,-6 0,-12 M80,40 q4,-6 0,-12 M90,42 q4,-6 0,-12" fill="none" stroke="#c9d3e0" stroke-width="2.5" stroke-linecap="round"/><circle cx="96" cy="80" r="14" fill="#fff" stroke="#343b4a" stroke-width="2.5"/><path d="M96,80 L96,71 M96,80 L103,84" stroke="#343b4a" stroke-width="2.5" stroke-linecap="round"/>`, "Let it <b>cool</b>. Don't touch anything or set it down"],
+    [`<line x1="4" y1="88" x2="56" y2="88" stroke="#8b93a3" stroke-width="3"/><rect x="18" y="72" width="22" height="14" rx="3" fill="#3f7bd1"/><path d="M12,64 L46,96 M46,64 L12,96" stroke="#b83a34" stroke-width="4" stroke-linecap="round"/><rect x="74" y="44" width="22" height="14" rx="3" fill="#3f7bd1"/><path d="M66,62 Q66,36 84,36 L104,36 Q112,36 112,46 L112,74 Q112,86 98,86 L80,86 Q66,86 66,72 Z" fill="#f2c9a8" opacity=".85"/><rect x="74" y="44" width="22" height="14" rx="3" fill="#3f7bd1"/><path d="M68,58 Q78,64 100,60" fill="none" stroke="#d9a07a" stroke-width="3" stroke-linecap="round"/><path d="M92,20 l5,6 l10,-12" fill="none" stroke="#1b7f4e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`, "The cap stays <b>in your hand</b>, never on the bench"],
+    [`<path d="M84,98 C66,84 72,62 84,40 C96,62 102,84 84,98Z" fill="#7fb2ff" opacity=".55"/><path d="M84,98 C77,88 79,74 84,64 C89,74 91,88 84,98Z" fill="#2f5fd0"/><g transform="rotate(-50 50 60)"><path d="M38,28 L38,82 A12,12 0 0 0 62,82 L62,28" fill="#f3e6bc" stroke="#8b93a3" stroke-width="3"/><rect x="38" y="28" width="24" height="16" fill="#f7f8fb"/><line x1="34" y1="28" x2="66" y2="28" stroke="#e8452c" stroke-width="4" stroke-linecap="round"/></g>`, "Flame the <b>lip</b> after uncapping and before recapping"]];
+  const RULES = ["Flame the loop or needle until the <b>whole wire glows red-hot</b>, before AND after every transfer.",
+    "Let it <b>cool</b> for a few seconds before it touches a culture. Don't touch anything or set it down while it cools.",
+    "<b>Never set a cap down on the bench.</b> Hold it in your hand the whole time.",
+    "<b>Flame the lip</b> of each tube right after you uncap it, and again right before you recap it.",
+    "Keep tubes open as <b>briefly</b> as you can, and hold them at an <b>angle</b>, not straight up.",
+    "Work close to the burner, and never set down a loop or needle that still has bacteria on it."];
   function renderAseptic(body){
     body.innerHTML = `
+      <div class="rulebox"><div class="rulehead">The golden rules of aseptic technique</div>
+        <div class="rules">${RULEPICS.map(([pic, cap]) => `<div class="rule"><svg viewBox="0 0 120 100" aria-hidden="true">${pic}</svg><p>${cap}</p></div>`).join("")}</div>
+        <ul class="rulelist">${RULES.map(r => `<li>${r}</li>`).join("")}</ul></div>
       <div class="sect">1. Choose a transfer</div>
       <div class="row" id="techRow">${Object.keys(TECH).map((k, i) => `<button class="chip ${i === 0 ? "on" : ""}" data-t="${k}">${TECH[k].name}</button>`).join("")}</div>
       <div class="grid2"><div class="panel" style="max-width:300px" id="techPic"></div><div class="info" id="techInfo"></div></div>
-      <div class="sect">2. Do the transfer: put the steps in order</div><div id="asepGame"></div>
+      <div class="sect">2. Do the transfer: put the steps in order</div>
+      <p class="labq" style="margin:0 0 6px">Every step is about keeping the culture pure and keeping the bacteria off you.</p><div id="asepGame"></div>
       <div class="sect">3. Which medium is this?</div>
       <p class="labq" style="margin:0 0 6px">Each tube was inoculated from the same stock. Match the growth to the medium.</p><div id="growGame"></div>`;
     const show = k => {
@@ -720,11 +732,14 @@
       const tool = t.tool === "loop" ? "loop" : "needle";
       orderGame($("asepGame"), [
         {id:"a", cue:"labeling", text:"Label all three tubes with your name, the date, the bacteria name, and the medium.", why:""},
-        {id:"b", cue:"sterilizing the tool", text:`Hold the ${tool} in the flame until it glows red-hot, then let it cool without touching anything.`, why:""},
-        {id:"c", cue:"opening the tubes", text:"Uncap the stock tube and the new tube, holding the caps in your hand, and flame the mouth of each tube.", why:"Never set a cap down on the bench."},
-        {id:"d", cue:"the transfer", text:t.tool === "loop" ? t.how : t.how, why:"Use the " + tool + " for this medium."},
-        {id:"e", cue:"flaming and recapping", text:"Flame the mouth of each tube again and recap both.", why:"Flame the tube mouth first, then recap."},
-        {id:"f", cue:"re-sterilizing", text:`Flame the ${tool} red-hot again before you set it down.`, why:"This protects you and the bench."}]);
+        {id:"b", cue:"sterilizing the tool", text:`Hold the ${tool} in the flame until the whole wire glows red-hot.`, why:"Red-hot heat kills every microbe on the wire."},
+        {id:"c", cue:"cooling", text:`Let the ${tool} cool for a few seconds. Don't touch anything with it or set it down.`, why:"A hot tool kills the bacteria you're trying to pick up."},
+        {id:"d", cue:"opening the tubes", text:"Uncap the stock tube and the new tube, keeping both caps in your hand. Hold the tubes at an angle.", why:"Never set a cap down on the bench."},
+        {id:"e", cue:"flaming the lips", text:"Pass the lip of each open tube through the flame.", why:"This kills microbes on the rim."},
+        {id:"f", cue:"picking up bacteria", text:`Touch the cooled ${tool} to the stock culture to pick up some bacteria.`, why:""},
+        {id:"g", cue:"the transfer", text:t.tr, why:"Use the " + tool + " for this medium."},
+        {id:"h", cue:"flaming and recapping", text:"Flame the lip of each tube again, then recap both.", why:"Flame the lip first, then recap."},
+        {id:"i", cue:"re-sterilizing", text:`Flame the ${tool} red-hot again before you set it down.`, why:"Never set down a tool with bacteria on it. This protects you and the bench."}]);
     };
     $("techRow").onclick = e => { const b = e.target.closest("[data-t]"); if (b) show(b.dataset.t); };
     show("broth");
@@ -736,7 +751,7 @@
   /* ================================================================= tab definitions */
   const TABS = {
     scope:{tab:"1: Microscope", title:"Use and Care of the Microscope", ex:"Exercise 1", render:renderScope,
-      question:"Can you name the parts, work out the magnification, and use the microscope in the right order?",
+      question:"Can you name the parts of the microscope and work out the magnification?",
       how:["A compound microscope uses two lens systems: the <b>objective</b> forms the image and the <b>ocular</b> (eyepiece) remagnifies it. <b>Total magnification = ocular (10x) × objective.</b>",
         "<b>Coarse focus</b> is for low power only (4x, 10x). <b>Fine focus</b> is for 40x and oil immersion. The scope is <b>parfocal</b>: once it's in focus on one objective, it stays almost in focus on the next.",
         "<b>Oil immersion (100x):</b> glass and oil share a refractive index (1.52), so light isn't bent away and resolution improves. Use oil <b>only</b> with the 100x objective, and clean it with lens paper only."],
@@ -791,6 +806,17 @@
       how:["Aseptic technique has two goals: <b>protect the culture</b> (keep contaminants out of your stock and new media) and <b>protect you</b> (keep the organism off your hands and bench).",
         "Flame the loop or needle until it glows red-hot, then let it cool without touching anything. Hold the caps in your hand and flame the tube mouths before and after.",
         "<b>Broth</b> and <b>slant</b> use a <b>loop</b>. A <b>deep</b> uses a straight <b>needle</b>."],
+      more:[
+        ["Why an aseptic space matters", null, ["<b>A pure culture is one kind of organism,</b> and every stain and biochemical test you run assumes that. One stray cell from the air, the bench, or your hands can grow into a mixed culture, and then your results describe the wrong organism.",
+          "<b>It protects people, too.</b> Lab organisms can make people sick, so keeping them on the loop and inside the tube protects you, your classmates, and whoever uses the bench next.",
+          "<b>Microbes are everywhere.</b> You saw it in Exercise 3: swabs of ordinary surfaces, fingertips, and a single hair all grew colonies."]],
+        ["How bacteria travel through the air", "air", ["Bacteria and fungal spores ride on dust, skin flakes, and tiny droplets floating in the air. They settle onto any open surface: an open tube, an uncapped plate, or a cap set down on the bench.",
+          "That's why the cap stays in your hand, the tube stays open only briefly, and you tilt it so less can fall straight in.",
+          "Working close to the burner helps: the flame heats the air above it, and the rising hot air carries floating particles up and away from your tubes."]],
+        ["How heat kills bacteria", "heat", ["High heat destroys the molecules a cell needs to live: it unfolds (denatures) proteins and enzymes, and breaks apart membranes and DNA.",
+          "A wire held in the flame until it glows red-hot is far hotter than any cell can survive, even a heat-resistant endospore (Exercise 9). That's why flaming sterilizes the loop and needle.",
+          "Flaming the lip of the tube kills microbes on the rim and warms the glass, so air flows up and out of the tube instead of in.",
+          "<b>Then let it cool.</b> A red-hot loop kills the bacteria you're trying to transfer, and plunging it into a culture can make it sizzle and spatter cells into the air."]]],
       quiz:[
         q("What are the two goals of aseptic technique?", ["Protect the culture and protect yourself", "Make the culture grow faster and make it colorful", "Kill the culture and clean the bench", "Save media and save time"], 0, "Keep contaminating organisms out, and keep your organism off you."),
         q("How do you sterilize a loop or needle?", ["Hold it in the flame until it glows red-hot, then let it cool without touching anything", "Wipe it with a paper towel", "Dip it in water", "Blow on it"], 0, "A hot tool kills the organisms you want, so let it cool first."),
@@ -800,6 +826,9 @@
         q("How do you inoculate a slant?", ["Starting at the bottom, drag the loop in a tight zigzag up the surface", "Stab the center with a needle", "Swirl a loop in liquid", "Pour the culture on top"], 0, "Growth then appears on the surface."),
         q("How do you inoculate a broth?", ["Dip a sterile loop in the stock and swirl it into the new broth", "Stab with a needle", "Zigzag on the surface", "Pour in the stock"], 0, "Swirling mixes the sample into the broth."),
         q("Describe growth in a deep.", ["Growth along the stab line", "Growth on the surface only", "Cloudiness throughout", "No growth"], 0, "A broth shows turbidity, a pellicle, or sediment. A slant shows growth on the surface."),
+        q("Why do you flame the lip of the tube?", ["To kill microbes on the rim so they don't get into the culture", "To melt the agar", "To warm up the bacteria", "To dry the tube"], 0, "Flame it right after uncapping and again right before recapping."),
+        q("Why hold an open tube at an angle instead of straight up?", ["Fewer airborne particles can fall straight in", "It pours faster", "It keeps the agar warm", "It doesn't matter"], 0, "Microbes ride on dust and droplets in the air and settle onto open surfaces."),
+        q("Why let the loop cool before it touches the culture?", ["A hot loop kills the bacteria you're trying to pick up, and it can spatter", "A cool loop holds more liquid", "So the loop doesn't melt", "To make it sterile"], 0, "Sterilize it, then wait a few seconds without touching anything."),
         q("What do you do with the loop right after the transfer?", ["Flame it red-hot again before setting it down", "Set it on the bench", "Wipe it on your coat", "Leave it in the tube"], 0, "This protects you and the bench.")]}
   };
 
@@ -812,11 +841,40 @@
     m.innerHTML = `<div class="tcard"></div>`;
     document.body.appendChild(m);
   })();
+  const THEORYPICS = {
+    air:() => {
+      const T = (x, y, t, o) => `<text x="${x}" y="${y}" font-size="${(o && o.fs) || 14}" font-weight="${(o && o.w) || 700}" fill="${(o && o.c) || "#343b4a"}" text-anchor="middle">${t}</text>`;
+      const flame = x => `<path d="M${x},190 C${x - 18},174 ${x - 12},150 ${x},124 C${x + 12},150 ${x + 18},174 ${x},190Z" fill="#7fb2ff" opacity=".55"/><path d="M${x},190 C${x - 8},180 ${x - 6},166 ${x},154 C${x + 6},166 ${x + 8},180 ${x},190Z" fill="#2f5fd0"/><rect x="${x - 7}" y="190" width="14" height="22" fill="#a9b1bf"/>`;
+      let s = T(190, 22, "Open straight up, cap on the bench", {c:"#b83a34"}) + T(570, 22, "Tilted, near the flame, cap in hand", {c:"#1b7f4e"});
+      s += `<path d="M168,70 L168,180 A22,22 0 0 0 212,180 L212,70" fill="#f3e6bc" stroke="#8b93a3" stroke-width="3"/><rect x="169.5" y="70" width="41" height="34" fill="#fff"/>`;
+      [[160, 40], [190, 46], [214, 36], [178, 58], [204, 62]].forEach(([x, y]) => { s += `<circle cx="${x}" cy="${y}" r="3.5" fill="#8b6a3a"/><path d="M${x},${y + 6} l0,14" stroke="#8b6a3a" stroke-width="1.6"/><path d="M${x - 3},${y + 16} l3,5 l3,-5" fill="none" stroke="#8b6a3a" stroke-width="1.6"/>`; });
+      s += `<line x1="250" y1="200" x2="330" y2="200" stroke="#8b93a3" stroke-width="3"/><rect x="276" y="184" width="26" height="14" rx="3" fill="#3f7bd1"/><circle cx="268" cy="176" r="3" fill="#8b6a3a"/><circle cx="310" cy="172" r="3" fill="#8b6a3a"/>`;
+      s += T(190, 228, "dust and droplets settle in", {w:400, fs:13});
+      s += `<g transform="rotate(-45 520 140)"><path d="M500,80 L500,180 A20,20 0 0 0 540,180 L540,80" fill="#f3e6bc" stroke="#8b93a3" stroke-width="3"/><rect x="501.5" y="80" width="37" height="30" fill="#fff"/></g>` + flame(640);
+      [[600, 110], [630, 90], [660, 104], [620, 64], [652, 52]].forEach(([x, y]) => { s += `<circle cx="${x}" cy="${y}" r="3.5" fill="#8b6a3a"/><path d="M${x},${y - 6} l0,-14" stroke="#e0a020" stroke-width="1.8"/><path d="M${x - 3},${y - 16} l3,-5 l3,5" fill="none" stroke="#e0a020" stroke-width="1.8"/>`; });
+      s += T(570, 228, "rising hot air carries particles up and away", {w:400, fs:13});
+      return `<svg viewBox="0 0 760 240" role="img" aria-label="Airborne particles fall into an upright open tube; a tilted tube near the flame stays clean">${s}</svg>`;
+    },
+    heat:() => {
+      const T = (x, y, t, o) => `<text x="${x}" y="${y}" font-size="${(o && o.fs) || 14}" font-weight="${(o && o.w) || 700}" fill="${(o && o.c) || "#343b4a"}" text-anchor="middle">${t}</text>`;
+      const loop = (x, y, hot) => `<rect x="${x - 70}" y="${y - 6}" width="22" height="12" rx="4" fill="#3f4cc0"/><line x1="${x - 48}" y1="${y}" x2="${x - 7}" y2="${y}" stroke="#9aa3b2" stroke-width="3"/>${hot ? `<line x1="${x - 30}" y1="${y}" x2="${x - 7}" y2="${y}" stroke="#e8452c" stroke-width="4"/><circle cx="${x}" cy="${y}" r="12" fill="#ff7a3a" opacity=".25"/>` : ""}<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="${hot ? "#ff5a2a" : "#9aa3b2"}" stroke-width="3"/>`;
+      let s = `<path d="M130,150 C112,134 118,110 130,84 C142,110 148,134 130,150Z" fill="#7fb2ff" opacity=".55"/><path d="M130,150 C122,140 124,126 130,114 C136,126 138,140 130,150Z" fill="#2f5fd0"/>` + loop(130, 104, true);
+      s += T(110, 186, "1. Red-hot in the flame") + T(110, 206, "kills everything on the wire", {w:400, fs:13});
+      s += `<line x1="200" y1="104" x2="250" y2="104" stroke="#8a93a3" stroke-width="2.5"/><path d="M258,104 l-10,-6 v12 Z" fill="#8a93a3"/>`;
+      s += loop(380, 104, false) + `<path d="M368,82 q4,-6 0,-12 M380,80 q4,-6 0,-12 M392,82 q4,-6 0,-12" fill="none" stroke="#c9d3e0" stroke-width="2.5" stroke-linecap="round"/><circle cx="420" cy="134" r="14" fill="#fff" stroke="#343b4a" stroke-width="2.5"/><path d="M420,134 L420,125 M420,134 L427,138" stroke="#343b4a" stroke-width="2.5" stroke-linecap="round"/>`;
+      s += T(360, 186, "2. Cool a few seconds") + T(360, 206, "touch nothing, don't set it down", {w:400, fs:13});
+      s += `<line x1="450" y1="104" x2="500" y2="104" stroke="#8a93a3" stroke-width="2.5"/><path d="M508,104 l-10,-6 v12 Z" fill="#8a93a3"/>`;
+      s += `<g transform="rotate(-40 640 110)"><path d="M620,60 L620,160 A20,20 0 0 0 660,160 L660,60" fill="#f3e6bc" stroke="#8b93a3" stroke-width="3"/><rect x="621.5" y="60" width="37" height="34" fill="#fff"/></g>` + loop(612, 104, false);
+      s += T(630, 186, "3. Then pick up cells") + T(630, 206, "a cool loop keeps them alive", {w:400, fs:13});
+      return `<svg viewBox="0 0 760 220" role="img" aria-label="Flame the loop red-hot, let it cool, then pick up cells">${s}</svg>`;
+    }
+  };
   function openTheory(){
     const t = TABS[tabKey], m = $("tModal");
     m.querySelector(".tcard").innerHTML = `<div class="thead"><div><div class="tkick">Understand the exercise</div><h2 id="tTitle">${t.title}</h2></div><button class="tclose" id="tClose" aria-label="Close">×</button></div>
       <div class="tasks"><span class="tlabel">The question it answers</span><p>${t.question}</p></div>
       <div class="tsec"><h3>Key ideas</h3><ul>${t.how.map(x => `<li>${x}</li>`).join("")}</ul></div>
+      ${(t.more || []).map(([h, pic, ps]) => `<div class="tsec"><h3>${h}</h3>${pic ? `<div class="panel" style="margin-bottom:10px;max-width:none">${THEORYPICS[pic]()}</div>` : ""}${ps.map(x => `<p style="margin:0 0 8px;line-height:1.6">${x}</p>`).join("")}</div>`).join("")}
       <div class="tfoot"><button class="btn primary" id="tBack">Back to the bench</button></div>`;
     m.hidden = false; document.body.style.overflow = "hidden"; m.querySelector(".tcard").scrollTop = 0;
     const close = () => { m.hidden = true; document.body.style.overflow = ""; const b = $("theoryBtn"); if (b) b.focus({preventScroll:true}); };

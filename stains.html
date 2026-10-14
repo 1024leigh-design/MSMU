@@ -51,6 +51,11 @@
   .quizhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
   .quizhead h3{margin:0}
   .btn.sm{font-size:.85rem;padding:6px 14px}
+  .orgrow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+  .orgchip{border:2px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font:700 .95rem var(--font);cursor:pointer;text-align:left;color:var(--ink)}
+  .orgchip small{display:block;font-weight:400;color:var(--muted);font-size:.85rem}
+  .orgchip.on{border-color:var(--accent);background:var(--accent-soft)}
+  .orgchip:disabled{opacity:.5;cursor:not-allowed}
   .sect{font-size:.82rem;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 6px}
   .benchsteps{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
   .bstep{font-size:.88rem;font-weight:700;border-radius:999px;padding:4px 11px;background:#eef1f5;color:var(--muted)}
@@ -143,7 +148,11 @@
   /* ---------------------------------------------------------------- reagents and actions */
   const ACT = {
     water:{label:"Drop of water", g:"slide", c:"#cfe6f5", code:"H₂O", name:["Water", "(a drop)"]},
-    cells:{label:"Add cells from the culture", g:"slide"},
+    cells:{label:"Put the cells on the slide", g:"slide"},
+    loopflame:{label:"Flame the loop red-hot", g:"slide"},
+    open:{label:"Uncap the tube and flame the lip", g:"slide"},
+    take:{label:"Touch the cooled loop to the culture", g:"slide"},
+    close:{label:"Flame the lip and recap the tube", g:"slide"},
     dry:{label:"Air dry", g:"slide"},
     flame:{label:"Pass through the flame", g:"slide"},
     paper:{label:"Lay absorbent paper on the smear", g:"slide", name:["Absorbent", "paper"]},
@@ -164,6 +173,8 @@
   /* what to do on the bench for each step (used by the hint button) */
   const HOW = {
     water:"Drag the <b>Water</b> dropper bottle onto the slide.", cells:"Drag the <b>loop</b> (with cells on it) onto the slide.",
+    loopflame:"Drag the <b>loop</b> onto the burner flame.", open:"Drag the <b>culture tube</b> onto the burner flame: that uncaps it (the cap stays in your hand) and flames the lip.",
+    take:"Once the loop has cooled, drag it to the <b>culture tube</b>.", close:"Drag the <b>culture tube</b> onto the burner flame to flame the lip and recap it.",
     dry:"Tap the <b>Air dry</b> button.", flame:"Drag the <b>slide</b> onto the burner flame. Each drop on the flame is one pass.",
     paper:"Drag the <b>absorbent paper</b> onto the slide.", steam:"Tap the <b>Steam over the water bath</b> button.",
     unpaper:"Drag the <b>paper</b> off the slide.", rinse:"Drag the <b>wash bottle</b> onto the slide.", blot:"Drag the <b>bibulous paper</b> onto the slide.",
@@ -183,13 +194,19 @@
 
   /* ---------------------------------------------------------------- the three stains */
   const st = (id, stage, say, why, x) => Object.assign({id, stage, say, why:why || ""}, x || {});
+  const PREP1 = "Get the cells (aseptic)", PREP2 = "Air dry + heat-fix", PREP = [PREP1, PREP2];
   const prep = c => {
-    const a = [], S1 = "Make the smear";
-    if (c.src === "slant") a.push(st("water", S1, "Place a drop of water on the slide.", "A slant is solid growth, so it needs a drop of water to make a light, milky suspension."));
-    a.push(st("cells", S1, c.src === "slant" ? "Scrape a SMALL amount of growth into the water and mix it into a light, milky suspension." : c.src === "broth" ? "Put 2 to 3 loopfuls of the broth directly on the slide. No water needed." : "Spread a thin smear of the culture on the slide.",
+    const a = [];
+    if (c.src === "slant") a.push(st("water", PREP1, "Place a drop of water on the slide.", "A slant is solid growth, so it needs a drop of water to make a light, milky suspension."));
+    a.push(st("loopflame", PREP1, "Sterilize the loop: hold it in the flame until the whole wire glows red-hot. Then let it cool for a few seconds without touching anything.", "Sterilize the loop before it touches the culture."));
+    a.push(st("open", PREP1, "Uncap the culture tube (the cap stays in your hand, never on the bench) and pass the lip of the tube through the flame.", "Open the tube and flame its lip before the loop goes in."));
+    a.push(st("take", PREP1, c.src === "slant" ? "Touch the cooled loop to the growth and pick up a SMALL amount." : c.src === "broth" ? "Dip the cooled loop into the broth to pick up a loopful." : "Touch the cooled loop to the culture to pick up a small amount.", "Pick up the cells with the cooled loop."));
+    a.push(st("close", PREP1, "Pass the lip of the tube through the flame again, then recap it.", "Flame the lip and recap the tube before you make the smear."));
+    a.push(st("cells", PREP1, c.src === "slant" ? "Mix the growth into the drop of water to make a light, milky suspension, and spread it in a thin circle." : c.src === "broth" ? "Spread the loopful on the slide. No water needed. A broth smear uses 2 to 3 loopfuls (flame the loop and the lip each time)." : "Spread a thin smear of the culture on the slide.",
       "Spread it in a thin circle. A thick smear hides the cells."));
-    a.push(st("dry", S1, "Let the smear air dry at room temperature.", "Dry it before fixing."));
-    a.push(st("flame", S1, "Heat-fix: pass the dried slide through the flame 3 to 5 times.", "Heat-fixing kills the bacteria and attaches them to the slide.", {min:3}));
+    a.push(st("loopflame", PREP1, "Flame the loop red-hot again before you set it down.", "Never set down a loop that has bacteria on it."));
+    a.push(st("dry", PREP2, "Let the smear air dry at room temperature.", "Dry it before fixing."));
+    a.push(st("flame", PREP2, "Heat-fix: pass the dried slide through the flame 3 to 5 times.", "Heat-fixing kills the bacteria and attaches them to the slide.", {min:3}));
     return a;
   };
   const reagent = (id, stage, say, time, color) => [
@@ -203,9 +220,10 @@
       question:"How do you turn a culture into a smear, stain it, and read its shape and arrangement?",
       how:["A stain is a salt with a colored ion (the chromophore). <b>Basic (cationic)</b> dyes like methylene blue carry a positive charge, and most bacterial cells carry a net negative charge, so the dye binds readily. <b>Acidic (anionic)</b> dyes are repelled by the cell surface.",
         "A simple stain uses one dye: the <b>cells are colored</b> and the background is clear, which gives contrast so you can see <b>morphology</b> and <b>arrangement</b>.",
+        "<b>Keep it sterile while you get the cells.</b> Flame the loop red-hot and let it cool, keep the tube's cap in your hand, flame the lip of the tube after uncapping and before recapping, and flame the loop again before you set it down.",
         "A <b>smear</b> is a thin film of cells on a slide. <b>Fixation</b> kills the bacteria and attaches them to the slide. Heat-fixing means 3 to 5 passes through the flame."],
       cultures:[{o:"se", src:"slant", sub:"slant"}, {o:"bm", src:"broth", sub:"broth"}],
-      pal:{slide:["water", "cells", "dry", "flame", "rinse", "blot"], stain:["mb", "eosin"]},
+      pal:{slide:["water", "loopflame", "open", "take", "close", "cells", "dry", "flame", "rinse", "blot"], stain:["mb", "eosin"]},
       seq:c => prep(c).concat(reagent("mb", "Methylene blue", "Flood the smear with methylene blue for 30 to 60 seconds.", "30 to 60 seconds", "#2a4fb0")),
       quiz:[
         q("Why does a basic (cationic) dye like methylene blue stain bacteria so well?", ["Bacterial cells are slightly negative, so a positively charged dye is attracted to them", "Bacterial cells are positive, so they attract the dye", "Basic dyes dissolve the cell wall", "Basic dyes are neutral"], 0, "Opposites attract: a positive dye binds the negatively charged cell surface."),
@@ -224,7 +242,7 @@
         "<b>Gram-positive = purple.</b> The thick peptidoglycan traps the crystal violet-iodine complex. <b>Gram-negative = pink.</b> Ethanol dissolves the outer lipid membrane, and the complex washes out of the thin peptidoglycan.",
         "Decolorizing is the <b>trickiest step</b>: ethanol until the runoff runs clear (about 10 seconds), and don't overdo it. It guides antibiotic choice before culture results are back."],
       cultures:[{o:"se", src:"slant", sub:"slant"}, {o:"bs", src:"slant", sub:"slant"}, {o:"ec", src:"broth", sub:"broth"}],
-      pal:{slide:["water", "cells", "dry", "flame", "rinse", "blot"], stain:["cv", "iodine", "etoh", "safranin", "mb", "mg", "cf"]},
+      pal:{slide:["water", "loopflame", "open", "take", "close", "cells", "dry", "flame", "rinse", "blot"], stain:["cv", "iodine", "etoh", "safranin", "mb", "mg", "cf"]},
       seq:c => prep(c)
         .concat(reagent("cv", "Crystal violet", "Cover the smear with crystal violet (the primary stain) for 60 seconds.", "60 seconds", "#5a2a98"))
         .concat(reagent("iodine", "Gram's iodine", "Cover the smear with Gram's iodine (the mordant) for 30 seconds.", "30 seconds", "#8a5a1a"))
@@ -250,7 +268,7 @@
         "<b>Endospores = green. Vegetative cells = pink/red.</b> A 72-hour culture has more endospores than a 24-hour culture."],
       cultures:[{o:"bs", age:"24-hr", spore:"some", frac:.2}, {o:"bs", age:"72-hr", spore:"many", frac:.72}, {o:"bm", age:"24-hr", spore:"some", frac:.24},
         {o:"ec", age:"24-hr", spore:"none", frac:0}, {o:"ec", age:"72-hr", spore:"none", frac:0}, {o:"ea", age:"24-hr", spore:"none", frac:0}],
-      pal:{slide:["cells", "dry", "flame", "paper", "steam", "addstain", "unpaper", "rinse", "blot"], stain:["mg", "safranin", "cv", "mb", "cf"]},
+      pal:{slide:["loopflame", "open", "take", "close", "cells", "dry", "flame", "paper", "steam", "addstain", "unpaper", "rinse", "blot"], stain:["mg", "safranin", "cv", "mb", "cf"]},
       seq:c => prep(c).concat([
         st("paper", "Malachite green + steam", "Lay a small piece of absorbent paper over the smear.", "The paper holds the stain on the smear while it steams."),
         st("mg", "Malachite green + steam", "Cover the paper with malachite green.", "", {wait:"stain applied", color:"#2f9e4f"}),
@@ -276,10 +294,11 @@
   /* ---------------------------------------------------------------- state */
   let tabKey = "smear", S = null, raf = null, L = null, DR = null;
   const T = () => TABS[tabKey];
-  const fresh = () => ({c:null, seq:null, i:0, loop:false, wrong:0, hints:0, passes:0, dec:0, steamLvl:1, topup:0, mag:0, msg:"", warn:false, busy:null,
+  const fresh = c => ({c, seq:T().seq(c), i:0, loop:false, tube:"closed", hotUntil:0, wrong:0, hints:0, passes:0, dec:0, steamLvl:1, topup:0, mag:0, msg:"", warn:false, busy:null,
     L:{water:false, cells:false, dried:false, fixed:false, paper:false, stain:null, film:null, blotted:false, runoff:false},
     flags:{overheated:false, under:false, over:false, dried:false}, world:null});
-  const dispSeq = () => S.seq || T().seq(T().cultures[0]);
+  const dispSeq = () => S.seq;
+  const loopHot = () => performance.now() < S.hotUntil;
   const stages = () => { const out = []; dispSeq().forEach(s => { if (!out.includes(s.stage)) out.push(s.stage); }); out.push("Examine"); return out; };
   const shelfItems = () => { const t = T(), a = []; if (t.pal.slide.includes("water")) a.push("water"); t.pal.stain.forEach(x => a.push(x)); if (t.pal.slide.includes("paper")) a.push("paper"); a.push("rinse", "blot"); return a; };
 
@@ -315,19 +334,6 @@
     box.querySelector("i").style.width = f1(100 * clamp((performance.now() - b.t0) / b.dur, 0, 1)) + "%";
   }
 
-  /* choosing a culture: touch the loop to a tube */
-  function pickCulture(i){
-    if (!S || S.busy) return;
-    const t = T(), c = t.cultures[i];
-    if (S.L.cells){ say("The smear already has cells on it. Tap <b>Start over</b> to try a different culture.", true); return; }
-    const first = !S.c;
-    S.c = c; S.seq = t.seq(c); S.world = null; S.loop = true;
-    if (S.L.water && S.seq[0].id === "water") S.i = 1;
-    else { S.i = 0;
-      if (S.L.water && first){ S.wrong++; say(`Got some <i>${esc(ORG[c.o].short)}</i>. This is a <b>broth</b> culture, so it didn't need a drop of water: broth goes straight on the slide. Carry on.`, true); return; } }
-    say(`Got some <i>${esc(ORG[c.o].short)}</i> ${c.age ? "(" + c.age + ") " : ""}on the loop.`);
-  }
-
   function act(id){
     if (!S) return;
     const t = T();
@@ -335,13 +341,16 @@
       if (S.busy.kind === "steam" && (id === "addstain" || id === "mg")){ S.steamLvl = 1; S.topup = performance.now(); S.msg = "More malachite green added. Keep the paper wet."; S.warn = false; ui(); }
       return;
     }
-    if (!S.c){
-      if (id === "water" && t.pal.slide.includes("water") && !S.L.water){ startWait("Adding a drop of water…", 700, () => { S.L.water = true; say("Water is on the slide. Now pick up some cells: drag the loop to a culture tube."); }, "water"); return; }
-      S.wrong++;
-      say("First choose a culture: drag the <b>loop</b> to one of the tubes to pick up some cells." + (t.pal.slide.includes("water") ? " A slant culture also needs a drop of water on the slide." : ""), true);
-      return;
-    }
     const cur = S.seq[S.i];
+    /* aseptic checks that hold no matter which step you're on */
+    if (id === "take" && S.tube !== "open"){ S.wrong++; say("The tube is capped. Uncap it and flame the lip first: drag the tube onto the burner flame.", true); return; }
+    if (id === "take" && loopHot()){ S.wrong++; say("Too hot! Let the loop cool for a few seconds first. A red-hot loop kills the cells you're trying to pick up, and it can make them spatter.", true); return; }
+    if (id === "take" && S.loop){ say("The loop already has cells on it."); return; }
+    if (id === "loopflame" && S.loop){ S.wrong++; say("Not yet: flaming the loop now would burn off the cells. Put them on the slide first, then flame the loop.", true); return; }
+    if (id === "cells" && S.loop && S.tube === "open"){ S.wrong++; say("Close up first: flame the lip of the tube and recap it before you make the smear. Keep tubes open as briefly as you can.", true); return; }
+    /* extra flaming is never wrong */
+    if (id === "loopflame" && cur && cur.id !== "loopflame" && !(cur.id === "water")){ startWait("Flaming the loop red-hot…", 800, () => { S.hotUntil = performance.now() + 2200; say("The loop is sterile again. Let it cool before it touches anything."); coolLater(); }, "loopflame"); return; }
+    if (id === "close" && S.tube === "open" && cur && cur.id === "take"){ startWait("Flaming the lip…", 700, () => { say("Lip flamed again. Now pick up the cells with the cooled loop."); }, "tube"); return; }
     if (id === "addstain"){ say("There is nothing to top up right now. Add more stain only while the slide is steaming.", true); S.wrong++; return; }
     /* extras that are allowed after their step */
     if (id === "flame" && S.L.fixed){
@@ -356,10 +365,14 @@
     }
     if (!cur){ say("Every step is done. Examine the slide under the microscope."); return; }
     if (id !== cur.id){ wrong(id, cur); return; }
-    if (id === "cells" && !S.loop){ say("Pick up cells first: drag the loop to the culture tube.", true); return; }
+    if (id === "cells" && !S.loop){ say("Pick up cells first: touch the cooled loop to the culture tube.", true); return; }
     switch (id){
       case "water": startWait("Adding a drop of water…", 700, () => { S.L.water = true; finish(); }, "water"); break;
-      case "cells": startWait(S.c.src === "slant" ? "Mixing the growth into the water…" : S.c.src === "broth" ? "Spreading 2 to 3 loopfuls…" : "Spreading a thin smear…", 1000, () => { S.L.cells = true; S.loop = false; finish(); }, "loop"); break;
+      case "loopflame": startWait("Flaming the loop red-hot…", 900, () => { S.hotUntil = performance.now() + 2200; finish(); say(S.L.cells ? "Sterile again, so it's safe to set down." : "Red-hot and sterile. Now let it cool for a few seconds: don't touch anything with it."); coolLater(); }, "loopflame"); break;
+      case "open": startWait("Uncapping and flaming the lip…", 900, () => { S.tube = "open"; finish(); say("The tube is open and the lip is flamed. The cap stays in your hand."); }, "tube"); break;
+      case "take": startWait("Picking up cells…", 800, () => { S.loop = true; finish(); }, "take"); break;
+      case "close": startWait("Flaming the lip and recapping…", 900, () => { S.tube = "closed"; finish(); }, "tube"); break;
+      case "cells": startWait(S.c.src === "slant" ? "Mixing the growth into the water…" : S.c.src === "broth" ? "Spreading the broth…" : "Spreading a thin smear…", 1000, () => { S.L.cells = true; S.loop = false; finish(); }, "loop"); break;
       case "dry": startWait("Air drying…", 1300, () => { S.L.dried = true; finish(); }); break;
       case "flame":
         startWait("Passing the slide through the flame…", 650, () => {
@@ -390,6 +403,7 @@
     }
   }
   let lastStain = null;
+  function coolLater(){ const me = S; setTimeout(() => { if (S !== me) return; draw(); if (!S.busy && /cool for a few/.test(S.msg + "") && !S.L.cells) say("The loop has cooled. ✓"); }, 2300); }
   function setFilm(){
     const o = ORG[S.c.o];
     if (tabKey === "smear") S.L.film = "#7d97d8";
@@ -410,10 +424,17 @@
     const inSeq = S.seq.some(s => s.id === id);
     if (id === "water" && S.c.src === "broth") m = "A broth culture is liquid, so no water is needed. Put the loopfuls straight on the slide.";
     else if (id === "cells" && cur.id === "water") m = "Put a drop of water on the slide first, then mix in the growth.";
-    else if (id === "cells") m = "The cells are already on the slide.";
+    else if (id === "cells" && S.L.cells) m = "The cells are already on the slide.";
+    else if (["loopflame", "open", "take", "close"].includes(id) && cur.id === "water") m = "Put a drop of water on the slide first. Then sterilize the loop and get the cells.";
+    else if (id === "open" && cur.id === "loopflame") m = "Sterilize the loop first, so the tube stays open as briefly as possible.";
+    else if (id === "open" && S.L.cells) m = "You already have your cells. The tube stays capped.";
+    else if (id === "close" && S.tube !== "open") m = "The tube is already capped.";
+    else if (id === "close" && cur.id === "take") m = "Pick up the cells first, then flame the lip and recap.";
+    else if (id === "take" && S.L.cells) m = "You already have cells on the slide.";
+    else if (["dry", "flame"].includes(id) && cur.stage === PREP1) m = cur.id === "loopflame" && S.L.cells ? "Flame the loop red-hot first, before you set it down. Never set down a loop with bacteria on it." : "Not yet. Get the cells onto the slide first.";
     else if (!inSeq && DISTRACT[id]) m = DISTRACT[id];
-    else if (cur.stage === "Make the smear" && ["cv", "iodine", "etoh", "safranin", "mb", "mg", "paper", "steam", "rinse", "blot"].includes(id)) m = "Not yet. Make and heat-fix the smear first: heat-fixing kills the bacteria and attaches them to the slide so they don't wash off.";
-    else if (id === "flame" && cur.id !== "flame") m = cur.stage === "Make the smear" ? "Not yet. Let the smear air dry before heat-fixing." : "The smear is already heat-fixed. Keep staining.";
+    else if (PREP.includes(cur.stage) && ["cv", "iodine", "etoh", "safranin", "mb", "mg", "paper", "steam", "rinse", "blot"].includes(id)) m = "Not yet. Make and heat-fix the smear first: heat-fixing kills the bacteria and attaches them to the slide so they don't wash off.";
+    else if (id === "flame" && cur.id !== "flame") m = PREP.includes(cur.stage) ? "Not yet. Let the smear air dry before heat-fixing." : "The smear is already heat-fixed. Keep staining.";
     else if (id === "etoh") m = cur.id === "iodine" ? "Not yet. The mordant (Gram's iodine) goes on before the decolorizer." : "Not yet. 95% ethanol is the decolorizer, and it comes after the crystal violet and the iodine.";
     else m = "Not yet. " + (cur.why ? cur.why + " " : "") + "You're on: <b>" + esc(cur.stage) + "</b>. Tap the hint button if you're stuck.";
     say(m, true);
@@ -421,17 +442,17 @@
 
   /* ---------------------------------------------------------------- bench layout */
   function layout(){
-    const host = $("slideSvg"), w = host && host.clientWidth ? host.clientWidth : innerWidth, narrow = w < 600, n = T().cultures.length;
+    const host = $("slideSvg"), w = host && host.clientWidth ? host.clientWidth : innerWidth, narrow = w < 600, n = 1;
     if (!narrow){
       const dx = Math.min(84, 430 / Math.max(n - 1, 1));
       L = {narrow, W:900, H:548, fs:1, n, stagger:false,
-        rack:i => ({x:70 + i * dx, y:30}), tray:{x:560, y:40, w:316, h:62}, loop:{x:790, y:71},
+        rack:i => ({x:110, y:30}), tray:{x:560, y:40, w:316, h:62}, loop:{x:790, y:71},
         slide:{cx:360, cy:250, w:380, h:116}, burner:{x:735, y:352},
         shelf:j => ({x:58 + j * 82, y:500})};
     } else {
       const dx = Math.min(98, 470 / Math.max(n - 1, 1));
       L = {narrow, W:600, H:950, fs:1.55, n, stagger:n > 2,
-        rack:i => ({x:300 - (n - 1) * dx / 2 + i * dx, y:36}), tray:{x:24, y:262, w:340, h:66}, loop:{x:262, y:295},
+        rack:i => ({x:150, y:36}), tray:{x:24, y:262, w:340, h:66}, loop:{x:262, y:295},
         slide:{cx:232, cy:432, w:330, h:112}, burner:{x:480, y:524},
         shelf:j => ({x:66 + (j % 5) * 117, y:j < 5 ? 708 : 886})};
     }
@@ -441,7 +462,7 @@
   const tipOf = d => d.item === "loop" ? [d.x, d.y + 60] : /^b:/.test(d.item) && !["b:blot", "b:paper"].includes(d.item) ? [d.x, d.y + 42] : [d.x, d.y];
   const onSlide = p => { const b = slideBox(); return p[0] > b.x0 - 34 && p[0] < b.x1 + 34 && p[1] > b.y0 - 50 && p[1] < b.y1 + 30; };
   const onBurner = p => Math.hypot(p[0] - flameAt().x, p[1] - flameAt().y) < 90;
-  const tubeAt = p => { for (let i = 0; i < L.n; i++){ const r = L.rack(i); if (Math.abs(p[0] - r.x) < 30 && p[1] > r.y - 30 && p[1] < r.y + 112) return i; } return -1; };
+  const onTube = p => { const r = L.rack(0); return Math.abs(p[0] - r.x) < 36 && p[1] > r.y - 34 && p[1] < r.y + 118; };
 
   /* ---------------------------------------------------------------- drawing pieces */
   const CULTURE = "#efe3c0";
@@ -450,8 +471,9 @@
     const l = cx - w / 2 + inset, r = cx + w / 2 - inset, rr = (r - l) / 2, b = top + h - inset;
     return `M${f1(l)},${f1(top)} L${f1(l)},${f1(b - rr)} A${f1(rr)},${f1(rr)} 0 0 0 ${f1(r)},${f1(b - rr)} L${f1(r)},${f1(top)} Z`;
   }
-  function cultureTube(i, hot){
-    const c = T().cultures[i], o = ORG[c.o], {x, y} = L.rack(i), w = 32, h = 98, chosen = S.c === c;
+  function cultureTube(i, hot, at, tilt){
+    const c = S.c, o = ORG[c.o], p0 = L.rack(0), x = at ? at.x : p0.x, y = at ? at.y : p0.y, w = 32, h = 98, chosen = false;
+    if (tilt) return `<g transform="rotate(${f1(tilt)} ${f1(x)} ${f1(y + 40)})">${cultureTube(i, false, {x, y}).replace(/<text[\s\S]*$/, "")}</g>`;
     let s = `<clipPath id="ct${i}"><path d="${tubePath(x, y, w, h, 3)}"/></clipPath><g clip-path="url(#ct${i})">`;
     if (c.src === "broth"){
       s += `<rect x="${x - w}" y="${y + 34}" width="${w * 2}" height="${h}" fill="${CULTURE}"/><rect x="${x - w}" y="${y + 34}" width="${w * 2}" height="${h}" fill="url(#glassShade)"/>`;
@@ -462,19 +484,22 @@
     }
     s += `</g><path d="${tubePath(x, y, w, h, 0).replace(/ Z$/, "")}" fill="none" stroke="#8b93a3" stroke-width="3" stroke-linejoin="round"/>`;
     s += `<line x1="${x - w / 2 + 7}" y1="${y + 10}" x2="${x - w / 2 + 7}" y2="${y + h - 22}" stroke="#fff" stroke-width="2.6" opacity=".75" stroke-linecap="round"/>`;
-    s += `<rect x="${x - 20}" y="${y - 18}" width="40" height="22" rx="5" fill="${o.cap}"/><rect x="${x - 20}" y="${y - 18}" width="40" height="6" rx="3" fill="#fff" opacity=".2"/>`;
+    if ((capOverride == null ? S.tube !== "open" : capOverride)) s += `<rect x="${x - 20}" y="${y - 18}" width="40" height="22" rx="5" fill="${o.cap}"/><rect x="${x - 20}" y="${y - 18}" width="40" height="6" rx="3" fill="#fff" opacity=".2"/>`;
+    else if (!at) s += `<g transform="rotate(-25 ${x + 52} ${y - 8})"><rect x="${x + 32}" y="${y - 20}" width="40" height="22" rx="5" fill="${o.cap}"/></g>` + txt(x + 58, y + 24 * L.fs, "cap in", {fs:11 * L.fs, col:"#5a6376", w:400}) + txt(x + 58, y + 38 * L.fs, "your hand", {fs:11 * L.fs, col:"#5a6376", w:400});
     if (chosen) s += `<rect x="${x - 27}" y="${y - 25}" width="54" height="${h + 34}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="3"/>`;
     if (hot) s += `<rect class="pulse" x="${x - 27}" y="${y - 25}" width="54" height="${h + 34}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="3" stroke-dasharray="7 6"/>`;
-    const dy = L.stagger && i % 2 ? 34 * L.fs : 0;
+    const dy = 0;
     s += txt(x, y + h + 22 * L.fs + dy, esc(o.short), {fs:12.5 * L.fs, it:true});
     s += txt(x, y + h + 38 * L.fs + dy, esc(c.age || c.sub), {fs:11.5 * L.fs, col:"#5a6376", w:400});
     return s;
   }
-  function loopSVG(tx, ty, flat, load){
+  function loopSVG(tx, ty, flat, load, heat){
     const len = 150, grip = 52, g = flat ? `<g transform="rotate(-90 ${tx} ${ty})">` : "<g>";
     let s = g + `<line x1="${tx}" y1="${ty - len}" x2="${tx}" y2="${ty - 7}" stroke="#9aa3b2" stroke-width="2.6"/>`;
     s += `<rect x="${tx - 6}" y="${ty - len - grip}" width="12" height="${grip + 6}" rx="5" fill="#3f4cc0"/><rect x="${tx - 6}" y="${ty - len - grip}" width="4" height="${grip + 6}" rx="2" fill="#fff" opacity=".25"/>`;
-    s += `<circle cx="${tx}" cy="${ty}" r="7" fill="${load ? CULTURE : "none"}" stroke="#9aa3b2" stroke-width="2.4"/>`;
+    const ht = heat == null ? (S ? clamp((S.hotUntil - performance.now()) / 2200, 0, 1) : 0) : heat;
+    if (ht > 0) s += `<line x1="${tx}" y1="${ty - 60}" x2="${tx}" y2="${ty - 7}" stroke="#ff5a2a" stroke-width="3" opacity="${f1(ht)}"/><circle cx="${tx}" cy="${ty}" r="13" fill="#ff7a3a" opacity="${f1(.3 * ht)}"/>`;
+    s += `<circle cx="${tx}" cy="${ty}" r="7" fill="${load ? CULTURE : "none"}" stroke="${ht > .05 ? "#ff5a2a" : "#9aa3b2"}" stroke-width="2.4"/>`;
     return s + `</g>`;
   }
   /* a plastic dropping bottle, drawn with its base at (0,0) and the nozzle tip at (0,-104) */
@@ -547,13 +572,13 @@
     /* culture rack */
     const r0 = L.rack(0), rN = L.rack(L.n - 1);
     s += `<rect x="${r0.x - 34}" y="${r0.y + 58}" width="${rN.x - r0.x + 68}" height="14" rx="5" fill="#c9b38f"/><rect x="${r0.x - 34}" y="${r0.y + 98}" width="${rN.x - r0.x + 68}" height="10" rx="5" fill="#b49b74"/>`;
-    for (let i = 0; i < L.n; i++) s += cultureTube(i, hi === "loop" && !S.L.cells);
+    if (hi !== "tube" && tool !== "tube") s += `<g data-item="tube"><rect x="${r0.x - 34}" y="${r0.y - 30}" width="68" height="150" fill="transparent"/>${cultureTube(0, hi === "loop" && !S.L.cells && S.tube === "open")}</g>`;
     /* tool tray with the loop */
     const tr = L.tray;
     s += `<rect x="${tr.x}" y="${tr.y}" width="${tr.w}" height="${tr.h}" rx="14" fill="#e3e7ee"/>` + txt(L.loop.x + 18, L.loop.y + 5 * L.fs, "loop", {fs:12.5 * L.fs, col:"#5a6376", a:"start"});
-    if (hi !== "loop" && tool !== "loop"){
+    if (hi !== "loop" && !["loop", "loopflame", "take"].includes(tool)){
       s += `<g data-item="loop"><rect x="${tr.x}" y="${tr.y}" width="${tr.w}" height="${tr.h}" fill="transparent"/>${loopSVG(L.loop.x, L.loop.y, true, S.loop)}`;
-      if (!held && !b && !S.c) s += `<rect class="pulse" x="${tr.x + 4}" y="${tr.y + 4}" width="${tr.w - 8}" height="${tr.h - 8}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="2.5" stroke-dasharray="7 6"/>`;
+      if (!held && !b && S.i === 0 && S.seq[0].id === "loopflame") s += `<rect class="pulse" x="${tr.x + 4}" y="${tr.y + 4}" width="${tr.w - 8}" height="${tr.h - 8}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="2.5" stroke-dasharray="7 6"/>`;
       s += `</g>`;
     }
     /* staining tray, or the boiling water bath while steaming */
@@ -568,7 +593,13 @@
       if (!L.narrow) s += txt(sl.cx, box.y1 + 48, "staining tray", {fs:11.5, col:"#8b93a3", w:400});
     }
     /* burner */
-    s += burnerSVG(hi === "slide", tool === "flame");
+    s += burnerSVG(hi === "slide" || hi === "tube" || (hi === "loop" && !S.loop), tool === "flame" || tool === "loopflame" || tool === "tube");
+    if (tool === "loopflame"){ const f = flameAt(); s += loopSVG(f.x + 6, f.y + 4, false, false, bk); }
+    if (tool === "tube"){ const f = flameAt(), k2 = Math.sin(bk * Math.PI), opening = /^Uncap/.test(b.text), closing = /recap/.test(b.text);
+      capOverride = opening ? bk < .25 : closing ? bk > .8 : false;
+      s += cultureTube(0, false, {x:lerp(L.rack(0).x, f.x + 33, k2), y:lerp(L.rack(0).y, f.y - 7, k2)}, -55 * k2 - .01);
+      capOverride = null; }
+    if (tool === "take"){ const r = L.rack(0), dk = Math.sin(bk * Math.PI); s += loopSVG(r.x, f1(r.y - 40 + dk * 110), false, bk > .5, 0); }
     /* the slide (picked up, passing through the flame, or resting) */
     if (tool === "flame"){
       const f = flameAt(), dx = Math.sin(bk * Math.PI * 2) * 46;
@@ -604,7 +635,7 @@
       else if (tool === "rinse"){ s += heldShape("rinse", mx - 50, top - 46); if (bk < .8) s += `<path d="M${mx - 50},${top - 4} Q${mx - 20},${top - 10} ${mx},${my - 6}" fill="none" stroke="#9fd0ee" stroke-width="5" stroke-linecap="round" opacity=".9"/>`; }
       else if (tool === "blot"){ const yy = lerp(top - 50, my + 20, clamp(bk * 3, 0, 1)) - (bk > .75 ? (bk - .75) * 200 : 0); s += `<g transform="translate(${mx} ${f1(yy)})">${blotShape()}</g>`; }
       else if (tool === "paper"){ s += `<g transform="translate(${mx} ${f1(lerp(top - 30, my + 22, clamp(bk * 1.4, 0, 1)))})" opacity="${f1(1 - seg(bk, .85, 1))}">${paperShape()}</g>`; }
-      else if (ACT[tool] && bk < .55){
+      else if (ACT[tool] && ACT[tool].code && bk < .55){
         s += heldShape(tool, mx, top - 40);
         const dk = (bk * 4) % 1; s += `<ellipse cx="${mx}" cy="${f1(lerp(top + 2, my, dk))}" rx="4" ry="5.5" fill="${ACT[tool].c}" stroke="#8b93a3" stroke-width="1"/>`;
       }
@@ -613,13 +644,16 @@
     /* the item in hand */
     if (held){
       if (hi === "loop") s += loopSVG(f1(held.x), f1(held.y + 60), false, S.loop);
+      else if (hi === "tube") s += cultureTube(0, false, {x:held.x, y:held.y - 40}, -20);
       else if (hi === "slide") s += slideSVG(held.x, held.y, .55, false);
       else if (hi === "paperOn") s += `<g transform="translate(${f1(held.x)} ${f1(held.y + 24)})">${paperShape()}</g>`;
       else if (/^b:/.test(hi)) s += heldShape(hi.slice(2), held.x, held.y);
     }
     svg.setAttribute("viewBox", `0 0 ${L.W} ${L.H}`);
     svg.innerHTML = s;
+    if (loopHot() && !S.busy && !coolRaf) coolRaf = requestAnimationFrame(() => { coolRaf = 0; draw(); });
   }
+  let coolRaf = 0, capOverride = null;
   const seg = (k, a, b) => clamp((k - a) / (b - a), 0, 1);
   const drawSlide = draw;
 
@@ -627,14 +661,20 @@
   function canGrab(item){
     if (!S) return false;
     if (S.busy){ if (S.busy.kind === "steam" && item === "b:mg") return true; say("Wait for this step to finish.", false); return false; }
-    if (item === "loop" && S.L.cells){ say("The cells are already on the slide. You're done with the loop.", false); return false; }
+    if (item === "loop" && S.L.cells && !(S.seq[S.i] && S.seq[S.i].id === "loopflame")){ say("The cells are already on the slide, and the loop is sterile. You're done with it.", false); return false; }
     return true;
   }
   function dropItem(d){
     const p = tipOf(d), it = d.item;
     if (it === "loop"){
-      const i = tubeAt(p); if (i >= 0){ pickCulture(i); return; }
-      if (onSlide(p)){ if (!S.loop){ say("First touch the loop to a culture tube to pick up some cells.", true); return; } act("cells"); }
+      if (onBurner(p)){ act("loopflame"); return; }
+      if (onTube(p)){ act("take"); return; }
+      if (onSlide(p)){ if (!S.loop){ say("The loop has no cells on it yet. Sterilize it, then touch it to the open culture tube.", true); return; } act("cells"); }
+      return;
+    }
+    if (it === "tube"){
+      if (onBurner([d.x, d.y])) act(S.tube === "open" ? "close" : "open");
+      else if (onSlide([d.x, d.y])) say("The tube doesn't go on the slide. Use the loop to move the cells, and drag the tube to the flame to open or close it.", true);
       return;
     }
     if (it === "slide"){ if (onBurner([d.x, d.y])) act("flame"); else if (!onSlide([d.x, d.y])) say("To heat-fix, drag the slide onto the burner flame."); return; }
@@ -713,21 +753,21 @@
   /* ---------------------------------------------------------------- UI */
   function ui(){
     if (!S) return;
-    const seq = dispSeq(), cur = S.c ? S.seq[S.i] : seq[0], done = !!S.c && S.i >= S.seq.length, stg = stages();
+    const seq = dispSeq(), cur = S.seq[S.i], done = S.i >= S.seq.length, stg = stages();
     const curStage = done ? "Examine" : cur.stage;
     $("stages").innerHTML = stg.map(n => {
       const idxs = seq.map((x, k) => x.stage === n ? k : -1).filter(k => k >= 0);
-      const ok = n === "Examine" ? S.mag === 100 : !!S.c && idxs.length && idxs.every(k => k < S.i), now = n === curStage;
+      const ok = n === "Examine" ? S.mag === 100 : idxs.length && idxs.every(k => k < S.i), now = n === curStage;
       return `<span class="bstep ${ok ? "ok" : now ? "cur" : ""}">${ok ? "✓ " : ""}${esc(n)}</span>`;
     }).join("");
     const hint = $("hint");
     hint.className = "benchhint" + (S.warn ? " warn" : "");
     hint.innerHTML = S.msg || (done ? "Every step is done! Tap <b>Examine under the microscope</b>." :
-      !S.c ? "Drag things on the bench onto the slide, in the right order. Wrong turns are counted. Start by picking a culture: drag the <b>loop</b> to a tube. (You can also tap an item, then tap where it goes.)" :
+      S.i === 0 ? "Drag things around the bench in the right order, keeping everything sterile. Wrong turns are counted. (You can also tap an item, then tap where it goes.)" :
       "Stage: <b>" + esc(cur.stage) + "</b>. What comes next?");
     const busy = !!S.busy, steaming = busy && S.busy.kind === "steam";
     document.querySelectorAll(".act").forEach(b => { b.disabled = busy ? !(steaming && b.dataset.act === "addstain") : false; });
-    document.querySelectorAll(".pick").forEach(b => { b.disabled = busy; });
+    document.querySelectorAll(".orgchip").forEach(b => { b.disabled = busy; });
     $("dryBtn").disabled = busy || done;
     if ($("steamBtn")) $("steamBtn").disabled = busy || done;
     $("hintBtn").disabled = busy || done;
@@ -736,7 +776,6 @@
   }
   function showHint(){
     if (!S || S.busy) return;
-    if (!S.c){ S.hints++; say("Hint: drag the <b>loop</b> to one of the culture tubes to pick up cells." + (T().pal.slide.includes("water") ? " A slant culture needs a drop of water on the slide first (drag the Water bottle onto the slide)." : "")); return; }
     const cur = S.seq[S.i]; if (!cur) return;
     S.hints++; say("Hint: " + cur.say + " " + (HOW[cur.id] || (ACT[cur.id] && ACT[cur.id].g === "stain" ? `Drag the <b>${ACT[cur.id].label}</b> bottle onto the slide.` : "")));
   }
@@ -750,6 +789,9 @@
         <div class="labhead"><h2>${t.title} <span class="chap" style="background:#e7e9fb;color:#2c3796">${t.ex}</span></h2><button class="btn hint" id="theoryBtn">📖 Understand the stain</button></div>
         <p class="labq"><b>Question:</b> ${t.question}</p>
         ${t.note ? `<div class="labnote">${t.note}</div>` : ""}
+        <div class="sect">1. Pick a culture</div>
+        <div class="orgrow" id="orgrow">${t.cultures.map((c, i) => `<button class="orgchip" data-c="${i}"><i>${esc(ORG[c.o].name)}</i>${c.age ? " " + c.age : ""}<small>${c.sub || "culture tube"}</small></button>`).join("")}</div>
+        <div class="sect">2. Do each step in order</div>
         <div class="benchsteps" id="stages"></div>
         <div class="benchhint" id="hint" role="status" aria-live="polite"></div>
         <div class="busy" id="busy" hidden><span></span><div class="bar"><i></i></div></div>
@@ -757,7 +799,6 @@
         <div class="benchbtns"><button class="btn secondary" id="dryBtn">💨 Air dry</button>${t.pal.slide.includes("steam") ? `<button class="btn secondary" id="steamBtn">♨️ Steam over the water bath</button>` : ""}
           <button class="btn hint" id="hintBtn">💡 Show me the next step</button><button class="btn primary" id="scopeBtn" hidden>🔬 Examine under the microscope</button><button class="btn secondary" id="againBtn">↺ Start over</button></div>
         <details class="kbd"><summary>Keyboard controls (no dragging)</summary>
-          <div class="sect">Culture (touch the loop to it)</div><div class="palette">${t.cultures.map((c, i) => `<button class="act pick" data-pick="${i}"><i>${esc(ORG[c.o].short)}</i>&nbsp;${esc(c.age || c.sub)}</button>`).join("")}</div>
           <div class="sect">On the slide</div><div class="palette">${t.pal.slide.map(a => `<button class="act" data-act="${a}">${ACT[a].label}</button>`).join("")}</div>
           <div class="sect">Stains and reagents</div><div class="palette">${t.pal.stain.map(a => `<button class="act" data-act="${a}" style="--dot:${ACT[a].c}"><span class="dot"></span>${ACT[a].label}</button>`).join("")}</div>
         </details>
@@ -766,20 +807,21 @@
       </div>`;
     $("labTabs").onclick = e => { const b = e.target.closest("[data-tab]"); if (!b) return; tabKey = b.dataset.tab; history.replaceState(null, "", "#" + tabKey); renderTab(); };
     document.querySelectorAll(".act[data-act]").forEach(b => b.addEventListener("click", () => act(b.dataset.act)));
-    document.querySelectorAll(".pick").forEach(b => b.addEventListener("click", () => pickCulture(+b.dataset.pick)));
+    $("orgrow").onclick = e => { const b = e.target.closest("[data-c]"); if (b) start(+b.dataset.c); };
     $("dryBtn").onclick = () => act("dry");
     if ($("steamBtn")) $("steamBtn").onclick = () => act("steam");
     $("hintBtn").onclick = showHint;
-    $("againBtn").onclick = start;
+    $("againBtn").onclick = () => start(S ? T().cultures.indexOf(S.c) : 0);
     $("scopeBtn").onclick = openScope;
     bindQuiz(t);
     $("theoryBtn").onclick = openTheory; $("theoryBtn2").onclick = openTheory;
     DR = MicroDrag($("slideSvg"), {canGrab, drop:dropItem, draw:() => draw(), tapped:() => say("Now tap where you want to put it.")});
-    start();
+    start(0);
   }
-  function start(){
+  function start(i){
     endBusy(); lastStain = null; cancelAnimationFrame(raf);
-    S = fresh(); if (DR) DR.cancel(); layout();
+    S = fresh(T().cultures[i || 0]); if (DR) DR.cancel(); layout();
+    document.querySelectorAll(".orgchip").forEach((b, k) => b.classList.toggle("on", k === (i || 0)));
     $("scope").hidden = true; $("scope").innerHTML = "";
     draw(); ui(); busyBar();
   }
@@ -977,7 +1019,10 @@
       reagents:[["Water (slant cultures only)", "", "Makes a light, milky suspension of solid growth", "Before the cells go on"], ["Methylene blue", "#2a4fb0", "Basic (cationic) dye: the simple stain. Colors the cells blue", "30 to 60 seconds"]],
       results:[{t:"S. epidermidis", s:"blue cocci in clusters", sp:{shape:"coccus", fill:"#3858b8", bg:"#f5f7fc"}}, {t:"B. megaterium", s:"large blue rods, some in chains", sp:{shape:"bacillus", fill:"#3858b8", bg:"#f5f7fc", L:22, W:8, chain:.35, n:14}}],
       extra:["Shapes and arrangements to know", arrangeSVG],
-      mistakes:[["Too much growth from a slant", "The smear is too thick and cells pile up, so you can't see single cells. Use a SMALL amount and spread it thin."],
+      mistakes:[["Touching the culture with a hot loop", "A red-hot loop kills the cells and can make them spatter. Flame it, then let it cool for a few seconds."],
+        ["Setting the cap on the bench, or skipping the lip", "The bench and the air carry microbes. Keep the cap in your hand, and flame the lip after uncapping and before recapping."],
+        ["Setting the loop down without flaming it", "Flame it red-hot again after the cells are on the slide. Never set down a loop with bacteria on it."],
+        ["Too much growth from a slant", "The smear is too thick and cells pile up, so you can't see single cells. Use a SMALL amount and spread it thin."],
         ["Adding water to a broth culture", "Not needed. A broth culture is already liquid, so 2 to 3 loopfuls go straight on the slide."],
         ["Heat-fixing before the smear is dry", "Let the smear air dry at room temperature first, then heat-fix."],
         ["More than 5 passes through the flame", "Too much heat shrinks and distorts the cells. Use 3 to 5 passes."],
@@ -1047,7 +1092,7 @@
   window.addEventListener("hashchange", () => { const k = location.hash.slice(1); if (TABS[k] && k !== tabKey){ tabKey = k; renderTab(); window.scrollTo({top:0, behavior:"smooth"}); } });
   window.addEventListener("resize", () => { if (!L) return; const was = L.narrow; layout(); if (was !== L.narrow) draw(); });
   renderTab();
-  window.__st = {S:() => S, L:() => L, act, pickCulture, dropItem, tipOf};
+  window.__st = {S:() => S, L:() => L, act, start, dropItem, tipOf};
 })();
 </script>
 </body>
