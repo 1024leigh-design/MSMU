@@ -54,13 +54,13 @@
 <script>
 (function(){
   /* To make a page live, give its tile an href. Tiles without one show as "Coming soon". */
-  const T = "biochem-tests.html", ST = "stains.html";
+  const T = "biochem-tests.html", ST = "stains.html", B = "basics.html";
   const GROUPS = [
     {title:"Microscopy and growth", items:[
-      {ex:"Exercise 1", name:"Parts of the Microscope", desc:"Parts, magnification, resolution, and oil immersion"},
-      {ex:"Exercise 2", name:"Living Microorganisms", desc:"Wet mounts, hanging drops, and motility"},
-      {ex:"Exercise 3", name:"Microbes in the Environment", desc:"Media, colonies, and describing growth"},
-      {ex:"Exercise 4", name:"Aseptic Technique", desc:"Transfers into broth, slants, and deeps"}]},
+      {ex:"Exercise 1", name:"Parts of the Microscope", desc:"Parts, magnification, resolution, and oil immersion", href:B + "#scope"},
+      {ex:"Exercise 2", name:"Living Microorganisms", desc:"Wet mounts, hanging drops, and motility", href:B + "#living"},
+      {ex:"Exercise 3", name:"Microbes in the Environment", desc:"Media, colonies, and describing growth", href:B + "#environment"},
+      {ex:"Exercise 4", name:"Aseptic Technique", desc:"Transfers into broth, slants, and deeps", href:B + "#aseptic"}]},
     {title:"Staining", items:[
       {ex:"Exercise 5", name:"Smears and Simple Staining", desc:"Heat fixing, morphology, and arrangement", href:ST + "#smear"},
       {ex:"Exercise 7", name:"Gram Stain", desc:"Gram-positive versus gram-negative", href:ST + "#gram"},

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microscopy and Growth | MicroLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="metab.css">
+<style>
+  .labtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .labtab{border:2px solid var(--line);background:#fff;color:var(--muted);font:700 .95rem var(--font);padding:9px 16px;border-radius:12px;cursor:pointer}
+  .labtab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .labwrap{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+  .labhead h2{margin:0 0 4px;font-size:1.3rem}
+  .labq{color:var(--muted);font-size:1rem;margin:0 0 12px}
+  .labhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  .tmodal{position:fixed;inset:0;background:rgba(20,24,36,.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto}
+  .tmodal[hidden]{display:none}
+  .tcard{background:#fff;border-radius:22px;max-width:820px;width:100%;padding:22px 24px 18px;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:tpop .25s ease-out}
+  @keyframes tpop{from{transform:translateY(14px);opacity:0}}
+  .thead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+  .thead h2{margin:2px 0 0;font-size:1.35rem}
+  .tkick{font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9a6212}
+  .tclose{border:none;background:#eef1f5;border-radius:50%;width:38px;height:38px;font-size:1.4rem;cursor:pointer;color:var(--ink);flex:none}
+  .tasks{background:linear-gradient(135deg,#fff4de,#fdeceb);border-radius:16px;padding:12px 16px;margin-bottom:12px}
+  .tasks p{margin:4px 0 0;font-size:1.08rem;line-height:1.45}
+  .tlabel{display:block;font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .tsec{margin:14px 0}
+  .tsec h3{font-size:.95rem;margin:0 0 8px;color:var(--accent)}
+  .tsec ul{margin:6px 0 0;padding-left:20px;line-height:1.6;font-size:1rem}
+  .tsec li{margin-bottom:8px}
+  .tfoot{display:flex;justify-content:flex-end;margin-top:8px}
+  .quizhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .quizhead h3{margin:0}
+  .btn.sm{font-size:.85rem;padding:6px 14px}
+  .howbox{background:#f3effd;border:1px solid #d9cdf5;border-radius:12px;padding:8px 14px;margin:0 0 14px;color:#3d2a6b;font-size:.95rem}
+  .howbox summary{cursor:pointer;font-weight:700}
+  .howbox ul{margin:8px 0 4px;padding-left:20px;line-height:1.5}
+  .sect{font-size:.82rem;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:20px 0 8px}
+  .panel{background:#f7f8fb;border:1px solid var(--line);border-radius:16px;padding:12px}
+  .panel svg{display:block;width:100%;height:auto}
+  .benchhint{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-size:1rem;color:#2c3796;min-height:1.5em;line-height:1.45;margin:8px 0}
+  .benchhint.good{background:var(--good-soft);color:#14593a}
+  .benchhint.warn{background:#fff3d6;color:#7a4b00}
+  .btn{font:700 .95rem var(--font);border-radius:999px;padding:8px 18px;cursor:pointer;border:2px solid var(--accent)}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.secondary{background:#fff;color:var(--accent)}
+  .btn.hint{border-color:#e5c56a;background:#fff8e6;color:#8a5a00}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+  .chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:700 .9rem var(--font);color:var(--ink);cursor:pointer}
+  .chip.on{border-color:var(--accent);background:var(--accent-soft)}
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  @media (max-width:820px){.grid2{grid-template-columns:1fr}}
+  .info{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:5.5em}
+  .info h4{margin:0 0 4px;font-size:1.05rem}
+  .mpart{cursor:pointer}
+  .mpart:hover{filter:brightness(1.18)}
+  .mpart.sel{filter:drop-shadow(0 0 5px #f2b134) brightness(1.1)}
+  .mpart.flash{filter:drop-shadow(0 0 6px #1b7f4e)}
+  .ans{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+  .ans button{border:2px solid var(--line);background:#fff;border-radius:12px;padding:9px 14px;font:700 .95rem var(--font);color:var(--ink);cursor:pointer}
+  .ans button:hover:not(:disabled){border-color:var(--accent)}
+  .ans button.right{border-color:var(--good);background:var(--good-soft)}
+  .ans button.wrong{border-color:#eab3af;background:var(--bad-soft)}
+  .tbl{width:100%;border-collapse:collapse;font-size:.95rem;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .tbl th,.tbl td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  .tbl th{background:#eef1f8}
+  .tblwrap{overflow-x:auto}
+  .ogame .odone{margin:8px 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .ogame .odone li{background:var(--good-soft);border:2px solid #9fd3b5;border-radius:12px;padding:8px 12px;font-size:.95rem}
+  .ogame .odone li small{display:block;color:#14593a;margin-top:2px}
+  .ogame .opool{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+  .ogame .opool button{text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:9px 12px;font:400 .95rem var(--font);color:var(--ink);cursor:pointer}
+  .ogame .opool button:hover{border-color:var(--accent)}
+  .ogame .opool button.shake{animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .numrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+  .numrow input{width:110px;font:400 1rem var(--font);padding:7px 10px;border-radius:10px;border:2px solid var(--line)}
+  .why{background:#f3effd;border:1px solid #d9cdf5;border-radius:10px;padding:10px 14px;font-size:.92rem;color:#3d2a6b;margin-top:10px}
+  .quiz{margin-top:24px;border-top:2px dashed var(--line);padding-top:14px}
+  .quiz h3{margin:0 0 10px;font-size:1.1rem;color:var(--more)}
+  .qcard{background:#faf8ff;border:1px solid #e3dbf6;border-radius:14px;padding:12px 14px;margin-bottom:10px}
+  .qq{margin:0 0 8px;font-weight:700}
+  .qopts{display:flex;flex-direction:column;gap:6px}
+  .qopt{text-align:left;border:2px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font:400 .95rem var(--font);color:var(--ink);cursor:pointer}
+  .qopt:hover:not(:disabled){border-color:var(--more)}
+  .qopt.right{border-color:var(--good);background:var(--good-soft);font-weight:700}
+  .qopt.wrong{border-color:#eab3af;background:var(--bad-soft);opacity:.75;cursor:default}
+  .qcard.done .qopt:not(.right){opacity:.55}
+  .qfb{margin-top:8px;font-size:.92rem;border-radius:10px;padding:7px 12px}
+  .qfb.good{background:var(--good-soft);color:#14593a}
+  .qfb.bad{background:var(--bad-soft);color:#7a2e28}
+  .qscore{font-weight:700;color:var(--more)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const f1 = n => Math.round(n * 10) / 10;
+  const rnd = k => { const v = Math.sin(k * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;"})[c]);
+  const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  const q = (qq, opts, a, why) => ({q:qq, opts, a, why});
+  let cleanups = [];
+  const onCleanup = fn => cleanups.push(fn);
+
+  /* ================================================================= shared widgets */
+  /* put the steps in order */
+  function orderGame(host, steps){
+    let i, wrong, hints, pool;
+    const start = () => {
+      i = 0; wrong = 0; hints = 0;
+      do { pool = shuffle(steps); } while (pool.length > 1 && pool.every((s, k) => s.id === steps[k].id));
+      draw("Tap the steps in the order they happen. Wrong turns are counted.", "");
+    };
+    const draw = (msg, kind, shakeId) => {
+      host.innerHTML = `<div class="ogame"><div class="benchhint ${kind || ""}" role="status">${msg}</div>
+        <ol class="odone">${steps.slice(0, i).map((s, k) => `<li><b>${k + 1}.</b> ${s.text}${s.why ? `<small>${s.why}</small>` : ""}</li>`).join("")}</ol>
+        ${i < steps.length ? `<div class="opool">${pool.filter(p => steps.findIndex(s => s.id === p.id) >= i).map(p => `<button data-id="${p.id}" class="${p.id === shakeId ? "shake" : ""}">${p.text}</button>`).join("")}</div>` : ""}
+        <div class="row">${i < steps.length ? `<button class="btn hint" data-h="1">💡 Hint</button>` : ""}<button class="btn secondary" data-r="1">↺ Start over</button></div></div>`;
+    };
+    host.onclick = e => {
+      if (e.target.closest("[data-r]")) { start(); return; }
+      if (e.target.closest("[data-h]")) { hints++; draw("Hint: the next step is about <b>" + esc(steps[i].cue) + "</b>.", "warn"); return; }
+      const b = e.target.closest("[data-id]"); if (!b) return;
+      if (b.dataset.id === steps[i].id){ i++; if (i >= steps.length) draw(`All ${steps.length} steps in order! Wrong turns: <b>${wrong}</b>. Hints used: <b>${hints}</b>.`, "good"); else draw("Yes! What comes next?", "good"); }
+      else { wrong++; draw("Not yet. Think about what has to happen first.", "warn", b.dataset.id); }
+    };
+    start();
+  }
+
+  /* picture identification: items = [{cat, term, svg, desc}] */
+  function pictureGame(host, cats, items, label){
+    let cat = cats[0], order = [], idx = 0, score = 0, tries = 0, answered = false;
+    const next = () => { order = shuffle(items.filter(x => x.cat === cat)); idx = 0; score = 0; tries = 0; show(); };
+    const show = () => {
+      answered = false;
+      const cur = order[idx], terms = items.filter(x => x.cat === cat).map(x => x.term);
+      host.innerHTML = `<div class="row">${cats.map(c => `<button class="chip ${c === cat ? "on" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+        <div class="grid2"><div class="panel" style="max-width:300px">${cur.svg}</div>
+        <div><p class="qq" style="margin:0 0 6px">${esc(label(cat))}</p><div class="ans">${terms.map(t => `<button data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+        <div class="benchhint" data-fb="1">Picture ${idx + 1} of ${order.length}. Score so far: ${score} of ${tries}.</div>
+        <div class="row"><button class="btn primary pgNext" hidden>${idx + 1 >= order.length ? "Start this set again" : "Next picture"}</button></div></div></div>`;
+    };
+    host.onclick = e => {
+      const c = e.target.closest("[data-cat]"); if (c){ cat = c.dataset.cat; next(); return; }
+      if (e.target.closest(".pgNext")){ if (idx + 1 >= order.length) next(); else { idx++; show(); } return; }
+      const b = e.target.closest("[data-t]"); if (!b || answered) return;
+      const cur = order[idx], ok = b.dataset.t === cur.term; tries++;
+      if (ok){ score++; answered = true; b.classList.add("right"); const fb = host.querySelector("[data-fb]"); fb.className = "benchhint good"; fb.innerHTML = `<b>Yes: ${esc(cur.term)}.</b> ${cur.desc} Score: ${score} of ${tries}.`; host.querySelectorAll(".ans button").forEach(x => x.disabled = true); host.querySelector(".pgNext").hidden = false; }
+      else { b.classList.add("wrong"); b.disabled = true; const fb = host.querySelector("[data-fb]"); fb.className = "benchhint warn"; fb.textContent = "Not quite. Look at the picture again and try another."; }
+    };
+    next();
+  }
+
+  /* quiz */
+  function quizHTML(t){
+    return `<section class="quiz"><div class="quizhead"><h3>Test yourself</h3><button class="btn secondary sm" id="theoryBtn2">📖 Review the theory first</button></div>` + t.quiz.map((qq, i) => {
+      const order = qq.opts.map((_, k) => k).sort((a, b) => rnd(i * 7 + a + tabKey.length) - rnd(i * 7 + b + tabKey.length));
+      return `<div class="qcard" data-q="${i}"><p class="qq">${i + 1}. ${qq.q}</p><div class="qopts">${order.map(k => `<button class="qopt" data-k="${k}">${qq.opts[k]}</button>`).join("")}</div><div class="qfb" hidden></div></div>`;
+    }).join("") + `<p class="qscore" id="qScore"></p></section>`;
+  }
+  function bindQuiz(t){
+    const box = $("quizBox"), got = {};
+    box.querySelectorAll(".qcard").forEach(card => card.addEventListener("click", e => {
+      const b = e.target.closest(".qopt"); if (!b || card.classList.contains("done")) return;
+      const qq = t.quiz[+card.dataset.q], ok = +b.dataset.k === qq.a, fb = card.querySelector(".qfb");
+      if (ok){ card.classList.add("done"); b.classList.add("right"); fb.className = "qfb good"; fb.innerHTML = `<b>Yes!</b> ${qq.why}`; if (!(card.dataset.q in got)) got[card.dataset.q] = true; }
+      else { b.classList.add("wrong"); b.disabled = true; fb.className = "qfb bad"; fb.innerHTML = "Not quite. Try another answer."; if (!(card.dataset.q in got)) got[card.dataset.q] = false; }
+      fb.hidden = false;
+      if (box.querySelectorAll(".qcard.done").length === t.quiz.length) $("qScore").textContent = `Finished! ${Object.values(got).filter(Boolean).length} of ${t.quiz.length} right on the first try.`;
+    }));
+  }
+
+  /* ================================================================= EXERCISE 1: microscope */
+  const PARTS = {
+    ocular:{name:"Ocular lens (eyepiece)", fn:"Remagnifies the image formed by the objective lens (usually 10x)."},
+    bodytube:{name:"Body tube", fn:"Transmits the image from the objective to the ocular."},
+    objectives:{name:"Objective lenses", fn:"The primary magnification lenses, mounted on the nosepiece: 4x, 10x, 40x, and 100x (oil)."},
+    stage:{name:"Stage (mechanical stage)", fn:"The platform that holds your slide. The mechanical stage holds and moves it."},
+    condenser:{name:"Condenser", fn:"Focuses light through the specimen."},
+    iris:{name:"Iris diaphragm", fn:"Controls the cone of light entering the condenser: contrast versus brightness."},
+    coarse:{name:"Coarse focus knob", fn:"The large knob. It moves the stage long distances and is for low power (4x, 10x) only."},
+    fine:{name:"Fine focus knob", fn:"The small knob for small adjustments. Use it with 40x and oil immersion."},
+    arm:{name:"Arm", fn:"Carry the microscope here, with your other hand under the base. Always use two hands."},
+    base:{name:"Base", fn:"The foundation. It houses the illuminator (the light source)."}
+  };
+  function scopeSVG(){
+    return `<svg viewBox="0 0 420 440" role="img" aria-label="Compound microscope with labeled parts to click">
+      <g class="mpart" data-part="base"><rect x="70" y="372" width="250" height="40" rx="12" fill="#56647c"/><ellipse cx="195" cy="373" rx="34" ry="7" fill="#ffe27a"/></g>
+      <g class="mpart" data-part="arm"><path d="M298 372 C 346 330, 352 196, 296 112" fill="none" stroke="#7a89a3" stroke-width="32" stroke-linecap="round"/><rect x="190" y="84" width="120" height="34" rx="12" fill="#7a89a3"/></g>
+      <g class="mpart" data-part="bodytube"><rect x="198" y="60" width="34" height="86" rx="4" fill="#9aa7bd"/></g>
+      <g class="mpart" data-part="ocular"><rect x="203" y="22" width="24" height="42" rx="6" fill="#2f3b52"/><rect x="199" y="18" width="32" height="8" rx="4" fill="#46546e"/></g>
+      <g class="mpart" data-part="objectives"><rect x="186" y="146" width="68" height="14" rx="6" fill="#6b7a93"/><rect x="192" y="160" width="12" height="34" rx="3" fill="#2f3b52"/><rect x="209" y="160" width="12" height="44" rx="3" fill="#2f3b52"/><rect x="226" y="160" width="12" height="38" rx="3" fill="#2f3b52"/></g>
+      <g class="mpart" data-part="stage"><rect x="118" y="214" width="196" height="14" rx="4" fill="#4a5772"/><rect x="170" y="206" width="92" height="8" fill="#d6e8f2" stroke="#8fb0c8"/></g>
+      <g class="mpart" data-part="condenser"><rect x="190" y="236" width="50" height="28" rx="6" fill="#8b98ae"/></g>
+      <g class="mpart" data-part="iris"><rect x="182" y="266" width="66" height="12" rx="6" fill="#c9a24a"/><rect x="246" y="268" width="26" height="4" rx="2" fill="#c9a24a"/></g>
+      <g class="mpart" data-part="coarse"><circle cx="340" cy="292" r="27" fill="#4a5772"/></g>
+      <g class="mpart" data-part="fine"><circle cx="340" cy="292" r="13" fill="#a8b8d2"/></g>
+    </svg>`;
+  }
+  function renderScope(body){
+    body.innerHTML = `
+      <div class="sect">1. Parts of the microscope</div>
+      <div class="row"><button class="chip on" data-mode="explore">Explore: tap a part</button><button class="chip" data-mode="quiz">Quiz: find the part</button></div>
+      <div class="grid2"><div class="panel">${scopeSVG()}</div>
+        <div><div class="info" id="partInfo"><h4>Tap any part of the microscope</h4><span>Its name and job show up here.</span></div>
+          <div class="benchhint" id="partMsg" hidden></div></div></div>
+      <div class="sect">2. Magnification and field of vision</div>
+      <p class="labq" style="margin-bottom:6px">Total magnification = ocular (10x) × objective. Pick an objective and watch how much of the slide you can see.</p>
+      <div class="row" id="objRow"></div>
+      <div class="grid2"><div class="panel" style="max-width:340px"><svg id="fovSvg" viewBox="0 0 300 300" role="img" aria-label="Field of vision"></svg></div><div class="info" id="fovInfo"></div></div>
+      <div class="sect">3. Scale problem</div>
+      <p class="labq" style="margin:0 0 6px">The field diameter at low power is 2 mm. Remember: 1 mm = 1000 μm.</p>
+      <div class="numrow"><label for="n1">A <i>Bacillus</i> cell is 2 μm long. How many fit end to end across the field?</label><input id="n1" type="number" inputmode="numeric"><button class="btn primary" data-chk="n1">Check</button></div><div class="qfb" id="n1fb" hidden></div>
+      <div class="numrow"><label for="n2">A yeast cell is 10 μm. How many fit across the field?</label><input id="n2" type="number" inputmode="numeric"><button class="btn primary" data-chk="n2">Check</button></div><div class="qfb" id="n2fb" hidden></div>
+      <div class="sect">4. Using the microscope: put the steps in order</div>
+      <div id="useGame"></div>`;
+    /* parts game */
+    let mode = "explore", sel = null, qi = 0, qorder = [], wrongs = 0, firstTry = 0, missed = false;
+    const info = $("partInfo"), msg = $("partMsg"), svg = body.querySelector(".mpart").closest("svg");
+    const clearSel = () => svg.querySelectorAll(".mpart").forEach(g => g.classList.remove("sel", "flash"));
+    const nextQ = () => {
+      msg.hidden = false; missed = false;
+      if (qi >= qorder.length){ info.innerHTML = `<h4>Finished!</h4><span>${firstTry} of ${qorder.length} on the first try.</span>`; msg.className = "benchhint good"; msg.textContent = "Switch back to Explore to review any part you missed."; return; }
+      info.innerHTML = `<h4>Find the: ${esc(PARTS[qorder[qi]].name)}</h4><span>Tap it on the microscope. (${qi + 1} of ${qorder.length})</span>`; msg.className = "benchhint"; msg.textContent = "Which part is it?";
+    };
+    body.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
+      mode = b.dataset.mode; body.querySelectorAll("[data-mode]").forEach(x => x.classList.toggle("on", x === b)); clearSel();
+      if (mode === "quiz"){ qorder = shuffle(Object.keys(PARTS)); qi = 0; firstTry = 0; nextQ(); }
+      else { msg.hidden = true; info.innerHTML = `<h4>Tap any part of the microscope</h4><span>Its name and job show up here.</span>`; }
+    });
+    svg.addEventListener("click", e => {
+      const g = e.target.closest(".mpart"); if (!g) return; const id = g.dataset.part;
+      if (mode === "explore"){ clearSel(); g.classList.add("sel"); info.innerHTML = `<h4>${esc(PARTS[id].name)}</h4><span>${esc(PARTS[id].fn)}</span>`; return; }
+      if (qi >= qorder.length) return;
+      if (id === qorder[qi]){ clearSel(); g.classList.add("flash"); if (!missed) firstTry++; msg.className = "benchhint good"; msg.innerHTML = `<b>Yes!</b> ${esc(PARTS[id].fn)}`; qi++; setTimeout(() => { clearSel(); nextQ(); }, 1100); }
+      else { missed = true; msg.className = "benchhint warn"; msg.textContent = `That's the ${PARTS[id].name.toLowerCase()}. Try again.`; }
+    });
+    /* field of vision */
+    const OBJ = [{o:4, fov:4.5, n:"Scanning (4x)", use:"Orientation and finding your specimen. You see a lot at once."}, {o:10, fov:1.8, n:"Low power (10x)", use:"Overview of cells and initial focus. Good for an overview."},
+      {o:40, fov:0.4, n:"High-dry (40x)", use:"Better cell detail: fungal hyphae and algal cells."}, {o:100, fov:0.18, n:"Oil immersion (100x)", use:"Individual bacterial cells, just barely. Needs immersion oil. The one we need for prokaryotes."}];
+    const world = Array.from({length:520}, (_, k) => [(rnd(k * 3 + 1) - .5) * 4.5, (rnd(k * 3 + 2) - .5) * 4.5]).concat([[.03, -.02], [-.06, .05], [.07, .06], [-.02, -.07]]);
+    $("objRow").innerHTML = OBJ.map((x, k) => `<button class="chip ${k === 1 ? "on" : ""}" data-o="${k}">${x.n}</button>`).join("");
+    const showFov = k => {
+      const x = OBJ[k], px = 300 / x.fov, r = x.o === 4 ? 2.2 : x.o === 10 ? 3.2 : x.o === 40 ? 7 : 15; let n = 0, s = `<circle cx="150" cy="150" r="148" fill="#f4f7fb" stroke="#222" stroke-width="3"/><clipPath id="fovc"><circle cx="150" cy="150" r="146"/></clipPath><g clip-path="url(#fovc)">`;
+      world.forEach(([wx, wy]) => { const sx = 150 + wx * px, sy = 150 + wy * px; if (Math.hypot(sx - 150, sy - 150) < 150){ n++; s += `<circle cx="${f1(sx)}" cy="${f1(sy)}" r="${r}" fill="#3f6fc0" opacity=".85"/>`; } });
+      $("fovSvg").innerHTML = s + `</g>`;
+      $("fovInfo").innerHTML = `<h4>${x.n}</h4><p style="margin:4px 0"><b>Total magnification:</b> 10 × ${x.o} = <b>${10 * x.o}x</b></p><p style="margin:4px 0"><b>Field diameter:</b> about ${x.fov} mm</p><p style="margin:4px 0"><b>Cells in view:</b> ${n}</p><p style="margin:4px 0">${x.use}</p><p style="margin:6px 0 0;color:var(--muted)">The field of vision shrinks as magnification increases.</p>`;
+      body.querySelectorAll("[data-o]").forEach(b => b.classList.toggle("on", +b.dataset.o === k));
+    };
+    $("objRow").onclick = e => { const b = e.target.closest("[data-o]"); if (b) showFov(+b.dataset.o); };
+    showFov(1);
+    body.querySelectorAll("[data-chk]").forEach(b => b.onclick = () => {
+      const id = b.dataset.chk, v = +$(id).value, ans = id === "n1" ? 1000 : 200, fb = $(id + "fb"); fb.hidden = false;
+      const ok = v === ans; fb.className = "qfb " + (ok ? "good" : "bad");
+      fb.innerHTML = ok ? `<b>Yes!</b> 2 mm = 2000 μm, and 2000 ÷ ${id === "n1" ? 2 : 10} = ${ans}.` : `Not quite. Convert first: 2 mm = 2000 μm. Then divide by the cell length.`;
+    });
+    orderGame($("useGame"), [
+      {id:"a", cue:"setting up the scope", text:"Place the scope squarely on the bench: flat, stable, cord behind.", why:"Always carry it with two hands."},
+      {id:"b", cue:"loading the slide", text:"Load your slide in the stage clips.", why:""},
+      {id:"c", cue:"the eyepieces", text:"Adjust the eyepieces (binocular) until you see one circle of light.", why:"Write your setting down."},
+      {id:"d", cue:"the condenser", text:"Focus the condenser: close the iris, lower the condenser until the light forms a circle, center it, raise it back, then open the iris until the light just fills the field.", why:""},
+      {id:"e", cue:"low power", text:"Focus at low power (10x) and center the specimen.", why:"Start low, always."},
+      {id:"f", cue:"high-dry", text:"Switch to high-dry (40x). Use the fine adjustment only, and open the iris for more light.", why:"The scope is parfocal: it stays nearly in focus."},
+      {id:"g", cue:"oil", text:"Swing the 40x out of the way, then put one drop of immersion oil on the slide.", why:"Do not rotate the 40x through the oil."},
+      {id:"h", cue:"oil immersion", text:"Click the 100x into the oil and fine-adjust.", why:""},
+      {id:"i", cue:"recording", text:"Record the magnification and sketch what you see.", why:"Label the total magnification under every sketch."},
+      {id:"j", cue:"cleaning up", text:"Clean up: swing back to low power, remove the slide, and wipe the oil off the objective with lens paper only.", why:"Never leave the 100x aimed at the stage."}]);
+  }
+
+  /* ================================================================= EXERCISE 2: living microorganisms */
+  function renderLiving(body){
+    body.innerHTML = `
+      <div class="sect">1. What are you seeing?</div>
+      <p class="labq" style="margin:0 0 6px">Watch the field, then decide: Brownian movement, true motility, or a fluid current sweeping everything along?</p>
+      <div class="grid2"><div class="panel"><svg id="motSvg" viewBox="0 0 420 260" role="img" aria-label="Moving cells under the microscope"></svg>
+        <div class="row"><button class="btn secondary" id="motPause">⏸ Pause</button><button class="btn secondary" id="motNext">Show another slide</button></div></div>
+        <div><div class="ans" id="motAns"><button data-a="brown">Brownian movement</button><button data-a="motile">True motility</button><button data-a="current">Fluid current</button></div>
+        <div class="benchhint" id="motFb">Pick the answer that matches what you see. Score: 0 of 0.</div></div></div>
+      <div class="sect">2. Wet mount versus hanging drop</div>
+      <div class="tblwrap"><table class="tbl"><tr><th></th><th>Wet mount</th><th>Hanging drop</th></tr>
+        <tr><th>Setup</th><td>A drop on a slide with a coverslip.</td><td>A drop on a coverslip, inverted over a depression slide and sealed with petroleum jelly.</td></tr>
+        <tr><th>Best for</th><td>A fast look at size and shape.</td><td>Motility: more depth and less water movement.</td></tr>
+        <tr><th>Downside</th><td>Water movement makes motility hard to judge.</td><td>Takes longer to prepare.</td></tr></table></div>
+      <div class="benchhint warn" style="margin-top:10px">Never use the 100x (oil immersion) lens on a hanging-drop slide.</div>
+      <div class="sect">3. Make a hanging-drop slide: put the steps in order</div>
+      <div id="hangGame"></div>
+      <div class="sect">4. Brightfield, phase-contrast, and darkfield</div>
+      <div class="tblwrap"><table class="tbl"><tr><th></th><th>Brightfield</th><th>Phase-contrast</th><th>Darkfield</th></tr>
+        <tr><th>Image</th><td>Dark objects on a light field.</td><td>Organisms appear as degrees of brightness.</td><td>Organisms appear bright on a dark field.</td></tr>
+        <tr><th>How</th><td>Very little contrast for unstained, living cells.</td><td>Turns differences in refractive properties into differences in brightness, so internal structure shows in live cells without staining.</td><td>A special condenser with an opaque disk blocks direct light, so only light reflected off the specimen enters the objective.</td></tr>
+        <tr><th>In our lab</th><td>Used for all observations.</td><td>Covered in the manual, not performed.</td><td>Covered in class, not performed. Used for organisms like <i>Treponema pallidum</i> that can't be stained.</td></tr></table></div>`;
+    /* motion simulator */
+    const svg = $("motSvg"), N = 16, P = [], NS = "http://www.w3.org/2000/svg"; let kind = "brown", score = 0, tries = 0, answered = false, paused = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, raf = null, last = 0;
+    const reset = () => {
+      svg.innerHTML = `<rect width="420" height="260" rx="14" fill="#f2f6f9"/>`; P.length = 0;
+      for (let k = 0; k < N; k++){
+        const x = 30 + Math.random() * 360, y = 24 + Math.random() * 212, a = Math.random() * 360, g = document.createElementNS(NS, "g"), r = document.createElementNS(NS, "rect");
+        r.setAttribute("x", -9); r.setAttribute("y", -3.2); r.setAttribute("width", 18); r.setAttribute("height", 6.4); r.setAttribute("rx", 3.2); r.setAttribute("fill", "#4a6fae"); r.setAttribute("opacity", ".9"); g.appendChild(r); svg.appendChild(g);
+        P.push({g, x, y, hx:x, hy:y, a, th:Math.random() * 6.283, sp:22 + Math.random() * 30, turn:0, spin:(Math.random() - .5) * 90});
+      }
+    };
+    const place = p => p.g.setAttribute("transform", `translate(${f1(p.x)} ${f1(p.y)}) rotate(${f1(p.a)})`);
+    const step = now => {
+      const dt = Math.min(.05, (now - last) / 1000 || 0); last = now;
+      P.forEach(p => {
+        if (kind === "brown"){ p.x = p.hx + clamp(p.x - p.hx + (Math.random() - .5) * 2.6, -6, 6); p.y = p.hy + clamp(p.y - p.hy + (Math.random() - .5) * 2.6, -6, 6); p.a += (Math.random() - .5) * 8; }
+        else if (kind === "motile"){ p.turn -= dt; if (p.turn <= 0){ p.th += (Math.random() - .5) * 1.4; p.turn = .6 + Math.random(); } p.x += Math.cos(p.th) * p.sp * dt; p.y += Math.sin(p.th) * p.sp * dt; p.a = p.th * 57.3 + (p.spin > 30 ? now / 8 : 0); }
+        else { p.x += 34 * dt + (Math.random() - .5) * .6; p.y += 7 * dt + (Math.random() - .5) * .6; }
+        if (p.x < -12){ p.x += 444; p.hx += 444; } if (p.x > 432){ p.x -= 444; p.hx -= 444; } if (p.y < -12) p.y += 284; if (p.y > 272) p.y -= 284;
+        place(p);
+      });
+    };
+    const loop = now => { if (!paused) step(now); else last = now; raf = requestAnimationFrame(loop); };
+    const newSlide = () => { kind = ["brown", "motile", "current"][Math.floor(Math.random() * 3)]; answered = false; reset(); P.forEach(place); $("motAns").querySelectorAll("button").forEach(b => { b.className = ""; b.disabled = false; }); };
+    onCleanup(() => cancelAnimationFrame(raf));
+    newSlide(); raf = requestAnimationFrame(loop);
+    $("motPause").onclick = () => { paused = !paused; $("motPause").textContent = paused ? "▶ Play" : "⏸ Pause"; };
+    $("motPause").textContent = paused ? "▶ Play" : "⏸ Pause";
+    $("motNext").onclick = newSlide;
+    const WHY = {brown:"Brownian movement: water molecules strike the cells, so they jiggle in place and keep their relative positions. It isn't directed.",
+      motile:"True motility: individual organisms move from one position to another, in different directions, and may spin or roll.",
+      current:"Fluid current: everything is swept in the same direction at the same speed. That is not motility. Watch whether individual organisms move independently."};
+    $("motAns").onclick = e => {
+      const b = e.target.closest("button"); if (!b || answered) return; tries++; const ok = b.dataset.a === kind, fb = $("motFb");
+      if (ok){ score++; answered = true; b.className = "right"; fb.className = "benchhint good"; fb.innerHTML = `<b>Yes!</b> ${WHY[kind]} Score: ${score} of ${tries}.`; $("motAns").querySelectorAll("button").forEach(x => x.disabled = true); }
+      else { b.className = "wrong"; b.disabled = true; fb.className = "benchhint warn"; fb.textContent = "Not quite. Watch how the cells move compared with each other."; }
+    };
+    orderGame($("hangGame"), [
+      {id:"a", cue:"the slide", text:"Get a clean depression slide.", why:""},
+      {id:"b", cue:"petroleum jelly", text:"Pick up a small amount of petroleum jelly on a toothpick.", why:""},
+      {id:"c", cue:"the coverslip edges", text:"Touch the jelly to all four edges of a coverslip: a thin rim, on one side only.", why:"The jelly seal reduces evaporation."},
+      {id:"d", cue:"setting the coverslip down", text:"Set the coverslip on a paper towel, jelly side up.", why:""},
+      {id:"e", cue:"the sample", text:"Add a small drop or loopful of the sample to the center of the coverslip.", why:""},
+      {id:"f", cue:"inverting", text:"Place the depression slide face-down over the drop, then quickly flip it so the drop hangs in the well.", why:"The inversion is the step students fumble."},
+      {id:"g", cue:"finding the drop", text:"At low power, move the slide so the edge of the drop crosses the center of the field.", why:""},
+      {id:"h", cue:"light and magnification", text:"Reduce the light with the iris diaphragm, switch to 40x, and observe. Never use the 100x oil lens.", why:""}]);
+  }
+
+  /* ================================================================= EXERCISE 3: microbes in the environment */
+  const COL = "#e9d9a4", COLS = "#b79f5c";
+  const FORM = {
+    Circular:`<circle cx="50" cy="50" r="34" fill="${COL}" stroke="${COLS}" stroke-width="3"/>`,
+    Irregular:`<path d="M26 42 C30 22 58 16 68 32 C86 36 84 60 70 68 C64 86 40 82 32 70 C16 64 16 50 26 42 Z" fill="${COL}" stroke="${COLS}" stroke-width="3"/>`,
+    Biconvex:`<path d="M10 50 Q50 14 90 50 Q50 86 10 50 Z" fill="${COL}" fill-opacity=".55" stroke="${COLS}" stroke-width="3" stroke-dasharray="5 3"/>`,
+    Filamentous:`<circle cx="50" cy="50" r="11" fill="${COL}" stroke="${COLS}" stroke-width="3"/>` + Array.from({length:14}, (_, k) => { const a = k / 14 * 6.283, r1 = 12, r2 = 34 + rnd(k) * 12; return `<path d="M${f1(50 + Math.cos(a) * r1)} ${f1(50 + Math.sin(a) * r1)} Q${f1(50 + Math.cos(a + .25) * (r1 + r2) / 2)} ${f1(50 + Math.sin(a + .25) * (r1 + r2) / 2)} ${f1(50 + Math.cos(a + .1) * r2)} ${f1(50 + Math.sin(a + .1) * r2)}" fill="none" stroke="${COLS}" stroke-width="2.4" stroke-linecap="round"/>`; }).join(""),
+    Rhizoid:`<g fill="none" stroke="${COLS}" stroke-width="3" stroke-linecap="round"><path d="M50 50 C44 38 40 28 30 20 M44 36 C36 34 28 38 18 36 M50 50 C60 36 70 30 80 18 M66 32 C74 34 82 32 90 38 M50 50 C42 62 34 66 24 80 M36 64 C28 60 18 62 10 58 M50 50 C58 64 66 70 74 84 M64 68 C72 66 80 68 90 64 M50 50 C50 62 52 74 50 90"/></g><circle cx="50" cy="50" r="6" fill="${COL}" stroke="${COLS}" stroke-width="2.5"/>`
+  };
+  const FDESC = {Circular:"A round colony.", Irregular:"An uneven shape with no regular outline.", Biconvex:"A lens shape, embedded in the agar.", Filamentous:"Thread-like growth spreading out from the center.", Rhizoid:"Branching, root-like growth."};
+  function marginSVG(type){
+    const cx = 50, cy = 118, R = 70; let pts = "", extra = "";
+    for (let d = -58; d <= 58; d += 1.2){
+      const t = d * Math.PI / 180; let r = R;
+      if (type === "Undulate") r += 3.2 * Math.sin(d * .55);
+      if (type === "Lobate") r += 8 * Math.abs(Math.sin(d * .11 * 3.1415)) - 4;
+      pts += `${f1(cx + Math.sin(t) * r)},${f1(cy - Math.cos(t) * r)} `;
+    }
+    if (type === "Filamentous") for (let d = -54; d <= 54; d += 6){ const t = d * Math.PI / 180, x1 = cx + Math.sin(t) * R, y1 = cy - Math.cos(t) * R, x2 = cx + Math.sin(t + .05) * (R + 13 + rnd(d) * 6), y2 = cy - Math.cos(t + .05) * (R + 13 + rnd(d) * 6); extra += `<path d="M${f1(x1)} ${f1(y1)} L${f1(x2)} ${f1(y2)}" stroke="${COLS}" stroke-width="2" stroke-linecap="round"/>`; }
+    if (type === "Curled") for (let d = -48; d <= 48; d += 16){ const t = d * Math.PI / 180, x1 = cx + Math.sin(t) * R, y1 = cy - Math.cos(t) * R; extra += `<path d="M${f1(x1)} ${f1(y1)} c${f1(Math.sin(t) * 10)},${f1(-Math.cos(t) * 10)} ${f1(Math.sin(t) * 16 + 6)},${f1(-Math.cos(t) * 8 - 4)} ${f1(Math.sin(t) * 12 + 8)},${f1(-Math.cos(t) * 16 + 2)} c-5,6 -12,2 -9,-4" fill="none" stroke="${COLS}" stroke-width="2.4" stroke-linecap="round"/>`; }
+    return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#f1f4f8"/><clipPath id="mclip"><rect width="100" height="100"/></clipPath><g clip-path="url(#mclip)"><polygon points="${pts} ${cx + 80},${cy + 10} ${cx - 80},${cy + 10}" fill="${COL}" stroke="none"/><polyline points="${pts}" fill="none" stroke="${COLS}" stroke-width="3"/>${extra}</g></svg>`;
+  }
+  const MDESC = {Entire:"A smooth, even edge.", Undulate:"A gently wavy edge.", Lobate:"An edge with large, rounded lobes.", Filamentous:"An edge with thread-like projections.", Curled:"An edge with curled projections."};
+  const ELEV = {
+    Flat:`<path d="M10 70 L90 70 L90 64 Q50 60 10 64 Z" fill="${COL}" stroke="${COLS}" stroke-width="2.5"/>`,
+    Raised:`<path d="M12 70 L18 52 L82 52 L88 70 Z" fill="${COL}" stroke="${COLS}" stroke-width="2.5"/>`,
+    Convex:`<path d="M12 70 Q50 14 88 70 Z" fill="${COL}" stroke="${COLS}" stroke-width="2.5"/>`,
+    Umbonate:`<path d="M12 70 Q50 36 88 70 Z" fill="${COL}" stroke="${COLS}" stroke-width="2.5"/><path d="M40 50 Q50 20 60 50 Z" fill="${COL}" stroke="${COLS}" stroke-width="2.5"/>`
+  };
+  const EDESC = {Flat:"Thin and level with the agar.", Raised:"Slightly elevated, with a flat top.", Convex:"Dome-shaped.", Umbonate:"Convex, with a raised knob in the center."};
+  function tubeSVG(kind, g, path){
+    const l = 20, r = 60, top = 8, b = 112; let s = `<clipPath id="tc${kind}${g}"><path d="M${l} ${top} L${l} ${b - 18} A20 20 0 0 0 ${r} ${b - 18} L${r} ${top} Z"/></clipPath><g clip-path="url(#tc${kind}${g})">`;
+    if (kind === "broth"){
+      s += `<rect x="${l}" y="30" width="40" height="90" fill="${g === "turbid" ? "#d9cfa0" : "#f1e9c4"}"/>`;
+      if (g === "turbid") s += Array.from({length:40}, (_, k) => `<circle cx="${f1(26 + rnd(k) * 28)}" cy="${f1(36 + rnd(k + 9) * 70)}" r="${f1(1 + rnd(k + 3) * 1.6)}" fill="#fff" opacity=".55"/>`).join("");
+      if (g === "pellicle") s += `<path d="M${l} 30 Q30 26 40 31 T${r} 30 L${r} 37 Q50 41 40 36 T${l} 37 Z" fill="#fff" stroke="#d9cfa0" stroke-width="1.5"/>`;
+      if (g === "flocculent") s += [[30, 52, 6], [46, 66, 7], [36, 82, 6], [50, 44, 5], [28, 96, 5]].map(([x, y, rr]) => `<path d="M${x - rr} ${y} q${rr / 2} ${-rr} ${rr} ${-rr / 2} q${rr} ${rr / 2} ${rr / 2} ${rr} q${-rr / 2} ${rr} ${-rr} ${rr / 2} z" fill="#fff" stroke="#d9cfa0" stroke-width="1.2"/>`).join("");
+      if (g === "sediment") s += `<path d="M${l} ${b - 14} Q40 ${b - 30} ${r} ${b - 14} L${r} ${b + 4} L${l} ${b + 4} Z" fill="#fff" stroke="#d9cfa0" stroke-width="1.5"/>`;
+      if (path) s += `<path d="M30 6 C30 30 50 30 50 48 S30 66 40 76" fill="none" stroke="#3f4cc0" stroke-width="2.4" stroke-dasharray="4 3"/>`;
+    } else if (kind === "slant"){
+      s += `<path d="M${l} 40 L${r} 74 L${r} 130 L${l} 130 Z" fill="#ead9a0"/>`;
+      if (g === "streak") s += `<path d="M26 54 L54 64 M26 58 L54 68 M26 62 L54 72 M28 66 L54 76" stroke="#fffbe8" stroke-width="3.4" stroke-linecap="round"/>`;
+      if (path) s += `<path d="M24 76 L56 70 L24 66 L56 60 L24 56 L56 50 L24 46" fill="none" stroke="#3f4cc0" stroke-width="2.4" stroke-dasharray="4 3"/>`;
+    } else {
+      s += `<rect x="${l}" y="34" width="40" height="90" fill="#ead9a0"/>`;
+      if (g === "stab") s += `<path d="M40 34 L40 96" stroke="#fffbe8" stroke-width="4" stroke-linecap="round"/>`;
+      if (path) s += `<path d="M40 8 L40 96 M36 92 L40 98 L44 92" fill="none" stroke="#3f4cc0" stroke-width="2.4" stroke-dasharray="4 3"/>`;
+    }
+    return `<svg viewBox="0 0 80 124">${s}</g><path d="M${l} ${top} L${l} ${b - 18} A20 20 0 0 0 ${r} ${b - 18} L${r} ${top}" fill="none" stroke="#8b93a3" stroke-width="3"/><rect x="${l - 3}" y="${top - 4}" width="46" height="5" rx="2" fill="#cdd3dd"/></svg>`;
+  }
+  const BDESC = {Turbid:"The whole broth is cloudy.", Pellicle:"A film or membrane on the surface.", Flocculent:"Clumps or flakes suspended in the broth.", Sediment:"Growth that settles at the bottom."};
+  function renderEnvironment(body){
+    body.innerHTML = `
+      <div class="sect">1. Set up the plates: put the steps in order</div><div id="plateGame"></div>
+      <div class="sect">2. Describe the colony</div>
+      <p class="labq" style="margin:0 0 6px">Next lab you describe each colony type by its whole-colony appearance, margin, and elevation. Match the picture to the term.</p><div id="colGame"></div>
+      <div class="sect">3. Describe growth in broth</div><div id="brothGame"></div>
+      <div class="sect">4. For each colony type, record all six</div>
+      <div class="tblwrap"><table class="tbl"><tr><th>Estimated diameter (mm)</th><th>Whole-colony appearance</th><th>Margin</th><th>Elevation</th><th>Pigment (color)</th><th>Exact number of colonies</th></tr></table></div>
+      <div class="benchhint warn" style="margin-top:8px">Count the actual number of colonies, not an estimate. If it's above 100, write TNTC (too numerous to count). If a plate has fuzzy, cottony, or web-like growth (fungi), do NOT open the lid. Describe it from the outside.</div>`;
+    orderGame($("plateGame"), [
+      {id:"a", cue:"labeling", text:"Label the bottom (agar side) of both plates with your name, the day, the date, and Environment or Body. Draw a line down the center of each plate.", why:"Label the bottom, not the lid."},
+      {id:"b", cue:"the first environmental sample", text:"Environment plate: wet a swab in sterile water, swab a surface, swab one half of the agar, and label that half.", why:""},
+      {id:"c", cue:"the second environmental sample", text:"Swab a different environmental source onto the other half, label it, and discard the swab in disinfectant.", why:""},
+      {id:"d", cue:"fingers", text:"Body plate: press your fingertips onto the agar on one half.", why:""},
+      {id:"e", cue:"hair", text:"Place a single hair directly on the other half.", why:"Keep the lid on when you aren't inoculating, and work quickly."},
+      {id:"f", cue:"incubating", text:"Place the plates upside down (inverted) on the metal trays up front, to incubate at 37°C until the next lab period.", why:"Inverted so condensation collects in the lid, not on the agar."}]);
+    const items = [];
+    Object.keys(FORM).forEach(t => items.push({cat:"Whole colony", term:t, svg:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#f1f4f8"/>${FORM[t]}</svg>`, desc:FDESC[t]}));
+    Object.keys(MDESC).forEach(t => items.push({cat:"Margin (edge)", term:t, svg:marginSVG(t), desc:MDESC[t]}));
+    Object.keys(ELEV).forEach(t => items.push({cat:"Elevation (side view)", term:t, svg:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#f1f4f8"/><rect x="0" y="70" width="100" height="30" fill="#e3ecf3"/><line x1="0" y1="70" x2="100" y2="70" stroke="#9fb3c4" stroke-width="2"/>${ELEV[t]}</svg>`, desc:EDESC[t]}));
+    pictureGame($("colGame"), ["Whole colony", "Margin (edge)", "Elevation (side view)"], items, c => c === "Whole colony" ? "Which whole-colony appearance is this (viewed from above)?" : c === "Margin (edge)" ? "Which margin (the edge of the colony) is this?" : "Which elevation (the colony's side profile) is this?");
+    const bi = Object.keys(BDESC).map(t => ({cat:"Growth in broth", term:t, svg:tubeSVG("broth", t.toLowerCase().replace("flocculent", "flocculent")), desc:BDESC[t]}));
+    pictureGame($("brothGame"), ["Growth in broth"], bi, () => "How would you describe the growth in this broth tube?");
+  }
+
+  /* ================================================================= EXERCISE 4: aseptic technique */
+  const TECH = {
+    broth:{name:"Broth to broth", tool:"loop", how:"Dip the sterile loop into the stock broth, then swirl it into your new broth tube to mix in the sample.", grow:"Turbidity (cloudiness), a pellicle, or sediment.", kind:"broth", g:"turbid"},
+    slant:{name:"Stock to slant", tool:"loop", how:"Starting at the bottom of the slant, drag your loop in a tight zigzag up the surface of the agar.", grow:"Growth on the surface.", kind:"slant", g:"streak"},
+    deep:{name:"Stock to deep", tool:"needle", how:"Insert a straight needle down the center of the agar, almost to the bottom, then withdraw it along the same path.", grow:"Growth along the stab line.", kind:"deep", g:"stab"}
+  };
+  function renderAseptic(body){
+    body.innerHTML = `
+      <div class="sect">1. Choose a transfer</div>
+      <div class="row" id="techRow">${Object.keys(TECH).map((k, i) => `<button class="chip ${i === 0 ? "on" : ""}" data-t="${k}">${TECH[k].name}</button>`).join("")}</div>
+      <div class="grid2"><div class="panel" style="max-width:240px" id="techPic"></div><div class="info" id="techInfo"></div></div>
+      <div class="sect">2. Do the transfer: put the steps in order</div><div id="asepGame"></div>
+      <div class="sect">3. Which medium is this?</div>
+      <p class="labq" style="margin:0 0 6px">Each tube was inoculated from the same stock. Match the growth to the medium.</p><div id="growGame"></div>`;
+    const show = k => {
+      const t = TECH[k];
+      $("techPic").innerHTML = `<div class="row" style="justify-content:space-around">${tubeSVG(t.kind, "", true).replace("<svg ", `<svg style="width:46%" `)}${tubeSVG(t.kind, t.g).replace("<svg ", `<svg style="width:46%" `)}</div><p style="text-align:center;margin:4px 0 0;font-size:.85rem;color:var(--muted)">Path of the tool, then the growth</p>`;
+      $("techInfo").innerHTML = `<h4>${t.name}</h4><p style="margin:4px 0"><b>Tool:</b> ${t.tool === "loop" ? "inoculating loop" : "straight needle"}</p><p style="margin:4px 0"><b>Technique:</b> ${t.how}</p><p style="margin:4px 0"><b>Growth looks like:</b> ${t.grow}</p>`;
+      $("techRow").querySelectorAll("[data-t]").forEach(b => b.classList.toggle("on", b.dataset.t === k));
+      const tool = t.tool === "loop" ? "loop" : "needle";
+      orderGame($("asepGame"), [
+        {id:"a", cue:"labeling", text:"Label all three tubes with your name, the date, the bacteria name, and the medium.", why:""},
+        {id:"b", cue:"sterilizing the tool", text:`Hold the ${tool} in the flame until it glows red-hot, then let it cool without touching anything.`, why:""},
+        {id:"c", cue:"opening the tubes", text:"Uncap the stock tube and the new tube, holding the caps in your hand, and flame the mouth of each tube.", why:"Never set a cap down on the bench."},
+        {id:"d", cue:"the transfer", text:t.tool === "loop" ? t.how : t.how, why:"Use the " + tool + " for this medium."},
+        {id:"e", cue:"flaming and recapping", text:"Flame the mouth of each tube again and recap both.", why:"Flame the tube mouth first, then recap."},
+        {id:"f", cue:"re-sterilizing", text:`Flame the ${tool} red-hot again before you set it down.`, why:"This protects you and the bench."}]);
+    };
+    $("techRow").onclick = e => { const b = e.target.closest("[data-t]"); if (b) show(b.dataset.t); };
+    show("broth");
+    const gi = [["broth", "turbid", "Broth", "A broth shows growth as turbidity (cloudiness), a pellicle, or sediment."], ["slant", "streak", "Slant", "A slant shows growth on the surface, where the loop streaked."], ["deep", "stab", "Deep", "A deep shows growth along the stab line."]]
+      .map(([k, g, term, d]) => ({cat:"Medium", term, svg:tubeSVG(k, g), desc:d}));
+    pictureGame($("growGame"), ["Medium"], gi, () => "Which medium is this tube?");
+  }
+
+  /* ================================================================= tab definitions */
+  const TABS = {
+    scope:{tab:"1: Microscope", title:"Use and Care of the Microscope", ex:"Exercise 1", render:renderScope,
+      question:"Can you name the parts, work out the magnification, and use the microscope in the right order?",
+      how:["A compound microscope uses two lens systems: the <b>objective</b> forms the image and the <b>ocular</b> (eyepiece) remagnifies it. <b>Total magnification = ocular (10x) × objective.</b>",
+        "<b>Coarse focus</b> is for low power only (4x, 10x). <b>Fine focus</b> is for 40x and oil immersion. The scope is <b>parfocal</b>: once it's in focus on one objective, it stays almost in focus on the next.",
+        "<b>Oil immersion (100x):</b> glass and oil share a refractive index (1.52), so light isn't bent away and resolution improves. Use oil <b>only</b> with the 100x objective, and clean it with lens paper only."],
+      quiz:[
+        q("A scope has a 10x ocular and a 40x objective. What is the total magnification?", ["400x", "50x", "4000x", "40x"], 0, "Total magnification = ocular × objective = 10 × 40 = 400x."),
+        q("Which objective must be used with immersion oil?", ["100x", "40x", "10x", "4x"], 0, "Use oil only with the 100x objective. Never rotate the 40x through oil."),
+        q("Which knob can you use with 40x and oil immersion?", ["Fine focus only", "Coarse focus only", "Either knob", "The condenser knob"], 0, "The coarse knob is for low power (4x, 10x) only."),
+        q("What does the condenser do?", ["Focuses light through the specimen", "Controls the amount of light only", "Holds the slide", "Remagnifies the image"], 0, "The iris diaphragm controls the amount of light entering the condenser."),
+        q("What does the iris diaphragm control?", ["The amount of light (contrast versus brightness)", "Which objective is used", "The focus", "The magnification"], 0, "Low power needs the iris barely open for contrast. Higher magnification needs more light."),
+        q("Why does immersion oil improve resolution?", ["Oil and glass have the same refractive index, so light isn't bent away and more of it enters the lens", "It magnifies the image", "It cools the lens", "It makes the slide thinner"], 0, "Without oil, light bends in the air and misses the lens."),
+        q("Resolving power = wavelength / (2 × numerical aperture). Which gives better resolution?", ["A smaller resolving power (shorter wavelength or higher numerical aperture)", "A larger resolving power", "A longer wavelength", "A lower numerical aperture"], 0, "Resolving power is a distance: smaller is better."),
+        q("What happens to the working distance (lens to specimen) as magnification increases?", ["It decreases", "It increases", "It stays the same", "It disappears"], 0, "Higher power lenses sit closer to the slide."),
+        q("What do you use to clean the objective lenses?", ["Lens paper only", "A Kimwipe", "Your sleeve", "A paper towel"], 0, "Never use Kimwipes or your sleeve."),
+        q("How do you carry a microscope?", ["Two hands: one under the base, one on the arm", "One hand on the stage", "By the ocular", "By the condenser"], 0, "Carry it with two hands and don't tilt it."),
+        q("Which three bacterial shapes should you be able to identify?", ["Coccus, bacillus, and spiral", "Circle, square, and rod", "Coccus, bacillus, and tetrad", "Rod, chain, and cluster"], 0, "Arrangements like pairs, chains, and clusters describe how cells group."),
+        q("As magnification increases, what happens to the field of vision?", ["It shrinks", "It grows", "It stays the same", "It turns dark"], 0, "At 100x you see only a tiny part of the slide.")]},
+    living:{tab:"2: Living organisms", title:"Examination of Living Microorganisms", ex:"Exercise 2", render:renderLiving,
+      question:"How do you tell true motility from Brownian movement, and which slide technique helps?",
+      how:["In <b>brightfield</b> microscopy, objects are dark on a light field. Unstained, living cells have very little contrast, which is why <b>phase-contrast</b> (and darkfield) exist.",
+        "<b>Brownian movement:</b> water molecules strike the cells, so they shake in place and keep their relative positions. <b>True motility:</b> an organism moves purposefully from one position to another.",
+        "A <b>wet mount</b> is fast, but water movement makes motility hard to judge. A <b>hanging drop</b> has more depth and less fluid movement, so it's better for motility."],
+      quiz:[
+        q("What does a brightfield image look like?", ["Dark objects on a light field", "Bright objects on a dark field", "Objects glowing in three dimensions", "Everything is the same color"], 0, "There is very little contrast for unstained, living cells."),
+        q("How does phase-contrast microscopy help?", ["It turns small differences in refractive properties into differences in brightness, so you can see internal structure in live cells", "It stains the cells", "It kills the cells", "It makes the field darker"], 0, "No staining or fixing is needed."),
+        q("How does darkfield microscopy work?", ["A special condenser blocks direct light, so only light reflected off the specimen enters the objective and organisms look bright on a dark field", "It stains the background", "It uses oil", "It makes the cells glow by heat"], 0, "It is used for organisms that are hard to see or stain."),
+        q("What is Brownian movement?", ["Cells jiggling in place because water molecules strike them", "Cells swimming toward food", "Cells spinning in a line", "Cells dividing"], 0, "All the particles vibrate and keep their relative positions. It isn't directed."),
+        q("What is true motility?", ["The organism actively moves from one position to another", "All cells moving in the same direction", "Cells jiggling in place", "Cells getting bigger"], 0, "Motility looks directed, and cells may spin or roll."),
+        q("Everything in the field slowly drifts the same way at the same speed. What is that?", ["A fluid current, not motility", "True motility", "Brownian movement", "Flagella"], 0, "Check whether individual organisms move independently and in different directions."),
+        q("Which technique is better for judging motility?", ["Hanging drop", "Wet mount", "Both are the same", "Neither"], 0, "A hanging drop has more depth and less water movement."),
+        q("Why is the hanging drop sealed with petroleum jelly?", ["To reduce evaporation", "To stain the cells", "To kill the bacteria", "To magnify the drop"], 0, "Students often use too little, and the drop dries out mid-observation."),
+        q("Which objective should you never use on a hanging-drop slide?", ["100x (oil immersion)", "40x", "10x", "4x"], 0, "Keep to low power and 40x."),
+        q("Why do you sterilize and then cool the loop before touching a culture?", ["A hot loop kills the organisms you are trying to pick up", "To keep the loop shiny", "To make the loop sticky", "To stain the cells"], 0, "Sterilize before and after, and let it cool."),
+        q("Which organisms should be more common in a hay infusion kept in the light than in one kept in the dark?", ["Photosynthetic organisms, such as algae", "Fungi only", "Organisms that can't grow in light", "There is no difference"], 0, "Light supports photosynthesis.")]},
+    environment:{tab:"3: Environment", title:"Microbes in the Environment", ex:"Exercise 3", render:renderEnvironment,
+      question:"How do you collect and plate microbes, and how do you describe the colonies that grow?",
+      how:["<b>Nutrient broth</b> is a liquid medium: growth makes it turbid (cloudy). <b>Nutrient agar</b> is broth plus agar, a solid medium: growth forms visible colonies. Agar is an extract of marine red algae, and few microbes can digest it, so it stays solid.",
+        "A <b>colony</b> is a population of cells arising from a single cell. A colony may come from a group of attached cells, so it is called a <b>colony-forming unit (CFU)</b>. A <b>chemically defined medium</b> has a known exact composition, like glucose-minimal salts broth.",
+        "Plates are incubated <b>inverted</b> so condensation collects in the lid, not on the agar."],
+      quiz:[
+        q("What is nutrient agar?", ["Nutrient broth plus agar", "Agar alone", "A liquid medium", "A chemically defined medium"], 0, "Agar solidifies the broth."),
+        q("Why does agar stay solid while microbes grow on it?", ["It is an extract of marine red algae, and few microbes can degrade it", "It is frozen", "It has no water", "It is made of glass"], 0, "That makes it a good solidifying agent."),
+        q("What makes a medium chemically defined?", ["Its exact chemical composition is known", "It contains agar", "It is liquid", "It is sterile"], 0, "An example is glucose-minimal salts broth."),
+        q("What is a colony-forming unit (CFU)?", ["A colony that may have come from a group of attached cells", "One single cell only", "A tube of broth", "A plate of agar"], 0, "A colony can arise from a single cell or a clump of cells."),
+        q("Where do you label a Petri plate?", ["On the bottom (agar side)", "On the lid", "On the side only", "You don't label plates"], 0, "The lid can get switched. Label the agar side."),
+        q("Why are plates incubated upside down (inverted)?", ["So condensation collects in the lid, not on the agar", "To save space", "To keep the agar warm", "To kill contaminants"], 0, "Otherwise condensation can drip onto the agar and wreck the plate."),
+        q("What do you write when there are more than 100 colonies of one type?", ["TNTC (too numerous to count)", "100", "An estimate", "Nothing"], 0, "Otherwise count the exact number of colonies."),
+        q("A plate has fuzzy, cottony growth. What do you do?", ["Do not open the lid: describe it from the outside", "Open it and smell it", "Touch it with a loop", "Throw it away unobserved"], 0, "Fuzzy growth is fungus, and opening the lid spreads spores."),
+        q("Which is NOT one of the six things you record for each colony type?", ["Gram reaction", "Estimated diameter", "Margin", "Exact number of colonies"], 0, "You record diameter, appearance, margin, elevation, pigment, and number."),
+        q("A broth tube has a film across the surface. What is that called?", ["A pellicle", "Sediment", "Turbidity", "Flocculent growth"], 0, "Turbid = cloudy, flocculent = clumps, sediment = settled at the bottom.")]},
+    aseptic:{tab:"4: Aseptic technique", title:"Transfer of Bacteria: Aseptic Technique", ex:"Exercise 4", render:renderAseptic,
+      question:"How do you move bacteria from a stock culture into broth, a slant, and a deep without contaminating anything?",
+      how:["Aseptic technique has two goals: <b>protect the culture</b> (keep contaminants out of your stock and new media) and <b>protect you</b> (keep the organism off your hands and bench).",
+        "Flame the loop or needle until it glows red-hot, then let it cool without touching anything. Hold the caps in your hand and flame the tube mouths before and after.",
+        "<b>Broth</b> and <b>slant</b> use a <b>loop</b>. A <b>deep</b> uses a straight <b>needle</b>."],
+      quiz:[
+        q("What are the two goals of aseptic technique?", ["Protect the culture and protect yourself", "Make the culture grow faster and make it colorful", "Kill the culture and clean the bench", "Save media and save time"], 0, "Keep contaminating organisms out, and keep your organism off you."),
+        q("How do you sterilize a loop or needle?", ["Hold it in the flame until it glows red-hot, then let it cool without touching anything", "Wipe it with a paper towel", "Dip it in water", "Blow on it"], 0, "A hot tool kills the organisms you want, so let it cool first."),
+        q("What do you do with the tube caps?", ["Hold them in your hand, and never set them down", "Set them on the bench", "Throw them away", "Leave them on"], 0, "Setting a cap down contaminates it."),
+        q("When do you flame the mouth of a tube?", ["Before and after the transfer", "Only before", "Only after", "Never"], 0, "Flame the mouth first, then recap."),
+        q("Which tool do you use to inoculate a deep?", ["A straight needle", "An inoculating loop", "A swab", "A pipette"], 0, "You stab down the center of the agar, almost to the bottom, then withdraw along the same path."),
+        q("How do you inoculate a slant?", ["Starting at the bottom, drag the loop in a tight zigzag up the surface", "Stab the center with a needle", "Swirl a loop in liquid", "Pour the culture on top"], 0, "Growth then appears on the surface."),
+        q("How do you inoculate a broth?", ["Dip a sterile loop in the stock and swirl it into the new broth", "Stab with a needle", "Zigzag on the surface", "Pour in the stock"], 0, "Swirling mixes the sample into the broth."),
+        q("Describe growth in a deep.", ["Growth along the stab line", "Growth on the surface only", "Cloudiness throughout", "No growth"], 0, "A broth shows turbidity, a pellicle, or sediment. A slant shows growth on the surface."),
+        q("What do you do with the loop right after the transfer?", ["Flame it red-hot again before setting it down", "Set it on the bench", "Wipe it on your coat", "Leave it in the tube"], 0, "This protects you and the bench.")]}
+  };
+
+
+  /* ---------------------------------------------------------------- understand pop-up */
+  (function(){
+    const m = document.createElement("div");
+    m.className = "tmodal"; m.id = "tModal"; m.hidden = true;
+    m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-labelledby", "tTitle");
+    m.innerHTML = `<div class="tcard"></div>`;
+    document.body.appendChild(m);
+  })();
+  function openTheory(){
+    const t = TABS[tabKey], m = $("tModal");
+    m.querySelector(".tcard").innerHTML = `<div class="thead"><div><div class="tkick">Understand the exercise</div><h2 id="tTitle">${t.title}</h2></div><button class="tclose" id="tClose" aria-label="Close">×</button></div>
+      <div class="tasks"><span class="tlabel">The question it answers</span><p>${t.question}</p></div>
+      <div class="tsec"><h3>Key ideas</h3><ul>${t.how.map(x => `<li>${x}</li>`).join("")}</ul></div>
+      <div class="tfoot"><button class="btn primary" id="tBack">Back to the bench</button></div>`;
+    m.hidden = false; document.body.style.overflow = "hidden"; m.querySelector(".tcard").scrollTop = 0;
+    const close = () => { m.hidden = true; document.body.style.overflow = ""; const b = $("theoryBtn"); if (b) b.focus({preventScroll:true}); };
+    $("tClose").onclick = close; $("tBack").onclick = close;
+    m.onclick = e => { if (e.target === m) close(); };
+    m.onkeydown = e => { if (e.key === "Escape") close(); };
+    $("tClose").focus();
+  }
+
+  /* ================================================================= page */
+  let tabKey = "scope";
+  function renderTab(){
+    cleanups.forEach(fn => fn()); cleanups = [];
+    const t = TABS[tabKey];
+    $("app").innerHTML = `
+      <header><div><a class="backlink" href="index.html">Lab review</a><h1>Microscopy and Growth<span class="chap">Exercises 1 to 4</span></h1></div></header>
+      <div class="labtabs" id="labTabs">${Object.keys(TABS).map(k => `<button class="labtab ${k === tabKey ? "on" : ""}" data-tab="${k}">${TABS[k].tab}</button>`).join("")}</div>
+      <div class="labwrap">
+        <div class="labhead"><h2>${t.title} <span class="chap" style="background:#e7e9fb;color:#2c3796">${t.ex}</span></h2><button class="btn hint" id="theoryBtn">📖 Understand the exercise</button></div>
+        <p class="labq"><b>Question:</b> ${t.question}</p>
+        <div id="tabBody"></div>
+        <div id="quizBox">${quizHTML(t)}</div>
+      </div>`;
+    $("labTabs").onclick = e => { const b = e.target.closest("[data-tab]"); if (!b) return; tabKey = b.dataset.tab; history.replaceState(null, "", "#" + tabKey); renderTab(); };
+    t.render($("tabBody")); bindQuiz(t);
+    $("theoryBtn").onclick = openTheory; $("theoryBtn2").onclick = openTheory;
+  }
+  const h = location.hash.slice(1); if (TABS[h]) tabKey = h;
+  window.addEventListener("hashchange", () => { const k = location.hash.slice(1); if (TABS[k] && k !== tabKey){ tabKey = k; renderTab(); window.scrollTo({top:0, behavior:"smooth"}); } });
+  renderTab();
+})();
+</script>
+</body>
+</html>

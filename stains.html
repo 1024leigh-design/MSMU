@@ -15,6 +15,27 @@
   .labwrap{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
   .labhead h2{margin:0 0 4px;font-size:1.3rem}
   .labq{color:var(--muted);font-size:1rem;margin:0 0 12px}
+  .labnote{background:#fff8e6;border:1px solid #f0d99a;border-radius:10px;padding:9px 14px;font-size:.95rem;color:#7a4b00;margin:0 0 12px;line-height:1.45}
+  .labhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  .tmodal{position:fixed;inset:0;background:rgba(20,24,36,.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto}
+  .tmodal[hidden]{display:none}
+  .tcard{background:#fff;border-radius:22px;max-width:820px;width:100%;padding:22px 24px 18px;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:tpop .25s ease-out}
+  @keyframes tpop{from{transform:translateY(14px);opacity:0}}
+  .thead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+  .thead h2{margin:2px 0 0;font-size:1.35rem}
+  .tkick{font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#9a6212}
+  .tclose{border:none;background:#eef1f5;border-radius:50%;width:38px;height:38px;font-size:1.4rem;cursor:pointer;color:var(--ink);flex:none}
+  .tasks{background:linear-gradient(135deg,#fff4de,#fdeceb);border-radius:16px;padding:12px 16px;margin-bottom:12px}
+  .tasks p{margin:4px 0 0;font-size:1.08rem;line-height:1.45}
+  .tlabel{display:block;font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .tsec{margin:14px 0}
+  .tsec h3{font-size:.95rem;margin:0 0 8px;color:var(--accent)}
+  .tsec ul{margin:6px 0 0;padding-left:20px;line-height:1.6;font-size:1rem}
+  .tsec li{margin-bottom:8px}
+  .tfoot{display:flex;justify-content:flex-end;margin-top:8px}
+  .quizhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .quizhead h3{margin:0}
+  .btn.sm{font-size:.85rem;padding:6px 14px}
   .howbox{background:#f3effd;border:1px solid #d9cdf5;border-radius:12px;padding:8px 14px;margin:0 0 14px;color:#3d2a6b;font-size:.95rem}
   .howbox summary{cursor:pointer;font-weight:700}
   .howbox ul{margin:8px 0 4px;padding-left:20px;line-height:1.5}
@@ -160,6 +181,7 @@
     gram:{
       tab:"Gram stain", title:"Gram Staining", ex:"Exercise 7",
       question:"Is this bacterium gram-positive or gram-negative?",
+      note:"<b>Note:</b> the times and numbers here (60 seconds of crystal violet, 30 seconds of iodine, about 10 seconds of ethanol, 60 seconds of safranin) can vary a little between handouts and instructors. Use them as a guide, and follow the numbers your instructor gives you.",
       how:["<b>Crystal violet</b> (primary stain) stains every cell purple. <b>Gram's iodine</b> (mordant) forms a crystal violet-iodine complex. <b>95% ethanol</b> (decolorizer) removes that complex from gram-negative cells. <b>Safranin</b> (counterstain) stains the gram-negative cells pink.",
         "<b>Gram-positive = purple.</b> The thick peptidoglycan traps the crystal violet-iodine complex. <b>Gram-negative = pink.</b> Ethanol dissolves the outer lipid membrane, and the complex washes out of the thin peptidoglycan.",
         "Decolorizing is the <b>trickiest step</b>: ethanol until the runoff runs clear (about 10 seconds), and don't overdo it. It guides antibiotic choice before culture results are back."],
@@ -462,9 +484,9 @@
       <header><div><a class="backlink" href="index.html">Lab review</a><h1>Smears and Stains<span class="chap">Exercises 5, 7, and 9</span></h1></div></header>
       <div class="labtabs" id="labTabs">${Object.keys(TABS).map(k => `<button class="labtab ${k === tabKey ? "on" : ""}" data-tab="${k}">${TABS[k].tab}</button>`).join("")}</div>
       <div class="labwrap">
-        <div class="labhead"><h2>${t.title} <span class="chap" style="background:#e7e9fb;color:#2c3796">${t.ex}</span></h2></div>
+        <div class="labhead"><h2>${t.title} <span class="chap" style="background:#e7e9fb;color:#2c3796">${t.ex}</span></h2><button class="btn hint" id="theoryBtn">📖 Understand the stain</button></div>
         <p class="labq"><b>Question:</b> ${t.question}</p>
-        <details class="howbox" open><summary>How it works</summary><ul>${t.how.map(x => `<li>${x}</li>`).join("")}</ul></details>
+        ${t.note ? `<div class="labnote">${t.note}</div>` : ""}
         <div class="sect">1. Pick a culture</div>
         <div class="orgrow" id="orgrow">${t.cultures.map((c, i) => `<button class="orgchip" data-c="${i}"><i>${esc(ORG[c.o].name)}</i>${c.age ? " " + c.age : ""}<small>${c.sub || "culture tube"}</small></button>`).join("")}</div>
         <div class="sect">2. Do each step in order</div>
@@ -484,6 +506,7 @@
     $("againBtn").onclick = () => { if (S) choose(t.cultures.indexOf(S.c)); };
     $("scopeBtn").onclick = openScope;
     bindQuiz(t);
+    $("theoryBtn").onclick = openTheory; $("theoryBtn2").onclick = openTheory;
     choose(0);
   }
   function choose(i){
@@ -540,7 +563,7 @@
 
   /* ---------------------------------------------------------------- quiz */
   function quizHTML(t){
-    return `<section class="quiz"><h3>Test yourself</h3>` + t.quiz.map((qq, i) => {
+    return `<section class="quiz"><div class="quizhead"><h3>Test yourself</h3><button class="btn secondary sm" id="theoryBtn2">📖 Review the theory first</button></div>` + t.quiz.map((qq, i) => {
       const order = qq.opts.map((_, k) => k).sort((a, b) => rnd(i * 7 + a + tabKey.length) - rnd(i * 7 + b + tabKey.length));
       return `<div class="qcard" data-q="${i}"><p class="qq">${i + 1}. ${qq.q}</p><div class="qopts">${order.map(k => `<button class="qopt" data-k="${k}">${qq.opts[k]}</button>`).join("")}</div><div class="qfb" hidden></div></div>`;
     }).join("") + `<p class="qscore" id="qScore"></p></section>`;
@@ -555,6 +578,29 @@
       fb.hidden = false;
       if (box.querySelectorAll(".qcard.done").length === t.quiz.length) $("qScore").textContent = `Finished! ${Object.values(got).filter(Boolean).length} of ${t.quiz.length} right on the first try.`;
     }));
+  }
+
+
+  /* ---------------------------------------------------------------- understand pop-up */
+  (function(){
+    const m = document.createElement("div");
+    m.className = "tmodal"; m.id = "tModal"; m.hidden = true;
+    m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-labelledby", "tTitle");
+    m.innerHTML = `<div class="tcard"></div>`;
+    document.body.appendChild(m);
+  })();
+  function openTheory(){
+    const t = TABS[tabKey], m = $("tModal");
+    m.querySelector(".tcard").innerHTML = `<div class="thead"><div><div class="tkick">Understand the stain</div><h2 id="tTitle">${t.title}</h2></div><button class="tclose" id="tClose" aria-label="Close">×</button></div>
+      <div class="tasks"><span class="tlabel">The question it answers</span><p>${t.question}</p></div>
+      <div class="tsec"><h3>How it works</h3><ul>${t.how.map(x => `<li>${x}</li>`).join("")}</ul></div>
+      <div class="tfoot"><button class="btn primary" id="tBack">Back to the bench</button></div>`;
+    m.hidden = false; document.body.style.overflow = "hidden"; m.querySelector(".tcard").scrollTop = 0;
+    const close = () => { m.hidden = true; document.body.style.overflow = ""; const b = $("theoryBtn"); if (b) b.focus({preventScroll:true}); };
+    $("tClose").onclick = close; $("tBack").onclick = close;
+    m.onclick = e => { if (e.target === m) close(); };
+    m.onkeydown = e => { if (e.key === "Escape") close(); };
+    $("tClose").focus();
   }
 
   /* ---------------------------------------------------------------- start */
