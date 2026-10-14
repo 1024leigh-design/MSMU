@@ -19,7 +19,7 @@
   .labhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
   .tmodal{position:fixed;inset:0;background:rgba(20,24,36,.55);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto}
   .tmodal[hidden]{display:none}
-  .tcard{background:#fff;border-radius:22px;max-width:820px;width:100%;padding:22px 24px 18px;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:tpop .25s ease-out}
+  .tcard{background:#fff;border-radius:22px;max-width:920px;width:100%;padding:22px 24px 18px;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:tpop .25s ease-out}
   @keyframes tpop{from{transform:translateY(14px);opacity:0}}
   .thead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
   .thead h2{margin:2px 0 0;font-size:1.35rem}
@@ -28,40 +28,58 @@
   .tasks{background:linear-gradient(135deg,#fff4de,#fdeceb);border-radius:16px;padding:12px 16px;margin-bottom:12px}
   .tasks p{margin:4px 0 0;font-size:1.08rem;line-height:1.45}
   .tlabel{display:block;font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-  .tsec{margin:14px 0}
-  .tsec h3{font-size:.95rem;margin:0 0 8px;color:var(--accent)}
+  .tsec{margin:18px 0}
+  .tsec h3{font-size:1rem;margin:0 0 8px;color:var(--accent)}
+  .tsec p{margin:0 0 8px;line-height:1.6;font-size:1rem}
   .tsec ul{margin:6px 0 0;padding-left:20px;line-height:1.6;font-size:1rem}
   .tsec li{margin-bottom:8px}
+  .tflowwrap{background:#f7f8fb;border-radius:14px;padding:8px;overflow-x:auto}
+  .tflow{display:block;width:100%;height:auto}
+  .ttbl{width:100%;border-collapse:collapse;font-size:.98rem;min-width:520px}
+  .ttbl th,.ttbl td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  .ttbl th{background:#eef1f8;font-size:.9rem}
+  .ttbl .sw{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:-2px;margin-right:6px;border:1px solid rgba(0,0,0,.25)}
+  .tres{display:flex;flex-wrap:wrap;gap:14px}
+  .tres > div{flex:1;min-width:150px;max-width:220px;background:#f7f8fb;border-radius:14px;padding:10px;text-align:center}
+  .tres svg{width:100%;max-width:150px;height:auto;display:block;margin:0 auto 6px}
+  .tres b{display:block;font-size:.98rem}
+  .tres span{font-size:.92rem;color:var(--muted)}
+  .tmist li{margin-bottom:10px}
+  .tmist b{color:#7a2e28}
   .tfoot{display:flex;justify-content:flex-end;margin-top:8px}
+  @media (max-width:720px){.tcard{padding:16px}}
   .quizhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
   .quizhead h3{margin:0}
   .btn.sm{font-size:.85rem;padding:6px 14px}
-  .howbox{background:#f3effd;border:1px solid #d9cdf5;border-radius:12px;padding:8px 14px;margin:0 0 14px;color:#3d2a6b;font-size:.95rem}
-  .howbox summary{cursor:pointer;font-weight:700}
-  .howbox ul{margin:8px 0 4px;padding-left:20px;line-height:1.5}
-  .orgrow{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
-  .orgchip{border:2px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;font:700 .92rem var(--font);cursor:pointer;text-align:left;color:var(--ink)}
-  .orgchip small{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
-  .orgchip.on{border-color:var(--accent);background:var(--accent-soft)}
   .sect{font-size:.82rem;font-weight:800;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 6px}
   .benchsteps{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
-  .bstep{font-size:.85rem;font-weight:700;border-radius:999px;padding:4px 11px;background:#eef1f5;color:var(--muted)}
+  .bstep{font-size:.88rem;font-weight:700;border-radius:999px;padding:4px 11px;background:#eef1f5;color:var(--muted)}
   .bstep.cur{background:var(--accent);color:#fff}
   .bstep.ok{background:var(--good-soft);color:var(--good)}
-  .benchhint{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-size:1rem;color:#2c3796;min-height:1.5em;line-height:1.45}
+  .benchhint{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-size:1.02rem;color:#2c3796;min-height:1.5em;line-height:1.45}
   .benchhint.warn{background:#fff3d6;color:#7a4b00}
+  .busy{display:flex;align-items:center;gap:12px;margin:8px 0 0;font-weight:700;color:#2c3796;font-size:.98rem}
+  .busy[hidden]{display:none}
+  .busy .bar{flex:1;max-width:320px;height:10px;border-radius:5px;background:#e4e8f5;overflow:hidden}
+  .busy .bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:5px}
   .bench{background:#fff;border:1px solid var(--line);border-radius:18px;padding:6px;margin:8px 0 10px}
-  .bench svg{display:block;width:100%;height:auto}
+  .bench svg{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+  .bench [data-item]{cursor:grab}
+  .pulse{animation:benchpulse 1.1s ease-in-out infinite}
+  @keyframes benchpulse{50%{opacity:.25}}
   .palette{display:flex;flex-wrap:wrap;gap:8px}
   .act{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--line);background:#fff;border-radius:12px;padding:9px 13px;font:700 .92rem var(--font);color:var(--ink);cursor:pointer}
   .act:hover:not(:disabled){border-color:var(--accent)}
   .act:disabled{opacity:.4;cursor:not-allowed}
   .act .dot{width:14px;height:14px;border-radius:50%;background:var(--dot,#9aa3b2);border:1px solid rgba(0,0,0,.25);flex:none}
+  .kbd{margin:6px 0 10px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:#fafbfd}
+  .kbd summary{cursor:pointer;font-weight:700;color:var(--muted);font-size:.95rem}
   .benchbtns{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 6px}
   .btn{font:700 .96rem var(--font);border-radius:999px;padding:9px 20px;cursor:pointer;border:2px solid var(--accent)}
   .btn.primary{background:var(--accent);color:#fff}
   .btn.secondary{background:#fff;color:var(--accent)}
   .btn.hint{border-color:#e5c56a;background:#fff8e6;color:#8a5a00}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
   .scope{margin-top:16px;border-top:2px dashed var(--line);padding-top:14px}
   .scope h3{margin:0 0 8px;font-size:1.1rem}
   .scopegrid{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:18px;align-items:start}
@@ -69,17 +87,16 @@
   .fieldbox{background:#15171d;border-radius:18px;padding:10px}
   .fieldbox svg{display:block;width:100%;height:auto;border-radius:50%}
   .magrow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-  .magnote{font-size:.95rem;color:var(--muted);min-height:2.6em}
+  .magnote{font-size:.98rem;color:var(--muted);min-height:2.6em}
   .recgrid{display:grid;grid-template-columns:1fr;gap:10px}
-  .recrow label{display:block;font-weight:700;font-size:.92rem;margin-bottom:4px}
+  .recrow label{display:block;font-weight:700;font-size:.95rem;margin-bottom:4px}
   .recrow select{width:100%;font:400 1rem var(--font);padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:#fff;color:var(--ink)}
   .recrow.ok select{border-color:var(--good);background:var(--good-soft)}
   .recrow.bad select{border-color:#eab3af;background:var(--bad-soft)}
-  .recfb{font-size:.88rem;margin-top:4px}
+  .recfb{font-size:.92rem;margin-top:4px}
   .recfb.ok{color:#14593a}
   .recfb.bad{color:#7a2e28}
-  .summary{background:#f3f5f9;border:2px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:.98rem;line-height:1.55}
-  .why{background:#f3effd;border:1px solid #d9cdf5;border-radius:10px;padding:10px 14px;font-size:.92rem;color:#3d2a6b;margin-top:12px}
+  .summary{background:#f3f5f9;border:2px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:12px;font-size:1rem;line-height:1.55}
   .quiz{margin-top:22px;border-top:2px dashed var(--line);padding-top:14px}
   .quiz h3{margin:0 0 10px;font-size:1.1rem;color:var(--more)}
   .qcard{background:#faf8ff;border:1px solid #e3dbf6;border-radius:14px;padding:12px 14px;margin-bottom:10px}
@@ -94,41 +111,63 @@
   .qfb.good{background:var(--good-soft);color:#14593a}
   .qfb.bad{background:var(--bad-soft);color:#7a2e28}
   .qscore{font-weight:700;color:var(--more)}
+  @media (prefers-reduced-motion:reduce){.pulse{animation:none}}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 
+<script src="drag.js"></script>
 <script>
 (function(){
   const $ = id => document.getElementById(id);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, k) => a + (b - a) * k;
   const f1 = n => Math.round(n * 10) / 10;
   const rnd = k => { const v = Math.sin(k * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
   const hash = s => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 100003; return h; };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;"})[c]);
+  const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), ch = s => clamp(Math.round(((n >> s) & 255) * (1 + k)), 0, 255); return "#" + [16, 8, 0].map(s => ch(s).toString(16).padStart(2, "0")).join(""); };
 
   /* ---------------------------------------------------------------- organisms */
   const ORG = {
-    se:{short:"S. epidermidis", name:"Staphylococcus epidermidis", shape:"coccus", gram:"pos"},
-    bm:{short:"B. megaterium", name:"Bacillus megaterium", shape:"bacillus", gram:"pos", L:46, W:16, chain:.35},
-    bs:{short:"B. subtilis", name:"Bacillus subtilis", shape:"bacillus", gram:"pos", L:32, W:11, chain:.3},
-    ec:{short:"E. coli", name:"Escherichia coli", shape:"bacillus", gram:"neg", L:24, W:10, chain:.08},
-    ea:{short:"E. aerogenes", name:"Enterobacter aerogenes", shape:"bacillus", gram:"neg", L:22, W:11, chain:.08}
+    se:{short:"S. epidermidis", name:"Staphylococcus epidermidis", shape:"coccus", gram:"pos", cap:"#9a6212"},
+    bm:{short:"B. megaterium", name:"Bacillus megaterium", shape:"bacillus", gram:"pos", L:46, W:16, chain:.35, cap:"#6b4bb8"},
+    bs:{short:"B. subtilis", name:"Bacillus subtilis", shape:"bacillus", gram:"pos", L:32, W:11, chain:.3, cap:"#2f9e63"},
+    ec:{short:"E. coli", name:"Escherichia coli", shape:"bacillus", gram:"neg", L:24, W:10, chain:.08, cap:"#3f7bd1"},
+    ea:{short:"E. aerogenes", name:"Enterobacter aerogenes", shape:"bacillus", gram:"neg", L:22, W:11, chain:.08, cap:"#c4532f"}
   };
   const SHAPE = ["Coccus (sphere)", "Bacillus (rod)", "Spirillum (spiral)"];
   const ARR = ["Pairs (diplo)", "Chains (strepto)", "Clusters (staphylo)", "Tetrads (4)", "Sarcinae (cube of 8)"];
 
   /* ---------------------------------------------------------------- reagents and actions */
   const ACT = {
-    water:{label:"Drop of water", g:"slide"}, cells:{label:"Add cells from the culture", g:"slide"}, dry:{label:"Air dry", g:"slide"},
-    flame:{label:"Pass through the flame", g:"slide"}, paper:{label:"Lay absorbent paper on the smear", g:"slide"},
-    steam:{label:"Steam over the boiling water bath", g:"slide"}, addstain:{label:"Add more stain", g:"slide"},
-    unpaper:{label:"Remove the paper", g:"slide"}, rinse:{label:"Rinse with water", g:"slide"}, blot:{label:"Blot dry", g:"slide"},
-    cv:{label:"Crystal violet", g:"stain", c:"#5a2a98"}, iodine:{label:"Gram's iodine", g:"stain", c:"#8a5a1a"},
-    etoh:{label:"95% ethanol", g:"stain", c:"#b9cfe6"}, safranin:{label:"Safranin", g:"stain", c:"#d8456b"},
-    mb:{label:"Methylene blue", g:"stain", c:"#2a4fb0"}, mg:{label:"Malachite green", g:"stain", c:"#2f9e4f"},
-    cf:{label:"Carbolfuchsin", g:"stain", c:"#c2185b"}, eosin:{label:"Eosin", g:"stain", c:"#e0507a"}
+    water:{label:"Drop of water", g:"slide", c:"#cfe6f5", code:"H₂O", name:["Water", "(a drop)"]},
+    cells:{label:"Add cells from the culture", g:"slide"},
+    dry:{label:"Air dry", g:"slide"},
+    flame:{label:"Pass through the flame", g:"slide"},
+    paper:{label:"Lay absorbent paper on the smear", g:"slide", name:["Absorbent", "paper"]},
+    steam:{label:"Steam over the boiling water bath", g:"slide"},
+    addstain:{label:"Add more stain", g:"slide"},
+    unpaper:{label:"Remove the paper", g:"slide"},
+    rinse:{label:"Rinse with water", g:"slide", name:["Wash", "bottle"]},
+    blot:{label:"Blot dry", g:"slide", name:["Bibulous", "paper"]},
+    cv:{label:"Crystal violet", g:"stain", c:"#5a2a98", code:"CV", name:["Crystal", "violet"]},
+    iodine:{label:"Gram's iodine", g:"stain", c:"#8a5a1a", code:"I", name:["Gram's", "iodine"]},
+    etoh:{label:"95% ethanol", g:"stain", c:"#c9dbee", code:"EtOH", name:["95%", "ethanol"]},
+    safranin:{label:"Safranin", g:"stain", c:"#d8456b", code:"S", name:["Safranin"]},
+    mb:{label:"Methylene blue", g:"stain", c:"#2a4fb0", code:"MB", name:["Methylene", "blue"]},
+    mg:{label:"Malachite green", g:"stain", c:"#2f9e4f", code:"MG", name:["Malachite", "green"]},
+    cf:{label:"Carbolfuchsin", g:"stain", c:"#c2185b", code:"CF", name:["Carbol-", "fuchsin"]},
+    eosin:{label:"Eosin", g:"stain", c:"#e0507a", code:"E", name:["Eosin"]}
+  };
+  /* what to do on the bench for each step (used by the hint button) */
+  const HOW = {
+    water:"Drag the <b>Water</b> dropper bottle onto the slide.", cells:"Drag the <b>loop</b> (with cells on it) onto the slide.",
+    dry:"Tap the <b>Air dry</b> button.", flame:"Drag the <b>slide</b> onto the burner flame. Each drop on the flame is one pass.",
+    paper:"Drag the <b>absorbent paper</b> onto the slide.", steam:"Tap the <b>Steam over the water bath</b> button.",
+    unpaper:"Drag the <b>paper</b> off the slide.", rinse:"Drag the <b>wash bottle</b> onto the slide.", blot:"Drag the <b>bibulous paper</b> onto the slide.",
+    etoh:"Drag the <b>95% ethanol</b> bottle onto the slide. Each time is about 2.5 seconds of dripping."
   };
   const DISTRACT = {
     mb:"Methylene blue is a simple stain. It isn't part of this procedure.",
@@ -165,10 +204,9 @@
       how:["A stain is a salt with a colored ion (the chromophore). <b>Basic (cationic)</b> dyes like methylene blue carry a positive charge, and most bacterial cells carry a net negative charge, so the dye binds readily. <b>Acidic (anionic)</b> dyes are repelled by the cell surface.",
         "A simple stain uses one dye: the <b>cells are colored</b> and the background is clear, which gives contrast so you can see <b>morphology</b> and <b>arrangement</b>.",
         "A <b>smear</b> is a thin film of cells on a slide. <b>Fixation</b> kills the bacteria and attaches them to the slide. Heat-fixing means 3 to 5 passes through the flame."],
-      cultures:[{o:"se", src:"slant", sub:"slant (solid medium)"}, {o:"bm", src:"broth", sub:"broth (liquid medium)"}],
+      cultures:[{o:"se", src:"slant", sub:"slant"}, {o:"bm", src:"broth", sub:"broth"}],
       pal:{slide:["water", "cells", "dry", "flame", "rinse", "blot"], stain:["mb", "eosin"]},
       seq:c => prep(c).concat(reagent("mb", "Methylene blue", "Flood the smear with methylene blue for 30 to 60 seconds.", "30 to 60 seconds", "#2a4fb0")),
-      film:{mb:"#7d97d8"},
       quiz:[
         q("Why does a basic (cationic) dye like methylene blue stain bacteria so well?", ["Bacterial cells are slightly negative, so a positively charged dye is attracted to them", "Bacterial cells are positive, so they attract the dye", "Basic dyes dissolve the cell wall", "Basic dyes are neutral"], 0, "Opposites attract: a positive dye binds the negatively charged cell surface."),
         q("Why don't acidic (anionic) dyes stain bacterial cells directly?", ["They are negatively charged and repelled by the negatively charged cell surface", "They are too large", "They kill the cells", "They need heat"], 0, "Like charges repel, so the dye doesn't bind."),
@@ -189,7 +227,7 @@
       pal:{slide:["water", "cells", "dry", "flame", "rinse", "blot"], stain:["cv", "iodine", "etoh", "safranin", "mb", "mg", "cf"]},
       seq:c => prep(c)
         .concat(reagent("cv", "Crystal violet", "Cover the smear with crystal violet (the primary stain) for 60 seconds.", "60 seconds", "#5a2a98"))
-        .concat(reagent("iodine", "Gram's iodine", "Cover the smear with Gram's iodine (the mordant) for 30 seconds.", "30 seconds", "#8a5a1a").map(x => x))
+        .concat(reagent("iodine", "Gram's iodine", "Cover the smear with Gram's iodine (the mordant) for 30 seconds.", "30 seconds", "#8a5a1a"))
         .concat([st("etoh", "Decolorize (ethanol)", "Drip 95% ethanol on the slide until the runoff runs clear (about 10 seconds). Don't overdo it.", "Decolorizing comes after the mordant.", {special:"decolor"}),
           st("rinse", "Decolorize (ethanol)", "Stop the ethanol and rinse gently with water.", "Rinse to stop decolorizing."),
           st("blot", "Decolorize (ethanol)", "Blot dry with bibulous paper. Don't rub.", "Blot, don't rub.")])
@@ -236,97 +274,134 @@
   function q(qq, opts, a, why){ return {q:qq, opts, a, why}; }
 
   /* ---------------------------------------------------------------- state */
-  let tabKey = "smear", S = null, raf = null;
+  let tabKey = "smear", S = null, raf = null, L = null, DR = null;
   const T = () => TABS[tabKey];
-  const fresh = c => ({c, seq:T().seq(c), i:0, wrong:0, hints:0, passes:0, dec:0, steamLvl:1, mag:0, msg:"", warn:false, busy:null, checked:false,
-    L:{water:false, cells:false, dried:false, fixed:false, paper:false, stain:null, film:null, blotted:false, runoff:false, rinsing:false},
+  const fresh = () => ({c:null, seq:null, i:0, loop:false, wrong:0, hints:0, passes:0, dec:0, steamLvl:1, topup:0, mag:0, msg:"", warn:false, busy:null,
+    L:{water:false, cells:false, dried:false, fixed:false, paper:false, stain:null, film:null, blotted:false, runoff:false},
     flags:{overheated:false, under:false, over:false, dried:false}, world:null});
-  const stages = () => { const out = []; T().seq(S.c).forEach(s => { if (!out.includes(s.stage)) out.push(s.stage); }); out.push("Examine"); return out; };
+  const dispSeq = () => S.seq || T().seq(T().cultures[0]);
+  const stages = () => { const out = []; dispSeq().forEach(s => { if (!out.includes(s.stage)) out.push(s.stage); }); out.push("Examine"); return out; };
+  const shelfItems = () => { const t = T(), a = []; if (t.pal.slide.includes("water")) a.push("water"); t.pal.stain.forEach(x => a.push(x)); if (t.pal.slide.includes("paper")) a.push("paper"); a.push("rinse", "blot"); return a; };
 
   /* ---------------------------------------------------------------- acting on the bench */
-  function say(m, warn){ S.msg = m; S.warn = !!warn; ui(); drawSlide(); }
-  function finish(){ S.i++; S.msg = ""; S.warn = false; ui(); drawSlide(); }
-  function startWait(text, dur, done){
-    S.busy = {kind:"wait", text, t0:performance.now(), dur, done};
-    document.body.dataset.busy = "1"; loop();
+  function say(m, warn){ S.msg = m; S.warn = !!warn; ui(); draw(); }
+  function finish(){ S.i++; S.msg = ""; S.warn = false; ui(); draw(); }
+  function startWait(text, dur, done, tool){
+    S.busy = {kind:"wait", text, t0:performance.now(), dur, done, tool};
+    document.body.dataset.busy = "1"; ui(); loop();
   }
   function endBusy(){ if (S) S.busy = null; delete document.body.dataset.busy; }
   function loop(){
     cancelAnimationFrame(raf);
     const frame = now => {
-      if (!S || !S.busy) { drawSlide(); return; }
+      if (!S || !S.busy) { draw(); busyBar(); return; }
       const b = S.busy, k = (now - b.t0) / b.dur;
       if (b.kind === "steam"){
         const dt = b.last ? now - b.last : 0; b.last = now;
         S.steamLvl = clamp(S.steamLvl - dt / 3600, 0, 1);
-        if (S.steamLvl <= 0 && !S.flags.dried){ S.flags.dried = true; S.msg = "The stain dried out! Add more malachite green while the slide steams."; S.warn = true; ui(); }
+        if (S.steamLvl <= 0 && !S.flags.dried){ S.flags.dried = true; S.msg = "The stain dried out! Drag more malachite green onto the slide while it steams."; S.warn = true; ui(); }
       }
-      drawSlide();
-      if (k >= 1){ const d = b.done; endBusy(); d && d(); ui(); drawSlide(); return; }
+      draw(); busyBar();
+      if (k >= 1){ const d = b.done; endBusy(); d && d(); ui(); draw(); busyBar(); return; }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
   }
+  function busyBar(){
+    const box = $("busy"); if (!box) return;
+    const b = S && S.busy;
+    if (!b || (b.dur < 900 && b.kind !== "steam")){ box.hidden = true; return; }
+    box.hidden = false; box.querySelector("span").textContent = b.text;
+    box.querySelector("i").style.width = f1(100 * clamp((performance.now() - b.t0) / b.dur, 0, 1)) + "%";
+  }
+
+  /* choosing a culture: touch the loop to a tube */
+  function pickCulture(i){
+    if (!S || S.busy) return;
+    const t = T(), c = t.cultures[i];
+    if (S.L.cells){ say("The smear already has cells on it. Tap <b>Start over</b> to try a different culture.", true); return; }
+    const first = !S.c;
+    S.c = c; S.seq = t.seq(c); S.world = null; S.loop = true;
+    if (S.L.water && S.seq[0].id === "water") S.i = 1;
+    else { S.i = 0;
+      if (S.L.water && first){ S.wrong++; say(`Got some <i>${esc(ORG[c.o].short)}</i>. This is a <b>broth</b> culture, so it didn't need a drop of water: broth goes straight on the slide. Carry on.`, true); return; } }
+    say(`Got some <i>${esc(ORG[c.o].short)}</i> ${c.age ? "(" + c.age + ") " : ""}on the loop.`);
+  }
 
   function act(id){
     if (!S) return;
-    const t = TABS[tabKey], cur = S.seq[S.i];
+    const t = T();
     if (S.busy){
-      if (S.busy.kind === "steam" && id === "addstain"){ S.steamLvl = 1; S.msg = "More stain added. Keep the slide wet."; S.warn = false; ui(); }
+      if (S.busy.kind === "steam" && (id === "addstain" || id === "mg")){ S.steamLvl = 1; S.topup = performance.now(); S.msg = "More malachite green added. Keep the paper wet."; S.warn = false; ui(); }
       return;
     }
+    if (!S.c){
+      if (id === "water" && t.pal.slide.includes("water") && !S.L.water){ startWait("Adding a drop of water…", 700, () => { S.L.water = true; say("Water is on the slide. Now pick up some cells: drag the loop to a culture tube."); }, "water"); return; }
+      S.wrong++;
+      say("First choose a culture: drag the <b>loop</b> to one of the tubes to pick up some cells." + (t.pal.slide.includes("water") ? " A slant culture also needs a drop of water on the slide." : ""), true);
+      return;
+    }
+    const cur = S.seq[S.i];
     if (id === "addstain"){ say("There is nothing to top up right now. Add more stain only while the slide is steaming.", true); S.wrong++; return; }
     /* extras that are allowed after their step */
-    if (id === "flame" && S.L.fixed){ S.passes++; if (S.passes > 5 && !S.flags.overheated){ S.flags.overheated = true; say("That is more than 5 passes. Too much heat can distort or destroy the cells.", true); } else say("Pass " + S.passes + ".", S.flags.overheated); drawSlide(); return; }
-    if (id === "etoh" && cur && cur.id === "rinse" && S.dec > 0){ S.dec += .25; ui(); drawSlide(); return; }
+    if (id === "flame" && S.L.fixed){
+      startWait("Passing the slide through the flame…", 650, () => { S.passes++;
+        if (S.passes > 5 && !S.flags.overheated){ S.flags.overheated = true; say("That is more than 5 passes. Too much heat can distort or destroy the cells.", true); }
+        else say("Pass " + S.passes + ".", S.flags.overheated); }, "flame");
+      return;
+    }
+    if (id === "etoh" && cur && cur.id === "rinse" && S.dec > 0){
+      startWait("Dripping more ethanol…", 650, () => { S.dec += .25; say(S.dec < 1 ? "The runoff is still purple. Keep dripping until it runs clear, then rinse." : S.dec < 1.75 ? "The runoff is clear. Rinse with water now to stop decolorizing." : "Still dripping ethanol. That is a long time: the gram-positive cells may be losing their color too.", S.dec >= 1.75); }, "etoh");
+      return;
+    }
     if (!cur){ say("Every step is done. Examine the slide under the microscope."); return; }
     if (id !== cur.id){ wrong(id, cur); return; }
-    S.wrongRun = 0;
+    if (id === "cells" && !S.loop){ say("Pick up cells first: drag the loop to the culture tube.", true); return; }
     switch (id){
-      case "water": S.L.water = true; finish(); break;
-      case "cells": S.L.cells = true; finish(); break;
+      case "water": startWait("Adding a drop of water…", 700, () => { S.L.water = true; finish(); }, "water"); break;
+      case "cells": startWait(S.c.src === "slant" ? "Mixing the growth into the water…" : S.c.src === "broth" ? "Spreading 2 to 3 loopfuls…" : "Spreading a thin smear…", 1000, () => { S.L.cells = true; S.loop = false; finish(); }, "loop"); break;
       case "dry": startWait("Air drying…", 1300, () => { S.L.dried = true; finish(); }); break;
       case "flame":
-        S.passes++;
-        if (S.passes < cur.min){ say("Pass " + S.passes + " of 3 to 5. Keep going.", false); drawSlide(); }
-        else { S.L.fixed = true; finish(); say(S.passes + " passes: fixed. You can do up to 5, but no more."); }
+        startWait("Passing the slide through the flame…", 650, () => {
+          S.passes++;
+          if (S.passes < cur.min){ say("Pass " + S.passes + " of 3 to 5. Keep going: drag the slide through the flame again."); }
+          else { S.L.fixed = true; finish(); say(S.passes + " passes: fixed. You can do up to 5, but no more."); }
+        }, "flame");
         break;
       case "etoh":
-        S.dec = .25; S.L.runoff = true; lastStain = "etoh"; finish(); say("Ethanol is running off. Drip more until the runoff runs clear, then rinse. Don't overdo it.");
+        startWait("Dripping ethanol…", 650, () => { S.dec = .25; S.L.runoff = true; lastStain = "etoh"; finish(); say("Ethanol is running off. Drip more until the runoff runs clear, then rinse. Don't overdo it."); }, "etoh");
         break;
-      case "paper": S.L.paper = true; finish(); break;
-      case "mg": S.L.stain = {c:cur.color}; finish(); break;
+      case "paper": startWait("Laying the paper on the smear…", 500, () => { S.L.paper = true; finish(); }, "paper"); break;
+      case "mg": startWait("Adding malachite green…", 700, () => { S.L.stain = {c:cur.color}; finish(); }, "mg"); break;
       case "steam": S.steamLvl = 1; S.busy = {kind:"steam", text:"Steaming (5 minutes, time-lapse)…", t0:performance.now(), dur:5200, last:0, done:() => { S.L.film = S.flags.dried ? "#4a7a52" : "#2f9e4f"; finish(); }};
-        document.body.dataset.busy = "1"; loop(); ui(); break;
+        document.body.dataset.busy = "1"; ui(); loop(); break;
       case "unpaper": S.L.paper = false; S.L.stain = null; finish(); break;
       case "rinse": {
         const decolor = S.L.runoff;
-        startWait("Rinsing…", cur.wait ? 1500 : 900, () => {
+        startWait("Rinsing…", cur.wait ? 1500 : 1000, () => {
           S.L.stain = null; S.L.runoff = false;
           if (decolor){ S.flags.under = S.dec < 1; S.flags.over = S.dec >= 1.75; }
           setFilm(); finish();
           if (decolor){ say(S.flags.under ? "You stopped before the runoff ran clear, so some gram-negative cells may still be purple." : S.flags.over ? "That was a long decolorizing. Gram-positive cells may have lost their color too." : "Decolorized just right: the runoff ran clear.", S.flags.under || S.flags.over); }
-        }); break; }
-      case "blot": startWait("Blotting…", 500, () => { S.L.blotted = true; finish(); }); break;
+        }, "rinse"); break; }
+      case "blot": startWait("Blotting…", 900, () => { S.L.blotted = true; finish(); }, "blot"); break;
       default: /* a stain */
-        S.L.stain = {c:cur.color}; startWait(cur.wait ? "Staining: " + cur.wait + " (time-lapse)…" : "Staining…", 1700, () => { setFilmAfter(id); finish(); });
+        S.L.stain = {c:cur.color}; startWait(cur.wait ? "Staining: " + cur.wait + " (time-lapse)…" : "Staining…", 1700, () => { lastStain = id; finish(); }, id);
     }
   }
   let lastStain = null;
-  function setFilmAfter(id){ lastStain = id; }
   function setFilm(){
-    const o = ORG[S.c.o], g = o.gram;
+    const o = ORG[S.c.o];
     if (tabKey === "smear") S.L.film = "#7d97d8";
     else if (tabKey === "gram"){
       if (lastStain === "cv") S.L.film = "#6a3aa8";
       else if (lastStain === "iodine") S.L.film = "#4a2a85";
-      else if (lastStain === "etoh") S.L.film = ((g === "pos" && !S.flags.over) || (g === "neg" && S.flags.under)) ? "#4a2a85" : "#efe6f3";
+      else if (lastStain === "etoh") S.L.film = ((o.gram === "pos" && !S.flags.over) || (o.gram === "neg" && S.flags.under)) ? "#4a2a85" : "#efe6f3";
       else if (lastStain === "safranin") S.L.film = gramShows() === "purple" ? "#6b3a8f" : "#e8678f";
     } else if (tabKey === "spore"){
       if (lastStain === "safranin") S.L.film = "#d4506c"; else S.L.film = "#9fd3ab";
     }
   }
-  /* rinse after etoh happens before lastStain is updated, so keep it correct */
   const gramShows = () => { const g = ORG[S.c.o].gram; return g === "pos" ? (S.flags.over ? "pink" : "purple") : (S.flags.under ? "purple" : "pink"); };
 
   function wrong(id, cur){
@@ -335,54 +410,240 @@
     const inSeq = S.seq.some(s => s.id === id);
     if (id === "water" && S.c.src === "broth") m = "A broth culture is liquid, so no water is needed. Put the loopfuls straight on the slide.";
     else if (id === "cells" && cur.id === "water") m = "Put a drop of water on the slide first, then mix in the growth.";
+    else if (id === "cells") m = "The cells are already on the slide.";
     else if (!inSeq && DISTRACT[id]) m = DISTRACT[id];
     else if (cur.stage === "Make the smear" && ["cv", "iodine", "etoh", "safranin", "mb", "mg", "paper", "steam", "rinse", "blot"].includes(id)) m = "Not yet. Make and heat-fix the smear first: heat-fixing kills the bacteria and attaches them to the slide so they don't wash off.";
-    else if (id === "flame" && cur.id !== "flame") m = "Not yet. Let the smear air dry before heat-fixing.";
+    else if (id === "flame" && cur.id !== "flame") m = cur.stage === "Make the smear" ? "Not yet. Let the smear air dry before heat-fixing." : "The smear is already heat-fixed. Keep staining.";
     else if (id === "etoh") m = cur.id === "iodine" ? "Not yet. The mordant (Gram's iodine) goes on before the decolorizer." : "Not yet. 95% ethanol is the decolorizer, and it comes after the crystal violet and the iodine.";
     else m = "Not yet. " + (cur.why ? cur.why + " " : "") + "You're on: <b>" + esc(cur.stage) + "</b>. Tap the hint button if you're stuck.";
     say(m, true);
   }
 
-  /* ---------------------------------------------------------------- drawing the slide */
-  function drawSlide(){
-    const svg = $("slideSvg"); if (!svg || !S) return;
-    const L = S.L, now = performance.now(), W = 640, H = 300, cx = 330, cy = 156;
-    let s = `<rect x="0" y="0" width="${W}" height="${H}" rx="16" fill="#f7f8fb"/><rect x="20" y="238" width="600" height="44" rx="10" fill="#ddd3bf"/>`;
-    /* burner */
-    const burning = S.busy ? false : false;
-    s += `<rect x="542" y="222" width="46" height="16" rx="4" fill="#8b93a3"/><rect x="558" y="196" width="14" height="28" fill="#a9b1bf"/>`;
-    s += `<path d="M565,196 C550,180 553,164 565,148 C577,164 580,180 565,196 Z" fill="#ff9a2e" opacity=".9"><animate attributeName="opacity" values=".7;1;.75" dur=".4s" repeatCount="indefinite"/></path><path d="M565,194 C557,184 559,174 565,164 C571,174 573,184 565,194 Z" fill="#ffe27a"/>`;
-    s += `<text x="565" y="262" font-size="11" font-weight="700" fill="#5a6376" text-anchor="middle">burner</text>`;
-    /* water bath while steaming */
-    if (S.busy && S.busy.kind === "steam"){
-      s += `<rect x="268" y="214" width="124" height="62" rx="8" fill="#cfe3f1" stroke="#8fb0c8" stroke-width="2"/><text x="330" y="270" font-size="11" font-weight="700" fill="#456" text-anchor="middle">boiling water bath</text>`;
-      for (let k = 0; k < 6; k++){ const px = 296 + k * 16 + (rnd(k) - .5) * 6, ph = ((now / 700) + k * .17) % 1; s += `<path d="M${f1(px)},${f1(212 - ph * 30)} q6,-8 0,-16" fill="none" stroke="#b7c7d4" stroke-width="3" stroke-linecap="round" opacity="${f1(1 - ph)}"/>`; }
+  /* ---------------------------------------------------------------- bench layout */
+  function layout(){
+    const host = $("slideSvg"), w = host && host.clientWidth ? host.clientWidth : innerWidth, narrow = w < 600, n = T().cultures.length;
+    if (!narrow){
+      const dx = Math.min(84, 430 / Math.max(n - 1, 1));
+      L = {narrow, W:900, H:548, fs:1, n, stagger:false,
+        rack:i => ({x:70 + i * dx, y:30}), tray:{x:560, y:40, w:316, h:62}, loop:{x:790, y:71},
+        slide:{cx:360, cy:250, w:380, h:116}, burner:{x:735, y:352},
+        shelf:j => ({x:58 + j * 82, y:500})};
+    } else {
+      const dx = Math.min(98, 470 / Math.max(n - 1, 1));
+      L = {narrow, W:600, H:950, fs:1.55, n, stagger:n > 2,
+        rack:i => ({x:300 - (n - 1) * dx / 2 + i * dx, y:36}), tray:{x:24, y:262, w:340, h:66}, loop:{x:262, y:295},
+        slide:{cx:232, cy:432, w:330, h:112}, burner:{x:480, y:524},
+        shelf:j => ({x:66 + (j % 5) * 117, y:j < 5 ? 708 : 886})};
     }
-    /* slide */
-    s += `<rect x="110" y="96" width="390" height="116" rx="6" fill="#e9f1f6" stroke="#a9b8c6" stroke-width="2.5"/><rect x="110" y="96" width="62" height="116" rx="6" fill="#d9e5ee"/><text x="141" y="158" font-size="11" fill="#7a8896" text-anchor="middle">label</text>`;
-    if (L.water && !L.dried) s += `<ellipse cx="${cx}" cy="${cy}" rx="48" ry="27" fill="#cfe8f7" opacity=".85" stroke="#9fc6df" stroke-width="1.5"/>`;
-    if (L.cells && !L.dried) s += `<ellipse cx="${cx}" cy="${cy}" rx="${L.water ? 32 : 36}" ry="${L.water ? 18 : 22}" fill="#efe3c0" opacity=".9"/>`;
-    if (L.dried) s += `<ellipse cx="${cx}" cy="${cy}" rx="38" ry="22" fill="${L.fixed ? "#e6dcc2" : "#f1ead6"}" opacity=".95" stroke="${L.fixed ? "#cdbf99" : "#e0d6b8"}" stroke-width="1.5"/>`;
-    if (L.film && !L.stain) s += `<ellipse cx="${cx}" cy="${cy}" rx="38" ry="22" fill="${L.film}" opacity=".9"/>`;
-    if (L.paper) s += `<rect x="${cx - 52}" y="${cy - 34}" width="104" height="68" fill="#fbfaf4" stroke="#d9cfa6" stroke-width="2" opacity=".96"/>`;
-    if (L.stain){
-      const lvl = S.busy && S.busy.kind === "steam" ? S.steamLvl : 1;
-      s += `<ellipse cx="${cx}" cy="${cy}" rx="${L.paper ? 48 : 64}" ry="${L.paper ? 30 : 38}" fill="${L.stain.c}" opacity="${f1(.25 + .6 * lvl)}"/>`;
+  }
+  const slideBox = () => { const s = L.slide; return {x0:s.cx - s.w / 2, x1:s.cx + s.w / 2, y0:s.cy - s.h / 2, y1:s.cy + s.h / 2}; };
+  const flameAt = () => ({x:L.burner.x, y:L.burner.y - 100});
+  const tipOf = d => d.item === "loop" ? [d.x, d.y + 60] : /^b:/.test(d.item) && !["b:blot", "b:paper"].includes(d.item) ? [d.x, d.y + 42] : [d.x, d.y];
+  const onSlide = p => { const b = slideBox(); return p[0] > b.x0 - 34 && p[0] < b.x1 + 34 && p[1] > b.y0 - 50 && p[1] < b.y1 + 30; };
+  const onBurner = p => Math.hypot(p[0] - flameAt().x, p[1] - flameAt().y) < 90;
+  const tubeAt = p => { for (let i = 0; i < L.n; i++){ const r = L.rack(i); if (Math.abs(p[0] - r.x) < 30 && p[1] > r.y - 30 && p[1] < r.y + 112) return i; } return -1; };
+
+  /* ---------------------------------------------------------------- drawing pieces */
+  const CULTURE = "#efe3c0";
+  const txt = (x, y, s, o) => { o = o || {}; return `<text x="${f1(x)}" y="${f1(y)}" font-size="${f1(o.fs || 13)}" font-weight="${o.w || 700}" fill="${o.col || "#343b4a"}" text-anchor="${o.a || "middle"}"${o.it ? ` font-style="italic"` : ""}>${s}</text>`; };
+  function tubePath(cx, top, w, h, inset){
+    const l = cx - w / 2 + inset, r = cx + w / 2 - inset, rr = (r - l) / 2, b = top + h - inset;
+    return `M${f1(l)},${f1(top)} L${f1(l)},${f1(b - rr)} A${f1(rr)},${f1(rr)} 0 0 0 ${f1(r)},${f1(b - rr)} L${f1(r)},${f1(top)} Z`;
+  }
+  function cultureTube(i, hot){
+    const c = T().cultures[i], o = ORG[c.o], {x, y} = L.rack(i), w = 32, h = 98, chosen = S.c === c;
+    let s = `<clipPath id="ct${i}"><path d="${tubePath(x, y, w, h, 3)}"/></clipPath><g clip-path="url(#ct${i})">`;
+    if (c.src === "broth"){
+      s += `<rect x="${x - w}" y="${y + 34}" width="${w * 2}" height="${h}" fill="${CULTURE}"/><rect x="${x - w}" y="${y + 34}" width="${w * 2}" height="${h}" fill="url(#glassShade)"/>`;
+      s += Array.from({length:16}, (_, k) => `<circle cx="${f1(x - 11 + rnd(i * 31 + k) * 22)}" cy="${f1(y + 40 + rnd(i * 31 + k + 50) * 50)}" r="${f1(1.1 + rnd(k + i) * 1.4)}" fill="#fffdf2" opacity=".8"/>`).join("");
+    } else {
+      s += `<path d="M${x - w / 2},${y + 44} L${x + w / 2},${y + 70} L${x + w / 2},${y + h} L${x - w / 2},${y + h} Z" fill="#ead9a0"/><path d="M${x - w / 2},${y + 44} L${x + w / 2},${y + 70} L${x + w / 2},${y + h} L${x - w / 2},${y + h} Z" fill="url(#glassShade)"/>`;
+      s += `<path d="M${x - 10},${y + 53} L${x + 8},${y + 59} L${x - 8},${y + 61} L${x + 10},${y + 67} L${x - 6},${y + 68}" fill="none" stroke="#f8f1dc" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }
+    s += `</g><path d="${tubePath(x, y, w, h, 0).replace(/ Z$/, "")}" fill="none" stroke="#8b93a3" stroke-width="3" stroke-linejoin="round"/>`;
+    s += `<line x1="${x - w / 2 + 7}" y1="${y + 10}" x2="${x - w / 2 + 7}" y2="${y + h - 22}" stroke="#fff" stroke-width="2.6" opacity=".75" stroke-linecap="round"/>`;
+    s += `<rect x="${x - 20}" y="${y - 18}" width="40" height="22" rx="5" fill="${o.cap}"/><rect x="${x - 20}" y="${y - 18}" width="40" height="6" rx="3" fill="#fff" opacity=".2"/>`;
+    if (chosen) s += `<rect x="${x - 27}" y="${y - 25}" width="54" height="${h + 34}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="3"/>`;
+    if (hot) s += `<rect class="pulse" x="${x - 27}" y="${y - 25}" width="54" height="${h + 34}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="3" stroke-dasharray="7 6"/>`;
+    const dy = L.stagger && i % 2 ? 34 * L.fs : 0;
+    s += txt(x, y + h + 22 * L.fs + dy, esc(o.short), {fs:12.5 * L.fs, it:true});
+    s += txt(x, y + h + 38 * L.fs + dy, esc(c.age || c.sub), {fs:11.5 * L.fs, col:"#5a6376", w:400});
+    return s;
+  }
+  function loopSVG(tx, ty, flat, load){
+    const len = 150, grip = 52, g = flat ? `<g transform="rotate(-90 ${tx} ${ty})">` : "<g>";
+    let s = g + `<line x1="${tx}" y1="${ty - len}" x2="${tx}" y2="${ty - 7}" stroke="#9aa3b2" stroke-width="2.6"/>`;
+    s += `<rect x="${tx - 6}" y="${ty - len - grip}" width="12" height="${grip + 6}" rx="5" fill="#3f4cc0"/><rect x="${tx - 6}" y="${ty - len - grip}" width="4" height="${grip + 6}" rx="2" fill="#fff" opacity=".25"/>`;
+    s += `<circle cx="${tx}" cy="${ty}" r="7" fill="${load ? CULTURE : "none"}" stroke="#9aa3b2" stroke-width="2.4"/>`;
+    return s + `</g>`;
+  }
+  /* a plastic dropping bottle, drawn with its base at (0,0) and the nozzle tip at (0,-104) */
+  function bottleShape(id){
+    const a = ACT[id], c = a.c || "#cfe6f5";
+    let s = `<path d="M-24,-8 Q-24,0 -16,0 L16,0 Q24,0 24,-8 L24,-54 Q24,-66 12,-70 L9,-72 L-9,-72 L-12,-70 Q-24,-66 -24,-54 Z" fill="#f4f7fa" stroke="#8b93a3" stroke-width="2"/>`;
+    s += `<path d="M-21,-8 Q-21,-3 -15,-3 L15,-3 Q21,-3 21,-8 L21,-50 L-21,-50 Z" fill="${c}" opacity=".9"/>`;
+    s += `<rect x="-19" y="-42" width="38" height="20" rx="4" fill="#fff" stroke="#d9dee7"/>` + txt(0, -27.5, a.code, {fs:a.code.length > 3 ? 10.5 : 12.5, col:"#343b4a"});
+    s += `<line x1="-17" y1="-62" x2="-17" y2="-10" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round"/>`;
+    s += `<rect x="-11" y="-85" width="22" height="14" rx="3" fill="#3b4250"/><path d="M-6,-85 L-2,-104 L2,-104 L6,-85 Z" fill="#e9edf3" stroke="#8b93a3" stroke-width="1.6"/>`;
+    return s;
+  }
+  function washShape(){
+    let s = `<path d="M-26,-8 Q-26,0 -18,0 L18,0 Q26,0 26,-8 L26,-70 Q26,-78 18,-78 L-18,-78 Q-26,-78 -26,-70 Z" fill="#eef5fb" stroke="#8b93a3" stroke-width="2"/>`;
+    s += `<rect x="-23" y="-56" width="46" height="53" rx="6" fill="#cfe6f5" opacity=".9"/><rect x="-18" y="-46" width="36" height="20" rx="4" fill="#fff" stroke="#d9dee7"/>` + txt(0, -31.5, "H₂O", {fs:12});
+    s += `<rect x="-12" y="-88" width="24" height="12" rx="3" fill="#3b4250"/><path d="M0,-88 L0,-104 Q0,-112 -8,-112 L-34,-112" fill="none" stroke="#e9edf3" stroke-width="6" stroke-linecap="round"/><path d="M0,-88 L0,-104 Q0,-112 -8,-112 L-34,-112" fill="none" stroke="#8b93a3" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>`;
+    return s;
+  }
+  function blotShape(){
+    return `<rect x="-34" y="-46" width="68" height="46" rx="4" fill="#fbf7ef" stroke="#a99e86" stroke-width="2"/><rect x="-30" y="-42" width="60" height="38" rx="3" fill="#fffdf7" stroke="#e2d9c3"/><line x1="-26" y1="-30" x2="26" y2="-30" stroke="#e2d9c3"/><line x1="-26" y1="-20" x2="26" y2="-20" stroke="#e2d9c3"/><rect x="-34" y="-46" width="8" height="46" rx="3" fill="#c9a24a"/>`;
+  }
+  function paperShape(){ return `<rect x="-24" y="-44" width="48" height="40" rx="2" fill="#fffef9" stroke="#d9cfa6" stroke-width="2"/><path d="M-24,-14 L-14,-4" stroke="#e8e1c6" stroke-width="2"/>`; }
+  function shelfShape(id){ return id === "rinse" ? washShape() : id === "blot" ? blotShape() : id === "paper" ? paperShape() : bottleShape(id); }
+  function heldShape(id, x, y){
+    if (id === "rinse") return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(-28) translate(34 112)">${washShape()}</g>`;
+    if (id === "blot" || id === "paper") return `<g transform="translate(${f1(x)} ${f1(y + 24)})">${shelfShape(id)}</g>`;
+    return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(168) translate(0 104)">${bottleShape(id)}</g>`;
+  }
+  function burnerSVG(hot, fierce){
+    const {x, y} = L.burner;
+    let s = `<path d="M${x - 70},${y - 6} C${x - 110},${y - 6} ${x - 120},${y + 12} ${x - 160},${y + 14}" fill="none" stroke="#c46a3a" stroke-width="7" stroke-linecap="round"/>`;
+    s += `<rect x="${x - 34}" y="${y - 12}" width="68" height="14" rx="5" fill="#6d7686"/><rect x="${x - 26}" y="${y - 20}" width="52" height="10" rx="4" fill="#8b93a3"/>`;
+    s += `<rect x="${x - 9}" y="${y - 72}" width="18" height="54" rx="3" fill="#a9b1bf"/><rect x="${x - 9}" y="${y - 72}" width="5" height="54" rx="2" fill="#fff" opacity=".35"/><rect x="${x - 12}" y="${y - 40}" width="24" height="9" rx="3" fill="#8b93a3"/>`;
+    const fh = fierce ? 98 : 84;
+    s += `<path d="M${x},${y - 72} C${x - 22},${y - 92} ${x - 12},${y - 72 - fh * .75} ${x},${y - 72 - fh} C${x + 12},${y - 72 - fh * .75} ${x + 22},${y - 92} ${x},${y - 72} Z" fill="#7fb2ff" opacity=".55"><animate attributeName="opacity" values=".45;.7;.5" dur=".5s" repeatCount="indefinite"/></path>`;
+    s += `<path d="M${x},${y - 72} C${x - 10},${y - 84} ${x - 6},${y - 104} ${x},${y - 116} C${x + 6},${y - 104} ${x + 10},${y - 84} ${x},${y - 72} Z" fill="#2f5fd0" opacity=".85"/>`;
+    if (hot) s += `<circle class="pulse" cx="${x}" cy="${y - 100}" r="62" fill="none" stroke="#3f4cc0" stroke-width="3" stroke-dasharray="8 6"/>`;
+    s += txt(x, y + 24 * L.fs, "burner", {fs:12.5 * L.fs, col:"#5a6376"});
+    return s;
+  }
+  /* the slide and everything on it, centered at (cx, cy), scale sc */
+  function slideSVG(cx, cy, sc, hot){
+    const s0 = L.slide, w = s0.w * sc, h = s0.h * sc, x0 = cx - w / 2, y0 = cy - h / 2, mx = cx + 26 * sc, my = cy, Lb = S.L;
+    let s = `<rect x="${f1(x0)}" y="${f1(y0)}" width="${f1(w)}" height="${f1(h)}" rx="${f1(6 * sc)}" fill="#e9f1f6" stroke="#a9b8c6" stroke-width="2.5"/>`;
+    s += `<rect x="${f1(x0)}" y="${f1(y0)}" width="${f1(64 * sc)}" height="${f1(h)}" rx="${f1(6 * sc)}" fill="#d9e5ee"/>` + (sc > .8 ? txt(x0 + 32 * sc, cy + 4, "label", {fs:11.5, col:"#7a8896", w:400}) : "");
+    s += `<line x1="${f1(x0 + 74 * sc)}" y1="${f1(y0 + 8 * sc)}" x2="${f1(x0 + w - 12 * sc)}" y2="${f1(y0 + 8 * sc)}" stroke="#fff" stroke-width="${f1(3 * sc)}" opacity=".8" stroke-linecap="round"/>`;
+    const E = (rx, ry, fill, op, extra) => `<ellipse cx="${f1(mx)}" cy="${f1(my)}" rx="${f1(rx * sc)}" ry="${f1(ry * sc)}" fill="${fill}" opacity="${op}"${extra || ""}/>`;
+    if (Lb.water && !Lb.dried) s += E(50, 28, "#cfe8f7", .85, ` stroke="#9fc6df" stroke-width="1.5"`);
+    if (Lb.cells && !Lb.dried) s += E(Lb.water ? 34 : 38, Lb.water ? 19 : 22, "#efe3c0", .9);
+    if (Lb.dried) s += E(40, 23, Lb.fixed ? "#e6dcc2" : "#f1ead6", .95, ` stroke="${Lb.fixed ? "#cdbf99" : "#e0d6b8"}" stroke-width="1.5"`);
+    if (Lb.film && !Lb.stain) s += E(40, 23, Lb.film, .9);
+    if (Lb.stain){ const lvl = S.busy && S.busy.kind === "steam" ? S.steamLvl : 1; s += E(Lb.paper ? 50 : 66, Lb.paper ? 31 : 40, Lb.stain.c, f1(.25 + .6 * lvl)); }
+    if (Lb.paper){ s += `<g data-item="paperOn"><rect x="${f1(mx - 56 * sc)}" y="${f1(my - 36 * sc)}" width="${f1(112 * sc)}" height="${f1(72 * sc)}" fill="#fbfaf4" stroke="#d9cfa6" stroke-width="2" opacity="${Lb.stain ? .55 : .96}"/>`;
+      if (Lb.stain){ const lvl = S.busy && S.busy.kind === "steam" ? S.steamLvl : 1; s += `<rect x="${f1(mx - 56 * sc)}" y="${f1(my - 36 * sc)}" width="${f1(112 * sc)}" height="${f1(72 * sc)}" fill="${Lb.stain.c}" opacity="${f1(.2 + .55 * lvl)}"/>`; }
+      s += `</g>`; }
+    if (hot) s += `<rect class="pulse" x="${f1(x0 - 10)}" y="${f1(y0 - 10)}" width="${f1(w + 20)}" height="${f1(h + 20)}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="3" stroke-dasharray="8 6"/>`;
+    return s;
+  }
+
+  /* ---------------------------------------------------------------- the full bench */
+  function draw(){
+    const svg = $("slideSvg"); if (!svg || !S) return;
+    if (!L) layout();
+    const t = T(), now = performance.now(), held = DR ? DR.held() : null, hi = held ? held.item : null, b = S.busy, bk = b ? clamp((now - b.t0) / b.dur, 0, 1) : 0;
+    const sl = L.slide, box = slideBox(), mx = sl.cx + 26, my = sl.cy;
+    const tool = b && b.kind === "wait" ? b.tool : null;
+    let s = `<defs><linearGradient id="glassShade" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".25"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".1"/></linearGradient>
+      <linearGradient id="benchTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f8fb"/><stop offset="1" stop-color="#eef1f6"/></linearGradient></defs>`;
+    s += `<rect x="0" y="0" width="${L.W}" height="${L.H}" rx="18" fill="url(#benchTop)"/>`;
+    /* culture rack */
+    const r0 = L.rack(0), rN = L.rack(L.n - 1);
+    s += `<rect x="${r0.x - 34}" y="${r0.y + 58}" width="${rN.x - r0.x + 68}" height="14" rx="5" fill="#c9b38f"/><rect x="${r0.x - 34}" y="${r0.y + 98}" width="${rN.x - r0.x + 68}" height="10" rx="5" fill="#b49b74"/>`;
+    for (let i = 0; i < L.n; i++) s += cultureTube(i, hi === "loop" && !S.L.cells);
+    /* tool tray with the loop */
+    const tr = L.tray;
+    s += `<rect x="${tr.x}" y="${tr.y}" width="${tr.w}" height="${tr.h}" rx="14" fill="#e3e7ee"/>` + txt(L.loop.x + 18, L.loop.y + 5 * L.fs, "loop", {fs:12.5 * L.fs, col:"#5a6376", a:"start"});
+    if (hi !== "loop" && tool !== "loop"){
+      s += `<g data-item="loop"><rect x="${tr.x}" y="${tr.y}" width="${tr.w}" height="${tr.h}" fill="transparent"/>${loopSVG(L.loop.x, L.loop.y, true, S.loop)}`;
+      if (!held && !b && !S.c) s += `<rect class="pulse" x="${tr.x + 4}" y="${tr.y + 4}" width="${tr.w - 8}" height="${tr.h - 8}" rx="12" fill="none" stroke="#3f4cc0" stroke-width="2.5" stroke-dasharray="7 6"/>`;
+      s += `</g>`;
+    }
+    /* staining tray, or the boiling water bath while steaming */
+    const steaming = b && b.kind === "steam";
+    if (steaming){
+      const bx = mx, by = box.y1 + 8;
+      s += `<rect x="${bx - 92}" y="${by}" width="184" height="62" rx="10" fill="#cfe3f1" stroke="#8fb0c8" stroke-width="2.5"/><rect x="${bx - 100}" y="${by + 60}" width="200" height="14" rx="5" fill="#6d7686"/>`;
+      s += txt(bx, by + 40, "boiling water bath", {fs:12.5 * L.fs, col:"#456"});
+      for (let k = 0; k < 7; k++){ const px = bx - 66 + k * 22 + (rnd(k) - .5) * 6, ph = ((now / 700) + k * .17) % 1; s += `<path d="M${f1(px)},${f1(by - 4 - ph * 34)} q7,-9 0,-18" fill="none" stroke="#b7c7d4" stroke-width="3" stroke-linecap="round" opacity="${f1(1 - ph)}"/>`; }
+    } else {
+      s += `<rect x="${box.x0 - 16}" y="${box.y1 + 14}" width="${sl.w + 32}" height="18" rx="6" fill="#d6dbe3"/><rect x="${box.x0 + 30}" y="${box.y1 - 2}" width="8" height="18" fill="#9aa3b2"/><rect x="${box.x1 - 38}" y="${box.y1 - 2}" width="8" height="18" fill="#9aa3b2"/>`;
+      if (!L.narrow) s += txt(sl.cx, box.y1 + 48, "staining tray", {fs:11.5, col:"#8b93a3", w:400});
+    }
+    /* burner */
+    s += burnerSVG(hi === "slide", tool === "flame");
+    /* the slide (picked up, passing through the flame, or resting) */
+    if (tool === "flame"){
+      const f = flameAt(), dx = Math.sin(bk * Math.PI * 2) * 46;
+      s += slideSVG(f.x + dx - 26 * .55, f.y + 6, .55, false);
+      s += `<path d="M${f.x},${L.burner.y - 72} C${f.x - 14},${L.burner.y - 86} ${f.x - 8},${f.y + 10} ${f.x},${f.y - 6} C${f.x + 8},${f.y + 10} ${f.x + 14},${L.burner.y - 86} ${f.x},${L.burner.y - 72} Z" fill="#7fb2ff" opacity=".5"/>`;
+    } else if (hi !== "slide"){
+      s += `<g data-item="slide">` + slideSVG(sl.cx, sl.cy, 1, held && hi !== "slide" && hi !== "paperOn" && !(hi === "loop" && !S.loop)) + `</g>`;
+    }
+    /* steam: stain level meter */
+    if (steaming){
+      const gx = box.x0 - 46, gy = box.y0 - 4;
+      s += txt(gx + 14, gy - 10, "stain", {fs:12 * L.fs, col:"#2c3796"});
+      s += `<rect x="${gx}" y="${gy}" width="28" height="${sl.h}" rx="6" fill="#e4e8f5"/><rect x="${gx}" y="${f1(gy + sl.h * (1 - S.steamLvl))}" width="28" height="${f1(sl.h * S.steamLvl)}" rx="6" fill="${S.steamLvl < .25 ? "#d9443a" : "#2f9e4f"}"/>`;
     }
     /* decolorizer runoff */
-    if (L.runoff){
+    if (S.L.runoff){
       const col = S.dec < .5 ? "#5a2a98" : S.dec < 1 ? "#b89ad6" : "#dfeaf5";
-      for (let k = 0; k < 5; k++) s += `<ellipse cx="${f1(cx - 24 + k * 12)}" cy="${cy + 26}" rx="3.4" ry="5" fill="${col}"><animate attributeName="cy" values="${cy + 26};${cy + 96}" dur="0.9s" begin="${f1(k * .18)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.2" dur="0.9s" begin="${f1(k * .18)}s" repeatCount="indefinite"/></ellipse>`;
-      s += `<text x="${cx}" y="${cy + 112}" font-size="13" font-weight="800" fill="#2c3796" text-anchor="middle">Runoff: ${S.dec < .5 ? "deep purple" : S.dec < 1 ? "pale purple" : "clear"}</text>`;
+      for (let k = 0; k < 5; k++) s += `<ellipse cx="${f1(mx - 24 + k * 12)}" cy="${f1(box.y1 + 2)}" rx="3.4" ry="5" fill="${col}"><animate attributeName="cy" values="${f1(box.y1 + 2)};${f1(box.y1 + 30)}" dur="0.9s" begin="${f1(k * .18)}s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.2" dur="0.9s" begin="${f1(k * .18)}s" repeatCount="indefinite"/></ellipse>`;
+      s += txt(mx, box.y0 - 12, "Runoff: " + (S.dec < .5 ? "deep purple" : S.dec < 1 ? "pale purple" : "clear"), {fs:14 * L.fs, col:"#2c3796"});
     }
-    /* overlay for timed steps */
-    if (S.busy){
-      const b = S.busy, k = clamp((now - b.t0) / b.dur, 0, 1);
-      s += `<rect x="150" y="14" width="340" height="52" rx="14" fill="#fff" stroke="#3f4cc0" stroke-width="2"/><text x="320" y="36" font-size="14" font-weight="800" fill="#2c3796" text-anchor="middle">${esc(b.text)}</text><rect x="170" y="46" width="300" height="9" rx="4.5" fill="#e4e8f5"/><rect x="170" y="46" width="${f1(300 * k)}" height="9" rx="4.5" fill="#3f4cc0"/>`;
-      if (b.kind === "steam"){ s += `<text x="520" y="110" font-size="12" font-weight="800" fill="#2c3796" text-anchor="middle">stain level</text><rect x="506" y="116" width="28" height="86" rx="6" fill="#e4e8f5"/><rect x="506" y="${f1(116 + 86 * (1 - S.steamLvl))}" width="28" height="${f1(86 * S.steamLvl)}" rx="6" fill="${S.steamLvl < .25 ? "#d9443a" : "#2f9e4f"}"/>`; }
+    /* shelf of bottles and tools */
+    shelfItems().forEach((id, j) => {
+      const p = L.shelf(j), name = ACT[id].name || [ACT[id].label];
+      const busyHere = tool === id || (tool === "etoh" && id === "etoh");
+      if (hi !== "b:" + id && !busyHere) s += `<g data-item="b:${id}"><rect x="${p.x - 36}" y="${p.y - 112}" width="72" height="116" fill="transparent"/><g transform="translate(${p.x} ${p.y})">${shelfShape(id)}</g></g>`;
+      else s += `<rect x="${p.x - 26}" y="${p.y - 6}" width="52" height="6" rx="3" fill="#dfe3ea"/>`;
+      name.forEach((w, k) => { s += txt(p.x, p.y + (18 + k * 15) * L.fs, esc(w), {fs:12.5 * L.fs}); });
+    });
+    /* the step in action */
+    if (tool && tool !== "flame"){
+      const top = box.y0 - 8;
+      if (tool === "loop"){ const a = bk * Math.PI * 6; s += loopSVG(f1(mx + 18 * Math.cos(a)), f1(my + 8 * Math.sin(a)), false, bk < .5); }
+      else if (tool === "rinse"){ s += heldShape("rinse", mx - 50, top - 46); if (bk < .8) s += `<path d="M${mx - 50},${top - 4} Q${mx - 20},${top - 10} ${mx},${my - 6}" fill="none" stroke="#9fd0ee" stroke-width="5" stroke-linecap="round" opacity=".9"/>`; }
+      else if (tool === "blot"){ const yy = lerp(top - 50, my + 20, clamp(bk * 3, 0, 1)) - (bk > .75 ? (bk - .75) * 200 : 0); s += `<g transform="translate(${mx} ${f1(yy)})">${blotShape()}</g>`; }
+      else if (tool === "paper"){ s += `<g transform="translate(${mx} ${f1(lerp(top - 30, my + 22, clamp(bk * 1.4, 0, 1)))})" opacity="${f1(1 - seg(bk, .85, 1))}">${paperShape()}</g>`; }
+      else if (ACT[tool] && bk < .55){
+        s += heldShape(tool, mx, top - 40);
+        const dk = (bk * 4) % 1; s += `<ellipse cx="${mx}" cy="${f1(lerp(top + 2, my, dk))}" rx="4" ry="5.5" fill="${ACT[tool].c}" stroke="#8b93a3" stroke-width="1"/>`;
+      }
     }
-    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    if (S.topup && now - S.topup < 700){ s += heldShape("mg", mx, box.y0 - 48); requestAnimationFrame(() => draw()); }
+    /* the item in hand */
+    if (held){
+      if (hi === "loop") s += loopSVG(f1(held.x), f1(held.y + 60), false, S.loop);
+      else if (hi === "slide") s += slideSVG(held.x, held.y, .55, false);
+      else if (hi === "paperOn") s += `<g transform="translate(${f1(held.x)} ${f1(held.y + 24)})">${paperShape()}</g>`;
+      else if (/^b:/.test(hi)) s += heldShape(hi.slice(2), held.x, held.y);
+    }
+    svg.setAttribute("viewBox", `0 0 ${L.W} ${L.H}`);
     svg.innerHTML = s;
+  }
+  const seg = (k, a, b) => clamp((k - a) / (b - a), 0, 1);
+  const drawSlide = draw;
+
+  /* ---------------------------------------------------------------- picking things up and putting them down */
+  function canGrab(item){
+    if (!S) return false;
+    if (S.busy){ if (S.busy.kind === "steam" && item === "b:mg") return true; say("Wait for this step to finish.", false); return false; }
+    if (item === "loop" && S.L.cells){ say("The cells are already on the slide. You're done with the loop.", false); return false; }
+    return true;
+  }
+  function dropItem(d){
+    const p = tipOf(d), it = d.item;
+    if (it === "loop"){
+      const i = tubeAt(p); if (i >= 0){ pickCulture(i); return; }
+      if (onSlide(p)){ if (!S.loop){ say("First touch the loop to a culture tube to pick up some cells.", true); return; } act("cells"); }
+      return;
+    }
+    if (it === "slide"){ if (onBurner([d.x, d.y])) act("flame"); else if (!onSlide([d.x, d.y])) say("To heat-fix, drag the slide onto the burner flame."); return; }
+    if (it === "paperOn"){ if (!onSlide(p)) act("unpaper"); return; }
+    if (/^b:/.test(it)){
+      const id = it.slice(2);
+      if (onSlide(p)) act(id);
+      else if (onBurner(p)) say("Keep bottles away from the flame. Drop them on the slide.", true);
+    }
   }
 
   /* ---------------------------------------------------------------- the microscope field */
@@ -413,18 +674,18 @@
     const pal = tabKey === "smear" ? {bg:"#f5f7fc", veg:"#3858b8", vs:"#243f8f"} :
       tabKey === "gram" ? {bg:"#f7f2f3", veg:gramShows() === "purple" ? "#5a2a98" : "#e5588a", vs:gramShows() === "purple" ? "#3c1a70" : "#b83a66"} :
       {bg:"#f2f6f1", veg:"#e0506c", vs:"#a83048"};
-    let s = `<clipPath id="fc"><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2 - 1}"/></clipPath><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2}" fill="${pal.bg}"/><g clip-path="url(#fc)">`;
+    let s = `<defs><radialGradient id="vig"><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs><clipPath id="fc"><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2 - 1}"/></clipPath><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2}" fill="${pal.bg}"/><g clip-path="url(#fc)">`;
     S.world.forEach(w => {
       if (w.k === "cluster"){ const r = heat ? 6.4 : 8.6; w.pts.forEach(p => { s += `<circle cx="${f1(p[0])}" cy="${f1(p[1])}" r="${r}" fill="${pal.veg}" stroke="${pal.vs}" stroke-width="${sw}"/>`; }); }
       else if (w.k === "free"){ s += `<ellipse cx="${f1(w.x)}" cy="${f1(w.y)}" rx="6" ry="4.2" fill="#35a34f" stroke="#1f7a37" stroke-width="${sw}" transform="rotate(${f1(w.a)} ${f1(w.x)} ${f1(w.y)})"/>`; }
       else w.group.forEach((g, j) => {
-        const L = o.L * (heat ? .78 : 1), W = o.W * (heat ? .72 : 1), wob = heat ? (rnd(j * 7 + g.x) - .5) * 14 : 0;
-        s += `<rect x="${f1(g.x - L / 2)}" y="${f1(g.y - W / 2)}" width="${f1(L)}" height="${f1(W)}" rx="${f1(W / 2)}" fill="${pal.veg}" stroke="${pal.vs}" stroke-width="${sw}" transform="rotate(${f1(g.a + wob)} ${f1(g.x)} ${f1(g.y)})"/>`;
-        if (g.spore) s += `<ellipse cx="${f1(g.x)}" cy="${f1(g.y)}" rx="${f1(L * .2)}" ry="${f1(W * .3)}" fill="#35a34f" stroke="#1f7a37" stroke-width="${sw}" transform="rotate(${f1(g.a)} ${f1(g.x)} ${f1(g.y)})"/>`;
+        const Lc = o.L * (heat ? .78 : 1), Wc = o.W * (heat ? .72 : 1), wob = heat ? (rnd(j * 7 + g.x) - .5) * 14 : 0;
+        s += `<rect x="${f1(g.x - Lc / 2)}" y="${f1(g.y - Wc / 2)}" width="${f1(Lc)}" height="${f1(Wc)}" rx="${f1(Wc / 2)}" fill="${pal.veg}" stroke="${pal.vs}" stroke-width="${sw}" transform="rotate(${f1(g.a + wob)} ${f1(g.x)} ${f1(g.y)})"/>`;
+        if (g.spore) s += `<ellipse cx="${f1(g.x)}" cy="${f1(g.y)}" rx="${f1(Lc * .2)}" ry="${f1(Wc * .3)}" fill="#35a34f" stroke="#1f7a37" stroke-width="${sw}" transform="rotate(${f1(g.a)} ${f1(g.x)} ${f1(g.y)})"/>`;
       });
     });
     if (S.flags.dried){ for (let k = 0; k < 60; k++) s += `<polygon points="0,0 7,2 3,7" fill="#2a5a38" opacity=".75" transform="translate(${f1(vx + rnd(k + 5) * vb)} ${f1(vx + rnd(k + 9) * vb)}) rotate(${f1(rnd(k) * 360)})"/>`; }
-    s += `</g><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2 - 1}" fill="none" stroke="#0c0d11" stroke-width="${f1(vb / 40)}" opacity=".85"/>`;
+    s += `<circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2}" fill="url(#vig)"/></g><circle cx="${vx + vb / 2}" cy="${vx + vb / 2}" r="${vb / 2 - 1}" fill="none" stroke="#0c0d11" stroke-width="${f1(vb / 40)}" opacity=".85"/>`;
     return `<svg viewBox="${vx} ${vx} ${vb} ${vb}" role="img" aria-label="Microscope field at ${mag}x">${s}</svg>`;
   }
 
@@ -452,34 +713,36 @@
   /* ---------------------------------------------------------------- UI */
   function ui(){
     if (!S) return;
-    const t = T(), cur = S.seq[S.i], done = S.i >= S.seq.length, stg = stages();
+    const seq = dispSeq(), cur = S.c ? S.seq[S.i] : seq[0], done = !!S.c && S.i >= S.seq.length, stg = stages();
     const curStage = done ? "Examine" : cur.stage;
     $("stages").innerHTML = stg.map(n => {
-      const idxs = S.seq.map((x, k) => x.stage === n ? k : -1).filter(k => k >= 0);
-      const ok = n === "Examine" ? S.mag === 100 : idxs.length && idxs.every(k => k < S.i), now = n === curStage;
+      const idxs = seq.map((x, k) => x.stage === n ? k : -1).filter(k => k >= 0);
+      const ok = n === "Examine" ? S.mag === 100 : !!S.c && idxs.length && idxs.every(k => k < S.i), now = n === curStage;
       return `<span class="bstep ${ok ? "ok" : now ? "cur" : ""}">${ok ? "✓ " : ""}${esc(n)}</span>`;
     }).join("");
     const hint = $("hint");
     hint.className = "benchhint" + (S.warn ? " warn" : "");
-    hint.innerHTML = S.msg || (done ? "Every step is done! Tap <b>Examine under the microscope</b>." : S.i === 0 ? "Choose each step from the buttons below. The order matters, and wrong turns are counted." : "Stage: <b>" + esc(cur.stage) + "</b>. What comes next?");
+    hint.innerHTML = S.msg || (done ? "Every step is done! Tap <b>Examine under the microscope</b>." :
+      !S.c ? "Drag things on the bench onto the slide, in the right order. Wrong turns are counted. Start by picking a culture: drag the <b>loop</b> to a tube. (You can also tap an item, then tap where it goes.)" :
+      "Stage: <b>" + esc(cur.stage) + "</b>. What comes next?");
     const busy = !!S.busy, steaming = busy && S.busy.kind === "steam";
-    document.querySelectorAll(".act").forEach(b => {
-      const id = b.dataset.act;
-      b.disabled = busy ? !(steaming && id === "addstain") : false;
-    });
+    document.querySelectorAll(".act").forEach(b => { b.disabled = busy ? !(steaming && b.dataset.act === "addstain") : false; });
+    document.querySelectorAll(".pick").forEach(b => { b.disabled = busy; });
+    $("dryBtn").disabled = busy || done;
+    if ($("steamBtn")) $("steamBtn").disabled = busy || done;
     $("hintBtn").disabled = busy || done;
     $("scopeBtn").hidden = !done;
     $("scopeBtn").disabled = busy;
-    if (done && !$("scope").dataset.open) { /* opened by button */ }
   }
   function showHint(){
     if (!S || S.busy) return;
+    if (!S.c){ S.hints++; say("Hint: drag the <b>loop</b> to one of the culture tubes to pick up cells." + (T().pal.slide.includes("water") ? " A slant culture needs a drop of water on the slide first (drag the Water bottle onto the slide)." : "")); return; }
     const cur = S.seq[S.i]; if (!cur) return;
-    S.hints++; say("Hint: " + cur.say + (cur.id === "etoh" ? " Each tap of the button is about 2.5 seconds." : ""));
+    S.hints++; say("Hint: " + cur.say + " " + (HOW[cur.id] || (ACT[cur.id] && ACT[cur.id].g === "stain" ? `Drag the <b>${ACT[cur.id].label}</b> bottle onto the slide.` : "")));
   }
 
   function renderTab(){
-    const t = T(); S = null; endBusy(); lastStain = null;
+    const t = T(); S = null; endBusy(); lastStain = null; L = null;
     $("app").innerHTML = `
       <header><div><a class="backlink" href="index.html">Lab review</a><h1>Smears and Stains<span class="chap">Exercises 5, 7, and 9</span></h1></div></header>
       <div class="labtabs" id="labTabs">${Object.keys(TABS).map(k => `<button class="labtab ${k === tabKey ? "on" : ""}" data-tab="${k}">${TABS[k].tab}</button>`).join("")}</div>
@@ -487,34 +750,38 @@
         <div class="labhead"><h2>${t.title} <span class="chap" style="background:#e7e9fb;color:#2c3796">${t.ex}</span></h2><button class="btn hint" id="theoryBtn">📖 Understand the stain</button></div>
         <p class="labq"><b>Question:</b> ${t.question}</p>
         ${t.note ? `<div class="labnote">${t.note}</div>` : ""}
-        <div class="sect">1. Pick a culture</div>
-        <div class="orgrow" id="orgrow">${t.cultures.map((c, i) => `<button class="orgchip" data-c="${i}"><i>${esc(ORG[c.o].name)}</i>${c.age ? " " + c.age : ""}<small>${c.sub || "culture tube"}</small></button>`).join("")}</div>
-        <div class="sect">2. Do each step in order</div>
         <div class="benchsteps" id="stages"></div>
-        <div class="benchhint" id="hint"></div>
-        <div class="bench"><svg id="slideSvg" role="img" aria-label="Slide on the bench"></svg></div>
-        <div class="sect">On the slide</div><div class="palette">${t.pal.slide.map(a => `<button class="act" data-act="${a}">${ACT[a].label}</button>`).join("")}</div>
-        <div class="sect">Stains and reagents</div><div class="palette">${t.pal.stain.map(a => `<button class="act" data-act="${a}" style="--dot:${ACT[a].c}"><span class="dot"></span>${ACT[a].label}</button>`).join("")}</div>
-        <div class="benchbtns"><button class="btn hint" id="hintBtn">💡 Show me the next step</button><button class="btn primary" id="scopeBtn" hidden>🔬 Examine under the microscope</button><button class="btn secondary" id="againBtn">↺ Start over</button></div>
+        <div class="benchhint" id="hint" role="status" aria-live="polite"></div>
+        <div class="busy" id="busy" hidden><span></span><div class="bar"><i></i></div></div>
+        <div class="bench"><svg id="slideSvg" role="img" aria-label="Staining bench: culture tubes, a loop, a slide, a burner, and dropper bottles of stain"></svg></div>
+        <div class="benchbtns"><button class="btn secondary" id="dryBtn">💨 Air dry</button>${t.pal.slide.includes("steam") ? `<button class="btn secondary" id="steamBtn">♨️ Steam over the water bath</button>` : ""}
+          <button class="btn hint" id="hintBtn">💡 Show me the next step</button><button class="btn primary" id="scopeBtn" hidden>🔬 Examine under the microscope</button><button class="btn secondary" id="againBtn">↺ Start over</button></div>
+        <details class="kbd"><summary>Keyboard controls (no dragging)</summary>
+          <div class="sect">Culture (touch the loop to it)</div><div class="palette">${t.cultures.map((c, i) => `<button class="act pick" data-pick="${i}"><i>${esc(ORG[c.o].short)}</i>&nbsp;${esc(c.age || c.sub)}</button>`).join("")}</div>
+          <div class="sect">On the slide</div><div class="palette">${t.pal.slide.map(a => `<button class="act" data-act="${a}">${ACT[a].label}</button>`).join("")}</div>
+          <div class="sect">Stains and reagents</div><div class="palette">${t.pal.stain.map(a => `<button class="act" data-act="${a}" style="--dot:${ACT[a].c}"><span class="dot"></span>${ACT[a].label}</button>`).join("")}</div>
+        </details>
         <div class="scope" id="scope" hidden></div>
         <div id="quizBox">${quizHTML(t)}</div>
       </div>`;
     $("labTabs").onclick = e => { const b = e.target.closest("[data-tab]"); if (!b) return; tabKey = b.dataset.tab; history.replaceState(null, "", "#" + tabKey); renderTab(); };
-    $("orgrow").onclick = e => { const b = e.target.closest("[data-c]"); if (!b) return; choose(+b.dataset.c); };
-    document.querySelectorAll(".act").forEach(b => b.addEventListener("click", () => act(b.dataset.act)));
+    document.querySelectorAll(".act[data-act]").forEach(b => b.addEventListener("click", () => act(b.dataset.act)));
+    document.querySelectorAll(".pick").forEach(b => b.addEventListener("click", () => pickCulture(+b.dataset.pick)));
+    $("dryBtn").onclick = () => act("dry");
+    if ($("steamBtn")) $("steamBtn").onclick = () => act("steam");
     $("hintBtn").onclick = showHint;
-    $("againBtn").onclick = () => { if (S) choose(t.cultures.indexOf(S.c)); };
+    $("againBtn").onclick = start;
     $("scopeBtn").onclick = openScope;
     bindQuiz(t);
     $("theoryBtn").onclick = openTheory; $("theoryBtn2").onclick = openTheory;
-    choose(0);
+    DR = MicroDrag($("slideSvg"), {canGrab, drop:dropItem, draw:() => draw(), tapped:() => say("Now tap where you want to put it.")});
+    start();
   }
-  function choose(i){
+  function start(){
     endBusy(); lastStain = null; cancelAnimationFrame(raf);
-    const t = T(); S = fresh(t.cultures[i]);
-    document.querySelectorAll(".orgchip").forEach((b, k) => b.classList.toggle("on", k === i));
+    S = fresh(); if (DR) DR.cancel(); layout();
     $("scope").hidden = true; $("scope").innerHTML = "";
-    drawSlide(); ui();
+    draw(); ui(); busyBar();
   }
 
   function openScope(){
@@ -554,7 +821,7 @@
       });
       const o = ORG[S.c.o], notes = [];
       if (S.flags.overheated) notes.push("You gave the slide more than 5 passes through the flame, so the cells look shrunken and distorted. Heat-fix with 3 to 5 passes.");
-      if (tabKey === "gram" && S.flags.under) notes.push("You stopped decolorizing before the runoff ran clear, so " + (o.gram === "neg" ? "the gram-negative cells stayed purple (a false gram-positive)." : "the decolorizing was incomplete.") );
+      if (tabKey === "gram" && S.flags.under) notes.push("You stopped decolorizing before the runoff ran clear, so " + (o.gram === "neg" ? "the gram-negative cells stayed purple (a false gram-positive)." : "the decolorizing was incomplete."));
       if (tabKey === "gram" && S.flags.over) notes.push("You decolorized too long, so " + (o.gram === "pos" ? "the gram-positive cells lost their purple and look pink (a false gram-negative)." : "the cells are fully decolorized."));
       if (S.flags.dried) notes.push("The stain dried out while steaming, so the slide has dark stain crystals. Add more stain as needed.");
       $("sum").innerHTML = `<div class="summary"><b>${right} of ${fs.length}</b> observations correct. Wrong turns while staining: <b>${S.wrong}</b>. Hints used: <b>${S.hints}</b>.${notes.length ? "<br>" + notes.join("<br>") : (S.wrong === 0 ? "<br>Clean technique!" : "")}</div>`;
@@ -580,8 +847,169 @@
     }));
   }
 
+  /* ================================================================ "Understand the stain" */
+  const SV = (w, h, body, label, minw) => `<svg viewBox="0 0 ${w} ${h}" class="tflow" style="min-width:${minw || 560}px" role="img" aria-label="${label}">${body}</svg>`;
+  const T2 = (x, y, s, o) => txt(x, y, s, Object.assign({fs:14}, o || {}));
+  /* a rod-shaped cell, optionally with an endospore */
+  const rod = (cx, cy, w, h, fill, stroke, spore) => `<rect x="${f1(cx - w / 2)}" y="${f1(cy - h / 2)}" width="${w}" height="${h}" rx="${h / 2}" fill="${fill}" stroke="${stroke || shade(fill === "none" ? "#c9b98f" : fill, -.3)}" stroke-width="2.2"/>`
+    + (spore ? `<ellipse cx="${f1(cx + w * .18)}" cy="${cy}" rx="${f1(w * .17)}" ry="${f1(h * .3)}" fill="${spore}" stroke="${shade(spore === "none" ? "#c9b98f" : spore, -.35)}" stroke-width="3"/>` : "");
+  const CLEAR = "#f6f0de";
 
-  /* ---------------------------------------------------------------- understand pop-up */
+  /* Gram: what the two kinds of cell wall look like */
+  function wallSVG(){
+    const bil = (x0, x1, y, head) => { let s = `<rect x="${x0}" y="${y + 5}" width="${x1 - x0}" height="12" fill="#f7e8c4"/>`; for (let x = x0 + 5; x < x1; x += 10) s += `<circle cx="${x}" cy="${y + 3}" r="4.2" fill="${head}"/><circle cx="${x}" cy="${y + 19}" r="4.2" fill="${head}"/>`; return s; };
+    const pg = (x0, x1, y, h) => { let s = `<rect x="${x0}" y="${y}" width="${x1 - x0}" height="${h}" rx="3" fill="#cdbbe8" stroke="#7d5fb8" stroke-width="1.5"/>`; for (let yy = y + 7; yy < y + h; yy += 8) s += `<line x1="${x0 + 3}" y1="${yy}" x2="${x1 - 3}" y2="${yy}" stroke="#7d5fb8" stroke-width="1" opacity=".6"/>`; for (let x = x0 + 12; x < x1; x += 18) s += `<line x1="${x}" y1="${y + 2}" x2="${x}" y2="${y + h - 2}" stroke="#7d5fb8" stroke-width="1" opacity=".5"/>`; return s; };
+    let s = "";
+    [[20, "Gram-positive", "#5a2a98"], [410, "Gram-negative", "#c23a6a"]].forEach(([px, name, col], n) => {
+      s += `<rect x="${px}" y="8" width="370" height="330" rx="16" fill="#fff" stroke="#d9dee7"/>` + T2(px + 185, 36, name, {fs:17, col});
+      s += T2(px + 18, 62, "outside the cell", {fs:12.5, col:"#8b93a3", a:"start", w:400});
+      const x0 = px + 18, x1 = px + 196, lx = px + 206;
+      if (!n){
+        s += pg(x0, x1, 74, 70) + T2(lx, 104, "thick", {fs:13.5, a:"start"}) + T2(lx, 121, "peptidoglycan", {fs:13.5, a:"start"});
+        s += bil(x0, x1, 158, "#e0a63a") + T2(lx, 174, "plasma membrane", {fs:13.5, a:"start"});
+      } else {
+        s += bil(x0, x1, 74, "#d9534f") + T2(lx, 84, "outer membrane", {fs:13.5, a:"start"}) + T2(lx, 100, "(lipid)", {fs:13.5, a:"start", w:400});
+        s += pg(x0, x1, 116, 14) + T2(lx, 128, "thin peptidoglycan", {fs:13.5, a:"start"});
+        s += bil(x0, x1, 158, "#e0a63a") + T2(lx, 174, "plasma membrane", {fs:13.5, a:"start"});
+      }
+      s += T2(px + 18, 204, "inside the cell", {fs:12.5, col:"#8b93a3", a:"start", w:400});
+      const lines = !n ? ["Ethanol can't pull the crystal violet-", "iodine complex out of the thick wall.", "The cell stays PURPLE."] : ["Ethanol dissolves the outer membrane,", "and the complex washes out of the thin", "wall. Safranin then makes it PINK."];
+      s += `<rect x="${px + 14}" y="226" width="342" height="98" rx="12" fill="${!n ? "#f1ebfa" : "#fbedf2"}"/>` + lines.map((l, k) => T2(px + 185, 256 + k * 24, l, {fs:14, w:k === 2 ? 700 : 400})).join("");
+    });
+    return SV(800, 346, s, "Gram-positive and gram-negative cell walls", 600);
+  }
+  /* a step-by-step chart: columns are reagents, rows are cells */
+  function stepChart(cols, rows){
+    const lw = 150, cw = 140, W = lw + cols.length * cw + 10, rh = 92, H = 120 + rows.length * rh;
+    let s = "";
+    cols.forEach((c, j) => {
+      const x = lw + j * cw + cw / 2;
+      if (j) s += `<line x1="${lw + j * cw}" y1="12" x2="${lw + j * cw}" y2="${H - 10}" stroke="#e3e7ee" stroke-width="2"/>`;
+      if (c.color) s += `<circle cx="${x}" cy="28" r="14" fill="${c.color}" stroke="${shade(c.color, -.3)}" stroke-width="1.5"/>`; else s += `<rect x="${x - 26}" y="18" width="52" height="20" rx="4" fill="#e9f1f6" stroke="#a9b8c6" stroke-width="1.5"/>`;
+      c.name.forEach((nm, k) => { s += T2(x, 62 + k * 17, nm, {fs:14}); });
+      s += T2(x, 62 + c.name.length * 17 + 2, c.role, {fs:12.5, col:"#5a6376", w:400});
+      if (c.time) s += T2(x, 62 + c.name.length * 17 + 19, c.time, {fs:12.5, col:"#9a6212"});
+    });
+    rows.forEach((r, i) => {
+      const y = 132 + i * rh + 20;
+      r.label.forEach((l, k) => { s += T2(12, y - 4 + k * 18, l, {fs:14, a:"start"}); });
+      r.cells.forEach((c, j) => { const x = lw + j * cw + cw / 2; s += rod(x, y - 6, 78, 30, c.f === CLEAR ? CLEAR : c.f, c.f === CLEAR ? "#c9b98f" : null, c.sp) + T2(x, y + 28, c.t, {fs:12.5, col:"#343b4a", w:400}); });
+    });
+    return SV(W, H, s, "What the cells look like after each step", 620);
+  }
+  /* simple stain: why a basic dye sticks and an acidic dye doesn't */
+  function chargeSVG(){
+    let s = rod(230, 120, 250, 96, "#eef2fb", "#8b9ac0");
+    const per = Array.from({length:14}, (_, k) => { const a = k / 14 * Math.PI * 2; return [230 + Math.cos(a) * 112, 120 + Math.sin(a) * 38]; });
+    per.forEach(([x, y]) => { s += T2(x, y + 5, "−", {fs:20, col:"#343b4a"}); });
+    [[0, -1], [-1, -.3], [-.7, .8], [.3, 1], [.6, -1]].forEach(([ax, ay], k) => { const x = 230 + ax * 150, y = 120 + ay * 66; s += `<circle cx="${f1(x)}" cy="${f1(y)}" r="13" fill="#2a4fb0"/>` + T2(x, y + 6, "+", {fs:18, col:"#fff"}); });
+    s += T2(230, 230, "Basic dye (+), like methylene blue: sticks", {fs:14.5, col:"#2a4fb0"}) + T2(230, 250, "opposites attract", {fs:13.5, col:"#5a6376", w:400});
+    [[470, 70], [500, 130], [462, 180]].forEach(([x, y]) => { s += `<circle cx="${x}" cy="${y}" r="13" fill="#e0507a"/>` + T2(x, y + 6, "−", {fs:18, col:"#fff"}) + `<line x1="${x + 18}" y1="${y}" x2="${x + 58}" y2="${y}" stroke="#e0507a" stroke-width="3"/><path d="M${x + 64},${y} l-10,-6 v12 Z" fill="#e0507a"/>`; });
+    s += T2(560, 230, "Acidic dye (−), like eosin: pushed away", {fs:14.5, col:"#b83a66"}) + T2(560, 250, "like charges repel", {fs:13.5, col:"#5a6376", w:400});
+    s += T2(230, 22, "Most bacterial cells carry a net negative charge", {fs:14.5});
+    return SV(760, 262, s, "Basic dye binds, acidic dye is repelled", 560);
+  }
+  /* simple stain: making the smear */
+  function smearStripSVG(){
+    const steps = [["Drop of water", "(slant cultures only)"], ["Add cells and", "spread thin"], ["Air dry", ""], ["Heat-fix:", "3 to 5 passes"], ["Methylene blue", "30 to 60 s"], ["Rinse, then", "blot dry"]];
+    let s = "";
+    steps.forEach(([a, b], k) => {
+      const x = 14 + k * 132, cx = x + 60, cy = 52;
+      s += `<rect x="${x}" y="${cy - 22}" width="120" height="44" rx="5" fill="#e9f1f6" stroke="#a9b8c6" stroke-width="2"/><rect x="${x}" y="${cy - 22}" width="24" height="44" rx="5" fill="#d9e5ee"/>`;
+      const E = (rx, ry, f, st) => `<ellipse cx="${cx + 10}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${f}"${st ? ` stroke="${st}" stroke-width="1.5"` : ""}/>`;
+      if (k === 0) s += E(20, 12, "#cfe8f7", "#9fc6df");
+      if (k === 1) s += E(20, 12, "#cfe8f7", "#9fc6df") + E(13, 8, "#efe3c0");
+      if (k === 2) s += E(17, 10, "#f1ead6", "#e0d6b8");
+      if (k === 3) s += E(17, 10, "#e6dcc2", "#cdbf99") + `<path d="M${cx + 10},${cy + 52} C${cx},${cy + 40} ${cx + 4},${cy + 30} ${cx + 10},${cy + 24} C${cx + 16},${cy + 30} ${cx + 20},${cy + 40} ${cx + 10},${cy + 52} Z" fill="#7fb2ff"/>`;
+      if (k === 4) s += E(26, 15, "#2a4fb0") + E(17, 10, "#3858b8");
+      if (k === 5) s += E(17, 10, "#7d97d8");
+      s += `<circle cx="${x + 12}" cy="${cy - 34}" r="11" fill="#3f4cc0"/>` + T2(x + 12, cy - 29, String(k + 1), {fs:13, col:"#fff"});
+      s += T2(cx, 112, a, {fs:13.5}) + (b ? T2(cx, 129, b, {fs:12.5, col:"#5a6376", w:400}) : "");
+      if (k < steps.length - 1) s += `<path d="M${x + 122},${cy} l9,0" stroke="#8a93a3" stroke-width="2.5"/>`;
+    });
+    return SV(810, 140, s, "Steps to make and stain a smear", 640);
+  }
+  /* shapes and arrangements */
+  function arrangeSVG(){
+    const col = "#3858b8", sk = "#243f8f", c = (x, y, r) => `<circle cx="${f1(x)}" cy="${f1(y)}" r="${r || 8}" fill="${col}" stroke="${sk}" stroke-width="1.5"/>`;
+    const items = [
+      ["Coccus", "sphere", x => c(x, 60, 12)],
+      ["Bacillus", "rod", x => rod(x, 60, 56, 18, col, sk)],
+      ["Spirillum", "spiral", x => `<path d="M${x - 34},60 q8.5,-16 17,0 t17,0 t17,0 t17,0" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round"/>`],
+      ["Diplo-", "pairs", x => c(x - 9, 60) + c(x + 9, 60)],
+      ["Strepto-", "chains", x => [-36, -18, 0, 18, 36].map(d => c(x + d, 60 + (d % 36 ? 3 : -2))).join("")],
+      ["Staphylo-", "clusters", x => [[-12, -8], [4, -12], [16, 0], [-4, 4], [10, 14], [-16, 10], [-2, 20]].map(([a, b]) => c(x + a, 56 + b, 7.5)).join("")],
+      ["Tetrad", "4 cells", x => [[-8, -8], [8, -8], [-8, 8], [8, 8]].map(([a, b]) => c(x + a, 60 + b)).join("")],
+      ["Sarcina", "cube of 8", x => [[-8, -8], [8, -8], [-8, 8], [8, 8]].map(([a, b]) => c(x + a + 6, 60 + b - 6, 7) ).join("") + [[-8, -8], [8, -8], [-8, 8], [8, 8]].map(([a, b]) => c(x + a - 4, 60 + b + 4, 7.5)).join("")]];
+    let s = T2(14, 20, "Shapes", {fs:13, a:"start", col:"#5a6376"}) + T2(326, 20, "Arrangements (how the cells group)", {fs:13, a:"start", col:"#5a6376"}) + `<line x1="312" y1="10" x2="312" y2="132" stroke="#e3e7ee" stroke-width="2"/>`;
+    items.forEach(([n, sub, fn], k) => { const x = 54 + k * 100 + (k > 2 ? 12 : 0); s += fn(x) + T2(x, 106, n, {fs:14}) + T2(x, 124, sub, {fs:12.5, col:"#5a6376", w:400}); });
+    return SV(820, 136, s, "Bacterial shapes and arrangements", 640);
+  }
+  /* endospores: where they come from */
+  function sporeSVG(){
+    let s = rod(110, 70, 120, 42, "#e0506c") + T2(110, 128, "Vegetative cell", {fs:14}) + T2(110, 146, "growing, dividing", {fs:12.5, col:"#5a6376", w:400});
+    s += `<line x1="186" y1="70" x2="262" y2="70" stroke="#8a93a3" stroke-width="2.5"/><path d="M270,70 l-10,-6 v12 Z" fill="#8a93a3"/>` + T2(226, 56, "nutrients", {fs:12.5, col:"#5865d6"}) + T2(226, 92, "run low", {fs:12.5, col:"#5865d6"});
+    s += rod(350, 70, 120, 42, "#e0506c", null, "#35a34f") + T2(350, 128, "Cell with an endospore", {fs:14}) + T2(350, 146, "spore forms inside", {fs:12.5, col:"#5a6376", w:400});
+    s += `<line x1="426" y1="70" x2="502" y2="70" stroke="#8a93a3" stroke-width="2.5"/><path d="M510,70 l-10,-6 v12 Z" fill="#8a93a3"/>` + T2(466, 56, "the cell", {fs:12.5, col:"#5865d6"}) + T2(466, 92, "breaks open", {fs:12.5, col:"#5865d6"});
+    s += `<ellipse cx="580" cy="70" rx="24" ry="15" fill="#35a34f" stroke="#1f6a32" stroke-width="5"/>` + T2(580, 128, "Free endospore", {fs:14}) + T2(580, 146, "dormant, very tough", {fs:12.5, col:"#5a6376", w:400});
+    s += `<path d="M604,60 L660,36" stroke="#5a6376" stroke-width="1.5"/>` + T2(664, 30, "tough spore coat:", {fs:12.5, a:"start"}) + T2(664, 46, "keeps simple stains out", {fs:12.5, a:"start", w:400});
+    return SV(830, 158, s, "How an endospore forms", 620);
+  }
+  /* small microscope fields for the expected results */
+  function miniField(sp, seed){
+    let s = `<defs><clipPath id="mf${seed}"><circle cx="70" cy="70" r="64"/></clipPath></defs><circle cx="70" cy="70" r="66" fill="#1b1d25"/><circle cx="70" cy="70" r="64" fill="${sp.bg || "#f6f6f8"}"/><g clip-path="url(#mf${seed})">`;
+    if (sp.shape === "coccus"){
+      for (let i = 0; i < 9; i++){ const x = 14 + rnd(seed + i) * 112, y = 14 + rnd(seed + i + 40) * 112, n = 4 + Math.floor(rnd(seed + i + 9) * 5);
+        for (let j = 0; j < n; j++){ const a = rnd(seed + i * 9 + j) * 6.28, r = rnd(seed + i * 7 + j) * 9; s += `<circle cx="${f1(x + Math.cos(a) * r)}" cy="${f1(y + Math.sin(a) * r)}" r="4.2" fill="${sp.fill}" stroke="${shade(sp.fill, -.3)}" stroke-width="1"/>`; } }
+    } else {
+      for (let i = 0; i < (sp.n || 18); i++){ const x = 8 + rnd(seed + i) * 124, y = 8 + rnd(seed + i + 40) * 124, a = rnd(seed + i + 80) * 180, Lr = sp.L || 16, Wr = sp.W || 6.5, chain = rnd(seed + i + 3) < (sp.chain || 0) ? 2 : 1;
+        for (let j = 0; j < chain; j++){ const off = (j - (chain - 1) / 2) * (Lr + 2), rr = a * Math.PI / 180, cx = x + Math.cos(rr) * off, cy = y + Math.sin(rr) * off;
+          s += `<rect x="${f1(cx - Lr / 2)}" y="${f1(cy - Wr / 2)}" width="${Lr}" height="${Wr}" rx="${Wr / 2}" fill="${sp.fill}" stroke="${shade(sp.fill, -.3)}" stroke-width="1" transform="rotate(${f1(a)} ${f1(cx)} ${f1(cy)})"/>`;
+          if (sp.spores && rnd(seed + i * 5 + j) < sp.spores) s += `<ellipse cx="${f1(cx)}" cy="${f1(cy)}" rx="${f1(Lr * .2)}" ry="${f1(Wr * .32)}" fill="#35a34f" stroke="#1f7a37" stroke-width="1" transform="rotate(${f1(a)} ${f1(cx)} ${f1(cy)})"/>`; } }
+      for (let i = 0; i < (sp.free || 0); i++){ const x = 10 + rnd(seed + 300 + i) * 120, y = 10 + rnd(seed + 340 + i) * 120; s += `<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="3.6" ry="2.6" fill="#35a34f" stroke="#1f7a37" stroke-width="1"/>`; }
+    }
+    return `<svg viewBox="0 0 140 140" role="img" aria-label="Expected microscope view">${s}</g></svg>`;
+  }
+
+  const THEORY = {
+    smear:{
+      graphics:[["Why a basic dye stains the cells", chargeSVG], ["Making and staining a smear", smearStripSVG]],
+      reagents:[["Water (slant cultures only)", "", "Makes a light, milky suspension of solid growth", "Before the cells go on"], ["Methylene blue", "#2a4fb0", "Basic (cationic) dye: the simple stain. Colors the cells blue", "30 to 60 seconds"]],
+      results:[{t:"S. epidermidis", s:"blue cocci in clusters", sp:{shape:"coccus", fill:"#3858b8", bg:"#f5f7fc"}}, {t:"B. megaterium", s:"large blue rods, some in chains", sp:{shape:"bacillus", fill:"#3858b8", bg:"#f5f7fc", L:22, W:8, chain:.35, n:14}}],
+      extra:["Shapes and arrangements to know", arrangeSVG],
+      mistakes:[["Too much growth from a slant", "The smear is too thick and cells pile up, so you can't see single cells. Use a SMALL amount and spread it thin."],
+        ["Adding water to a broth culture", "Not needed. A broth culture is already liquid, so 2 to 3 loopfuls go straight on the slide."],
+        ["Heat-fixing before the smear is dry", "Let the smear air dry at room temperature first, then heat-fix."],
+        ["More than 5 passes through the flame", "Too much heat shrinks and distorts the cells. Use 3 to 5 passes."],
+        ["Using an acidic dye like eosin", "It is repelled by the negatively charged cell surface, so the cells don't stain."],
+        ["Rubbing instead of blotting", "Blot gently with bibulous paper. Don't rub."]]},
+    gram:{
+      graphics:[["Two kinds of cell wall", wallSVG], ["What the cells look like after each step", () => stepChart(
+        [{name:["Heat-fixed", "smear"], role:"before staining"}, {name:["Crystal", "violet"], role:"primary stain", time:"60 s", color:"#5a2a98"}, {name:["Gram's", "iodine"], role:"mordant", time:"30 s", color:"#8a5a1a"}, {name:["95%", "ethanol"], role:"decolorizer", time:"about 10 s", color:"#c9dbee"}, {name:["Safranin", ""], role:"counterstain", time:"60 s", color:"#d8456b"}],
+        [{label:["Gram-", "positive"], cells:[{f:CLEAR, t:"colorless"}, {f:"#5a2a98", t:"purple"}, {f:"#3c1a70", t:"purple (CV-I)"}, {f:"#4a2a85", t:"stays purple"}, {f:"#5a2a98", t:"PURPLE"}]},
+         {label:["Gram-", "negative"], cells:[{f:CLEAR, t:"colorless"}, {f:"#5a2a98", t:"purple"}, {f:"#3c1a70", t:"purple (CV-I)"}, {f:CLEAR, t:"colorless"}, {f:"#e5588a", t:"PINK"}]}])]],
+      reagents:[["Crystal violet", "#5a2a98", "Primary stain: colors every cell purple", "60 seconds"], ["Gram's iodine", "#8a5a1a", "Mordant: forms the crystal violet-iodine (CV-I) complex", "30 seconds"],
+        ["95% ethanol", "#c9dbee", "Decolorizer: pulls the CV-I complex out of gram-negative cells", "Until the runoff runs clear (about 10 seconds)"], ["Safranin", "#d8456b", "Counterstain: colors the now colorless gram-negative cells pink", "60 seconds"]],
+      results:[{t:"S. epidermidis", s:"gram-positive cocci (purple)", sp:{shape:"coccus", fill:"#5a2a98", bg:"#f7f2f3"}}, {t:"B. subtilis", s:"gram-positive rods (purple)", sp:{shape:"bacillus", fill:"#5a2a98", bg:"#f7f2f3", L:16, W:6, chain:.3}}, {t:"E. coli", s:"gram-negative rods (pink)", sp:{shape:"bacillus", fill:"#e5588a", bg:"#f7f2f3", L:12, W:6}}],
+      mistakes:[["Stopping the ethanol too soon", "The complex isn't fully removed, so gram-negative cells stay purple: a false gram-positive."],
+        ["Too much ethanol", "Over-decolorizing pulls the complex out of gram-positive cells too, so they turn pink: a false gram-negative."],
+        ["Ethanol before the iodine", "The mordant goes on before the decolorizer. Without the CV-I complex, the crystal violet washes out of every cell."],
+        ["Skipping the safranin", "Gram-negative cells stay colorless after the ethanol, so they are very hard to see."],
+        ["More than 5 passes through the flame", "Too much heat distorts the cells."]]},
+    spore:{
+      graphics:[["Where endospores come from", sporeSVG], ["What the cells look like after each step", () => stepChart(
+        [{name:["Heat-fixed", "smear"], role:"before staining"}, {name:["Malachite", "green + steam"], role:"primary stain", time:"5 minutes", color:"#2f9e4f"}, {name:["Water", "rinse"], role:"decolorizer", time:"30 s", color:"#cfe6f5"}, {name:["Safranin", ""], role:"counterstain", time:"30 s", color:"#d8456b"}],
+        [{label:["Cell with an", "endospore"], cells:[{f:CLEAR, sp:CLEAR, t:"colorless"}, {f:"#2f9e4f", sp:"#2f9e4f", t:"all green"}, {f:CLEAR, sp:"#2f9e4f", t:"spore stays green"}, {f:"#e0506c", sp:"#2f9e4f", t:"green spore, pink cell"}]}])]],
+      reagents:[["Malachite green", "#2f9e4f", "Primary stain. Steam drives it into the tough endospore", "Steam 5 minutes over the boiling water bath on absorbent paper. Add more stain so it never dries out"],
+        ["Water", "#cfe6f5", "Decolorizer: washes the green out of the vegetative cells, but not out of the spores", "30 seconds"], ["Safranin", "#d8456b", "Counterstain: colors the vegetative cells pink/red", "30 seconds"]],
+      results:[{t:"B. subtilis, 72-hr", s:"many green endospores, pink cells", sp:{shape:"bacillus", fill:"#e0506c", bg:"#f2f6f1", L:17, W:6.5, spores:.7, free:12}}, {t:"B. subtilis, 24-hr", s:"some green endospores", sp:{shape:"bacillus", fill:"#e0506c", bg:"#f2f6f1", L:17, W:6.5, spores:.2, free:3}}, {t:"E. coli", s:"pink cells, no endospores", sp:{shape:"bacillus", fill:"#e0506c", bg:"#f2f6f1", L:12, W:6}}],
+      mistakes:[["Letting the stain dry while steaming", "Dark stain crystals cover the slide. Keep adding malachite green so the paper stays wet."],
+        ["Rinsing with the paper still on", "Take the paper off before the water rinse."],
+        ["Skipping the steam", "The spore coat keeps stain out. Without heat, malachite green can't get into the endospore."],
+        ["Expecting spores from E. coli or E. aerogenes", "They don't form endospores, so every cell is pink."],
+        ["Using a young culture", "A 24-hour culture has fewer endospores than a 72-hour culture, because spores form when nutrients run out."]]}
+  };
+
   (function(){
     const m = document.createElement("div");
     m.className = "tmodal"; m.id = "tModal"; m.hidden = true;
@@ -589,12 +1017,23 @@
     m.innerHTML = `<div class="tcard"></div>`;
     document.body.appendChild(m);
   })();
-  function openTheory(){
-    const t = TABS[tabKey], m = $("tModal");
-    m.querySelector(".tcard").innerHTML = `<div class="thead"><div><div class="tkick">Understand the stain</div><h2 id="tTitle">${t.title}</h2></div><button class="tclose" id="tClose" aria-label="Close">×</button></div>
+  function theoryHTML(){
+    const t = TABS[tabKey], th = THEORY[tabKey];
+    return `<div class="thead"><div><div class="tkick">Understand the stain</div><h2 id="tTitle">${t.title}</h2></div><button class="tclose" id="tClose" aria-label="Close">×</button></div>
       <div class="tasks"><span class="tlabel">The question it answers</span><p>${t.question}</p></div>
       <div class="tsec"><h3>How it works</h3><ul>${t.how.map(x => `<li>${x}</li>`).join("")}</ul></div>
+      ${th.graphics.map(([h, fn]) => `<div class="tsec"><h3>${h}</h3><div class="tflowwrap">${fn()}</div></div>`).join("")}
+      <div class="tsec"><h3>Reagents, in order</h3><div class="tflowwrap" style="background:none;padding:0"><table class="ttbl"><tr><th>Reagent</th><th>Its job</th><th>Time</th></tr>
+        ${th.reagents.map(([n, c, job, time]) => `<tr><td><b>${c ? `<span class="sw" style="background:${c}"></span>` : ""}${n}</b></td><td>${job}</td><td>${time}</td></tr>`).join("")}</table></div></div>
+      <div class="tsec"><h3>What you should see at 1000x</h3><div class="tres">${th.results.map((r, k) => `<div>${miniField(r.sp, k * 50 + 7)}<b><i>${r.t.split(",")[0]}</i>${r.t.includes(",") ? "," + r.t.split(",")[1] : ""}</b><span>${r.s}</span></div>`).join("")}</div></div>
+      ${th.extra ? `<div class="tsec"><h3>${th.extra[0]}</h3><div class="tflowwrap">${th.extra[1]()}</div></div>` : ""}
+      <div class="tsec"><h3>What can go wrong</h3><ul class="tmist">${th.mistakes.map(([a, b]) => `<li><b>${a}:</b> ${b}</li>`).join("")}</ul></div>
+      ${t.note ? `<div class="tsec"><p class="labnote" style="margin:0">${t.note}</p></div>` : ""}
       <div class="tfoot"><button class="btn primary" id="tBack">Back to the bench</button></div>`;
+  }
+  function openTheory(){
+    const m = $("tModal");
+    m.querySelector(".tcard").innerHTML = theoryHTML();
     m.hidden = false; document.body.style.overflow = "hidden"; m.querySelector(".tcard").scrollTop = 0;
     const close = () => { m.hidden = true; document.body.style.overflow = ""; const b = $("theoryBtn"); if (b) b.focus({preventScroll:true}); };
     $("tClose").onclick = close; $("tBack").onclick = close;
@@ -606,7 +1045,9 @@
   /* ---------------------------------------------------------------- start */
   const h = location.hash.slice(1); if (TABS[h]) tabKey = h;
   window.addEventListener("hashchange", () => { const k = location.hash.slice(1); if (TABS[k] && k !== tabKey){ tabKey = k; renderTab(); window.scrollTo({top:0, behavior:"smooth"}); } });
+  window.addEventListener("resize", () => { if (!L) return; const was = L.narrow; layout(); if (was !== L.narrow) draw(); });
   renderTab();
+  window.__st = {S:() => S, L:() => L, act, pickCulture, dropItem, tipOf};
 })();
 </script>
 </body>

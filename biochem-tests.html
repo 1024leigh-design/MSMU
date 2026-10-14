@@ -111,6 +111,17 @@
   .tlinks{display:flex;flex-wrap:wrap;gap:8px}
   .treadnote{margin-top:10px!important;background:#eef1fb;border-radius:10px;padding:8px 12px;font-size:.9rem;color:#2c3796}
   .tfoot{display:flex;justify-content:flex-end;margin-top:8px}
+  .trun{margin:0;padding:0;list-style:none;counter-reset:run;display:grid;gap:8px}
+  .trun li{counter-increment:run;display:flex;gap:10px;align-items:flex-start;background:#f7f8fb;border-radius:12px;padding:9px 12px;font-size:1rem;line-height:1.45}
+  .trun li::before{content:counter(run);flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+  .ttblwrap{overflow-x:auto}
+  .ttbl{width:100%;border-collapse:collapse;font-size:.98rem}
+  .ttbl th,.ttbl td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  .ttbl th{background:#eef1f8;font-size:.9rem}
+  .tdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#8b93a3;margin-right:7px;vertical-align:1px}
+  .tdot.pos{background:var(--good)} .tdot.neg{background:var(--bad)}
+  .ttips{margin:0;padding-left:20px;line-height:1.6;font-size:1rem}
+  .ttips li{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -179,7 +190,8 @@
        q("A clear zone around the growth means…", ["The starch there was broken down (amylase positive)", "No growth", "The iodine didn't work", "The organism is gram-negative"], 0, "No starch left to stain = clear.")]},
     {key:"of", tab:"OF-Dextrose", title:"OF-Dextrose (Hugh-Leifson) Test", medium:"of", tools:["needle", "loop"], incubate:true, base:{},
      step:{when:"pre", label:"Add mineral oil", name:"Add mineral oil", title:"Adding mineral oil", sub:"about 1 cm on the right-hand tube", dur:1800,
-       hint:"Inoculated both tubes! Now tap <b>Add mineral oil</b>: about 1 cm goes on <b>one</b> tube. The other tube stays open to the air.", need:"Add the mineral oil to one tube first, then tap Incubate."},
+       drop:{name:"Mineral oil", amt:"about 1 cm", liquid:"#f3e7a6", bottle:"#9c8530"},
+       hint:"Inoculated both tubes! Now drag the <b>dropper</b> to the <b>mineral oil</b> bottle, then over the <b>right-hand tube</b> to add about 1 cm of oil. The left tube stays open to the air.", need:"Add the mineral oil to one tube first (drag the dropper to the oil bottle, then to the right-hand tube), then tap Incubate."},
      question:"Does this bacterium use dextrose (glucose) with oxygen, without oxygen, or not at all?",
      setup:"Two tubes of OF-dextrose medium: low peptone, high dextrose, and phenol red. Inoculate both tubes, cover one with about 1 cm of mineral oil to keep air out, and leave the other open. Yellow means acid was made.",
      orgs:[
@@ -202,7 +214,7 @@
     {key:"durham", tab:"Durham sugar", title:"Durham Sugar Fermentation Test", medium:"broth", tools:["loop"], durham:true, incubate:true,
      base:{fill:C_RED}, sugars:true,
      question:"Can this bacterium ferment the sugar in the tube, and does it make gas?",
-     setup:"Phenol red broth with one sugar (0.5–1%) and a small upside-down Durham tube inside to trap gas. Pick a sugar, then inoculate.",
+     setup:"Phenol red broth with one sugar (0.5 to 1%) and a small upside-down Durham tube inside to trap gas. Pick a sugar, then inoculate.",
      orgs:[
        {name:"Escherichia coli", short:"E. coli", cap:"#3f7bd1", sug:{glucose:"AG", lactose:"AG", sucrose:"-"}, note:{sucrose:"Most lab strains of <i>E. coli</i> can't ferment sucrose (a few strains can)."}},
        {name:"Enterobacter aerogenes", short:"E. aerogenes", cap:"#c4532f", sug:{glucose:"AG", lactose:"AG", sucrose:"AG"}},
@@ -434,6 +446,10 @@
   const outcome = () => S.loaded ? T().outcome(T().orgs[S.loaded.org], ctx()) : null;
   const needZinc = () => S.done && T().zinc && !S.zinc && outcome() && outcome().needZinc;
   const stepPre = () => !!T().step && T().step.when === "pre";
+  /* OF: the mineral oil goes on with the dropper, before incubating */
+  const oilDrop = () => T().step && T().step.drop;
+  const oilPhase = () => !!oilDrop() && S.inoc && !S.stepDone && !S.incubated;
+  const fillCol = () => S.filled === "oil" ? oilDrop().liquid : S.filled !== null ? T().reagents[S.filled].liquid : null;
   const needStep = () => S.done && !!T().step && T().step.when === "post" && !S.stepDone && outcome() && outcome().needStep;
   const orgName = () => S.loaded ? T().orgs[S.loaded.org].short : "";
 
@@ -553,7 +569,8 @@
         s += `<linearGradient id="ofg${n}" x1="0" y1="${y0}" x2="0" y2="${b}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${c.top}"/><stop offset="1" stop-color="${c.bot}"/></linearGradient>`;
         s += `<clipPath id="ofc${n}"><path d="${tubePath(cx, top, w, h, 3)}"/></clipPath><g clip-path="url(#ofc${n})">`;
         s += `<rect x="${cx - w}" y="${y0}" width="${w * 2}" height="${h}" fill="url(#ofg${n})"/><rect x="${cx - w}" y="${y0}" width="${w * 2}" height="${h}" fill="url(#liqShade)"/>`;
-        if (isOil && vis.oil) s += `<rect x="${cx - w}" y="${y0 - 28}" width="${w * 2}" height="30" fill="#f3e7a6" opacity=".92"/><line x1="${cx - w / 2}" y1="${y0 - 28}" x2="${cx + w / 2}" y2="${y0 - 28}" stroke="#d9c46a" stroke-width="2"/>`;
+        const ok = vis.oilK != null ? vis.oilK : vis.oil ? 1 : 0;
+        if (isOil && ok > 0) s += `<rect x="${cx - w}" y="${f1(y0 - 28 * ok)}" width="${w * 2}" height="${f1(28 * ok + 2)}" fill="#f3e7a6" opacity=".92"/><line x1="${cx - w / 2}" y1="${f1(y0 - 28 * ok)}" x2="${cx + w / 2}" y2="${f1(y0 - 28 * ok)}" stroke="#d9c46a" stroke-width="2"/>`;
         if (opts.stab || vis.growth) s += `<line x1="${cx}" y1="${y0 + 4}" x2="${cx}" y2="${b - 26}" stroke="${vis.growth ? "#f6efd8" : "#fff7df"}" stroke-width="${vis.growth ? 4 : 2}" opacity=".9"/>`;
         s += `</g>` + glass(cx, top, w, h) + txt(cx, top - 10, lab, {fs:12 * L.fs, col:"#5a6376"});
       });
@@ -616,7 +633,7 @@
     s += `<rect x="${x - 11}" y="${y - 54}" width="22" height="22" rx="3" fill="${r.bottle}"/><rect x="${x - 14}" y="${y - 60}" width="28" height="9" rx="3" fill="#2a2f3a"/>`;
     s += `<rect x="${x - 32}" y="${y - 34}" width="64" height="96" rx="12" fill="${r.bottle}"/><rect x="${x - 29}" y="${y - 6}" width="58" height="${10 + words.length * 13}" rx="4" fill="#fffdf6"/>`;
     s += words.map((w, k) => txt(x, y + 9 + k * 13, w, {fs:w.length > 8 ? 9 : 10.5, col:"#343b4a"})).join("");
-    s += txt(x, y + 78, r.drops === "flood" ? "flood" : `${r.drops} drop${r.drops > 1 ? "s" : ""}`, {fs:11 * L.fs, col:"#5a6376"});
+    s += txt(x, y + 78, r.amt || (r.drops === "flood" ? "flood" : `${r.drops} drop${r.drops > 1 ? "s" : ""}`), {fs:11 * L.fs, col:"#5a6376"});
     return s + `</g>`;
   }
   function dropperSVG(tx, ty, flat, fill){
@@ -679,12 +696,14 @@
     const v = vNow();
     if (t.medium === "slant" && S.incubated) v.growth = true;
     if (a && a.kind === "drop" && T().reagents[a.r].drops === "flood") opts.flood = Math.sin(k * Math.PI);
+    if (a && a.kind === "oil") v.oilK = clamp((k - .15) / .8, 0, 1);
     s += drawMedium(v, opts);
     const mb = medBox();
     s += txt(L.med.x, (t.medium === "plate" ? L.plate.y + L.plate.r + 36 : t.medium === "strip" || t.medium === "slide" ? L.plate.y + 84 : L.med.top + L.med.h + 26), MNAME[t.key](sugar), {fs:13 * L.fs, col:"#343b4a"});
     /* bottles + zinc */
     const reag = t.reagents;
     reag.forEach((r, j) => { s += bottleSVG(j, r, held === "dropper" && S.filled === null && reagentPhase() && j === S.rIdx, j < S.rIdx); });
+    if (oilDrop() && !S.incubated) s += bottleSVG(0, oilDrop(), held === "dropper" && S.filled === null && oilPhase(), S.stepDone);
     if (t.zinc && (needZinc() || S.zinc) && held !== "zinc" && !(a && a.kind === "zinc")) s += S.zinc ? "" : zincSVG(L.zinc.x, L.zinc.y, !held);
     /* resting tools */
     ["loop", "needle"].forEach(kind => {
@@ -694,9 +713,9 @@
       if (hot) s += `<rect class="pulse" x="${p.x - 100}" y="${p.y - 15}" width="212" height="30" rx="12" fill="none" stroke="#3f4cc0" stroke-width="2.5" stroke-dasharray="7 6"/>`;
       s += txt(p.x + 112, p.y + 5, kind, {fs:12 * L.fs, a:"start", col:"#5a6376"}) + `</g>`;
     });
-    if (reag.length && held !== "dropper" && !(a && a.kind === "drop")){
-      const p = L.dropper, hot = !held && !a && reagentPhase();
-      s += `<g data-item="dropper"><rect x="${p.x - 110}" y="${p.y - 18}" width="130" height="36" fill="transparent"/>${dropperSVG(p.x + 5, p.y, true, S.filled !== null ? reag[S.filled].liquid : null)}`;
+    if ((reag.length || oilDrop()) && held !== "dropper" && !(a && (a.kind === "drop" || a.kind === "oil"))){
+      const p = L.dropper, hot = !held && !a && (reagentPhase() || oilPhase());
+      s += `<g data-item="dropper"><rect x="${p.x - 110}" y="${p.y - 18}" width="130" height="36" fill="transparent"/>${dropperSVG(p.x + 5, p.y, true, fillCol())}`;
       if (hot) s += `<rect class="pulse" x="${p.x - 108}" y="${p.y - 17}" width="124" height="34" rx="12" fill="none" stroke="#3f4cc0" stroke-width="2.5" stroke-dasharray="7 6"/>`;
       s += txt(p.x - 40, p.y + 34, "dropper", {fs:11 * L.fs, col:"#5a6376"}) + `</g>`;
     }
@@ -710,6 +729,10 @@
       else { const di = Math.min(n - 1, Math.floor(k * n)), dk = (k * n) % 1; if (k < 1) s += `<ellipse cx="${tx}" cy="${f1(lerp(ty + 6, yEnd, dk))}" rx="4" ry="5.5" fill="${r.liquid}" stroke="#8b93a3" stroke-width="1"/>`;
         s += `<rect x="${tx + 22}" y="${ty - 40}" width="${n > 9 ? 108 : 96}" height="28" rx="14" fill="#3f4cc0"/>` + txt(tx + 22 + (n > 9 ? 54 : 48), ty - 21, `${di + 1} / ${n} drops`, {fs:13, col:"#fff"}); }
     }
+    if (a && a.kind === "oil"){ const tx = L.med.x + 70, ty = L.med.top - 26;
+      s += dropperSVG(tx, ty, false, k < .85 ? oilDrop().liquid : null);
+      if (k < .9){ const dk = (k * 6) % 1; s += `<ellipse cx="${tx}" cy="${f1(lerp(ty + 6, L.med.top + 40, dk))}" rx="4" ry="5.5" fill="${oilDrop().liquid}" stroke="#b9a24a" stroke-width="1"/>`; }
+      s += `<rect x="${tx + 22}" y="${ty - 40}" width="108" height="28" rx="14" fill="#3f4cc0"/>` + txt(tx + 76, ty - 21, "about 1 cm", {fs:13, col:"#fff"}); }
     if (a && a.kind === "zinc"){ const tx = L.med.x + 30, ty = t.medium === "broth" ? L.med.top - 40 : L.plate.y - 80;
       s += `<g transform="rotate(${f1(-50 * Math.sin(Math.min(1, k * 2) * Math.PI / 2))} ${tx} ${ty})">${zincSVG(tx, ty, false).replace(/<text[^>]*>zinc dust<\/text>/, "")}</g>`;
       for (let q = 0; q < 14; q++){ const qq = (k * 3 + q / 14) % 1; s += `<circle cx="${f1(tx - 20 + (rnd(q) - .5) * 16)}" cy="${f1(lerp(ty + 10, liqTop(), qq))}" r="1.8" fill="#8b93a3" opacity="${f1(1 - seg(k, .85, 1))}"/>`; } }
@@ -725,7 +748,7 @@
     /* the item in hand */
     if (drag){
       if (drag.item === "loop" || drag.item === "needle") s += toolSVG(drag.item, drag.x, drag.y + 70, false, S.loaded && S.loaded.tool === drag.item);
-      else if (drag.item === "dropper") s += dropperSVG(drag.x, drag.y + 55, false, S.filled !== null ? reag[S.filled].liquid : null);
+      else if (drag.item === "dropper") s += dropperSVG(drag.x, drag.y + 55, false, fillCol());
       else s += zincSVG(drag.x, drag.y, false);
     }
     svg.innerHTML = s;
@@ -740,6 +763,7 @@
   function canGrab(item){
     if (anim || S.overlay) return false;
     if (item === "loop" || item === "needle"){ if (S.inoc){ say(S.done ? "This run is finished. Tap “Try another organism” to start over." : "Already inoculated. Keep going with the next step."); return false; } return true; }
+    if (item === "dropper" && oilDrop()){ if (oilPhase()) return true; say(S.stepDone ? "The oil is already on. Tap Incubate." : S.incubated ? "No reagents to add. Read the tubes." : "Inoculate both tubes first, then add the oil."); return false; }
     if (item === "dropper"){ if (!reagentPhase()){ say(S.done || !T().reagents.length ? "No more reagents to add." : needsIncubate() && S.inoc ? "Incubate first, then add reagents." : "Inoculate first."); return false; } return true; }
     if (item === "zinc") return needZinc();
     return false;
@@ -753,6 +777,16 @@
         if (!S.loaded || S.loaded.tool !== d.item){ say(`First touch the ${d.item} to one of the bacteria tubes to pick up some cells.`); return true; }
         if (!t.tools.includes(d.item)){ say(wrongTool(d.item)); return true; }
         startInoc(d.item); return true;
+      }
+      return false;
+    }
+    if (d.item === "dropper" && oilPhase()){
+      const b = L.bottle(0);
+      if (Math.abs(tip[0] - b.x) < 38 && tip[1] > b.y - 80 && tip[1] < b.y + 70){ S.filled = "oil"; msgOverride = ""; updateUI(); return true; }
+      if (inBox(tip, mb, 30)){
+        if (S.filled === null){ say("Fill the dropper first: touch it to the <b>mineral oil</b> bottle."); return true; }
+        if (tip[0] < L.med.x){ say("Keep the left tube open to the air. The oil goes on the <b>right-hand</b> tube."); return true; }
+        startAnim({kind:"oil", dur:1700, done:() => { S.filled = null; S.stepDone = true; }}); return true;
       }
       return false;
     }
@@ -891,7 +925,7 @@
     $("benchHint").innerHTML = hint();
     $("benchSteps").innerHTML = stepList().map(([n, ok], i, arr) => { const cur = !ok && arr.slice(0, i).every(x => x[1]); return `<span class="bstep ${ok ? "ok" : cur ? "cur" : ""}">${ok ? "✓" : i + 1}. ${n}</span>`; }).join("");
     const ib = $("incBtn"); ib.hidden = !t.incubate; ib.disabled = !(S.inoc && !S.incubated && !S.overlay && !(stepPre() && !S.stepDone));
-    const sb = $("stepBtn"); sb.hidden = !t.step;
+    const sb = $("stepBtn"); sb.hidden = !t.step || !!t.step.drop;
     if (t.step){ sb.textContent = t.step.label; sb.disabled = !!(S.overlay || anim) || !(t.step.when === "pre" ? (S.inoc && !S.stepDone) : needStep()); }
     const res = $("benchResult");
     if (S.done){
@@ -973,6 +1007,8 @@
       marks:[[6.0, "6.0"], [7.6, "7.6"]], zones:[[5, 6.0, "yellow: acid"], [6.0, 7.6, "green: neutral"], [7.6, 9, "blue: alkaline"]]},
     neutral:{name:"Neutral red", axis:"pH", range:[5, 9], stops:[[5, "#ff2e97"], [6.8, "#f0608a"], [8.0, "#f0c45a"], [9, "#f6df6a"]],
       marks:[[6.8, "6.8"], [8.0, "8.0"]], zones:[[5, 6.8, "pink-red: acid"], [6.8, 8.0, ""], [8.0, 9, "pale: no acid"]]},
+    bcp:{name:"Bromcresol purple", axis:"pH", range:[4, 8], stops:[[4, "#e6d23a"], [5.2, "#e2c93a"], [6.0, "#a88a6a"], [6.8, "#7d55a8"], [8, "#6a3f9e"]],
+      marks:[[5.2, "5.2"], [6.8, "6.8"]], zones:[[4, 5.2, "yellow: acid"], [5.2, 6.8, ""], [6.8, 8, "purple: not acid"]]},
     emb:{name:"Eosin Y + methylene blue", axis:"how much acid →", range:[0, 3], stops:[[0, "#efe7d6"], [0.9, "#cf8fa6"], [1.8, "#5a2d52"], [2.35, "#15231b"], [3, "#2fe08a"]],
       marks:[], zones:[[0, 1, "colorless: none"], [1, 2, "pink: some"], [2, 3, "dark → green sheen: lots"]]}
   };
@@ -1017,15 +1053,15 @@
       ind:"phenol",
       used:["dextrose", "oxygen (open tube only)"], made:["acid (→ yellow)"],
       why:"The medium has <b>low peptone and high dextrose</b>, so alkaline waste from peptone doesn't hide a weak acid made from dextrose. Mineral oil keeps air out of one tube. <b>Yellow</b> means acid was produced, and comparing the two tubes tells you how the organism uses dextrose.",
-      reads:[{k:"deep", fill:"#f2d23c", tag:"Ferm.", lab:"both tubes yellow"}, {k:"deep", fill:"#f2d23c", tag:"Ox.", lab:"open tube only"}, {k:"deep", fill:"#d9443a", tag:"Neither", lab:"no yellow"}]},
+      reads:[{k:"pair", a:"#f2d23c", b:"#f2d23c", tag:"Fermentative", lab:"both tubes yellow"}, {k:"pair", a:"#f2d23c", b:"#d9443a", tag:"Oxidative", lab:"open tube only"}, {k:"pair", a:"#d9443a", b:"#d9443a", tag:"Neither", lab:"no yellow"}]},
     durham:{
       asks:"Can this organism ferment <b>this one sugar</b>, and does its fermentation pathway release <b>gas</b>?",
       flow:[{label:"Ferment the sugar, then restore NAD⁺", items:[N("Sugar", SUG), "glycolysis", N("Pyruvate", PYR, "3C"), "fermentation",
-        FORK({a:"", n:N("Lactic acid", ACID, "acid → yellow")}, {a:"", n:N("Ethanol + CO₂", "#9a6212", "CO₂ gas → bubble")})]}],
-      eq:[["sugar → 2 pyruvate", "glycolysis"], ["pyruvate → lactic acid", "acid drops the pH → yellow"], ["pyruvate → ethanol + CO₂", "CO₂ gas → bubble"]],
+        FORK({a:"", n:N("Acids", ACID, "lactic, acetic, formic → yellow")}, {a:"", n:N("CO₂ + H₂ gas", "#9a6212", "from formic acid → bubble")})]}],
+      eq:[["sugar → 2 pyruvate", "glycolysis"], ["pyruvate → acids (lactic, acetic, formic)", "acid drops the pH → yellow"], ["formic acid → CO₂ + H₂", "gas rises into the Durham tube → bubble"]],
       ind:"phenol",
-      used:["the sugar (glucose, lactose, sucrose…)"], made:["acid (→ yellow)", "CO₂ gas (→ bubble)"],
-      why:"Fermentation acids drop the pH below 6.8, so phenol red turns <b>yellow</b>. If the pathway also makes CO₂, it rises and gets trapped in the upside-down Durham tube as a <b>bubble</b>. Color (acid) and bubble (gas) are two <b>separate</b> readouts. Timing matters: a <b>slow fermenter</b> may turn <b>orange</b> first and go fully yellow only later, and some organisms make acid early, then run out of sugar and start digesting peptones, which raises the pH and swings the tube <b>back toward red/pink</b>. Read on time.",
+      used:["the sugar (glucose, lactose, sucrose…)"], made:["acid (→ yellow)", "CO₂ and H₂ gas (→ bubble)"],
+      why:"Fermentation acids drop the pH below 6.8, so phenol red turns <b>yellow</b>. If the pathway also makes gas (CO₂ and H₂), it rises and gets trapped in the upside-down Durham tube as a <b>bubble</b>. Color (acid) and bubble (gas) are two <b>separate</b> readouts. Timing matters: a <b>slow fermenter</b> may turn <b>orange</b> first and go fully yellow only later, and some organisms make acid early, then run out of sugar and start digesting peptones, which raises the pH and swings the tube <b>back toward red/pink</b>. Read on time.",
       reads:[{k:"tube", fill:"#f2d23c", durham:true, gas:true, tag:"A / G", lab:"acid + gas"}, {k:"tube", fill:"#f2d23c", durham:true, tag:"A", lab:"acid, no gas"}, {k:"tube", fill:"#e8603a", durham:true, gas:true, tag:"G", lab:"gas, no acid (rare)"}, {k:"tube", fill:"#d9443a", durham:true, tag:"−", lab:"no fermentation"}],
       readNote:"A slow grower caught early can look <b>orange</b> (partway to yellow). Give it the full incubation time before calling it.",
       extra:"Why ferment at all? Without oxygen, cells must turn NADH back into NAD⁺ or glycolysis stops. Making acids (or alcohol) is how they recycle it."},
@@ -1047,9 +1083,9 @@
       eq:[["sugar → 2 pyruvate", "glycolysis first"], ["pyruvate → acetoin → 2,3-butanediol", "neutral products, not acid"], ["acetoin + O₂ (shake) → pink-red", "the VP readout: acetoin is oxidized"]],
       ind:null, noInd:"No pH indicator. The pink-red is a <b>chemical reaction</b>: the reagents (plus oxygen from shaking) <b>oxidize acetoin</b>, not a pH change.",
       used:["the sugar in the broth"], made:["acetoin (→ pink-red with reagents)"],
-      why:"Like MR, this starts with fermentation to recycle NAD⁺ so glycolysis can keep running, but the <b>2,3-butanediol pathway</b> makes <b>neutral</b> products (acetoin, then butanediol), keeping the pH near 7. To read it, add VP A then VP B and <b>shake</b>: oxygen oxidizes the acetoin, and the reagents turn it <b>pink-red</b>. It develops over 15–30 minutes, so reading too early gives a false negative.",
+      why:"Like MR, this starts with fermentation to recycle NAD⁺ so glycolysis can keep running, but the <b>2,3-butanediol pathway</b> makes <b>neutral</b> products (acetoin, then butanediol), keeping the pH near 7. To read it, add VP reagent I, then VP reagent II, and <b>shake</b>: oxygen oxidizes the acetoin, and the reagents turn it <b>pink-red</b>. It develops over 15 to 30 minutes, so reading too early gives a false negative.",
       reads:[{k:"tube", fill:"#d0455d", tag:"VP +", lab:"pink-red"}, {k:"tube", fill:"#b98a52", tag:"VP −", lab:"copper-brown"}],
-      readNote:"Shake to add oxygen, then wait <b>15–30 min</b> for the pink-red to develop before reading.",
+      readNote:"Shake to add oxygen, then wait <b>15 to 30 minutes</b> for the pink-red to develop before reading.",
       extra:"The broth has sugar AND peptone: the bacteria eat the sugar first, then peptones."},
     citrate:{
       asks:"Can this organism use <b>citrate as its only carbon source</b>?",
@@ -1098,7 +1134,7 @@
         {label:"Indole", items:[N("Tryptophan", SUG), "tryptophanase", N("Indole", ACID, "+ Kovac's reagent → red ring")]},
         {label:"Ornithine decarboxylase", items:[N("Glucose fermented first", "#c98a0e", "medium turns yellow"), "decarboxylase", N("Alkaline amines", NEU, "pH rises: back to purple")]}],
       eq:[["tryptophan → indole", "tryptophanase; add Kovac's reagent"], ["glucose → acid (yellow), then ornithine → alkaline amines", "decarboxylase turns it back to purple"]],
-      ind:null, noInd:"The medium has a pH indicator: <b>purple</b> when the ornithine reaction raises the pH, <b>yellow</b> when acid is left. Indole has its own reagent, Kovac's.",
+      ind:"bcp",
       used:["tryptophan", "glucose", "ornithine"], made:["indole (→ red ring)", "alkaline amines (→ purple)"],
       why:"Read all three from one tube. Motility and medium color need no reagent. Add <b>5 drops of Kovac's reagent</b> last, <b>without shaking</b>, so it layers on top, and read the top layer after 1 to 2 minutes.",
       reads:[{k:"deep", fill:"#7d55a8", ring:"#d0243a", tag:"+", lab:"purple, red ring, cloudy"}, {k:"deep", fill:"#e6d23a", ring:"#efd35a", tag:"−", lab:"yellow, yellow ring"}]},
@@ -1113,6 +1149,47 @@
       extra:"Anaerobic respiration still runs an ETC, just ending on nitrate instead of O₂, so it makes much more ATP than fermentation does."}
   };
 
+  /* how to run each test, in order, and what trips students up */
+  const RUN = {
+    msa:["Streak the MSA plate with a loop.", "Incubate.", "Read it: nothing is added. Growth answers the salt question, and the agar color answers the mannitol question."],
+    emb:["Streak the EMB plate with a loop.", "Incubate.", "Read the colonies directly: nothing is added."],
+    starch:["Streak the starch agar plate with a loop.", "Incubate.", "Flood the whole plate with Gram's iodine and wait about 30 seconds.", "Look for a clear zone around the growth."],
+    of:["Stab both OF-dextrose tubes with a needle.", "Cover one tube with about 1 cm of mineral oil. Leave the other tube open to the air.", "Incubate.", "Compare the two tubes: yellow means acid."],
+    durham:["Choose the sugar broth: glucose, lactose, or sucrose.", "Inoculate the broth with a loop.", "Incubate.", "Read it directly: the color for acid, and the Durham tube for a gas bubble."],
+    mr:["Inoculate an MR-VP broth with a loop.", "Incubate.", "Add 5 drops of methyl red.", "Read the color right away."],
+    vp:["Inoculate the second MR-VP broth with a loop.", "Incubate.", "Add 12 drops of VP reagent I, then 3 drops of VP reagent II.", "Shake, then let it sit 15 to 30 minutes before reading."],
+    citrate:["Streak the Simmons citrate slant lightly.", "Incubate.", "Read the color and look for growth: nothing is added."],
+    gel:["Stab the nutrient gelatin straight down with a needle, and pull it back out along the same path.", "Leave it on the back bench at room temperature. Never put it in the incubator.", "If it looks liquid, chill it in crushed ice for a few minutes.", "Tilt it gently (do not shake). Still liquid after chilling = positive."],
+    urea:["Streak up the urea agar slant with a loop.", "Incubate.", "Compare it to an uninoculated control: nothing is added."],
+    phe:["Streak the phenylalanine slant.", "Incubate.", "Add 4 to 5 drops of ferric chloride onto the slant, and tip the tube to wash it over the growth.", "Read it immediately: the green fades within minutes."],
+    h2s:["Stab the peptone iron deep straight down with a needle.", "Incubate.", "Look for black: nothing is added."],
+    mio:["Stab the MIO medium straight down with a needle.", "Incubate.", "Read motility and the medium color first.", "Add 5 drops of Kovac's reagent last, without shaking, and read the top layer after 1 to 2 minutes."],
+    nitrate:["Inoculate the nitrate broth with a loop.", "Incubate.", "Add 5 drops of Nitrate A, then 5 drops of Nitrate B, and wait 1 minute.", "No color? Add a tiny amount of zinc dust and wait 5 minutes."]
+  };
+  const TIPS = {
+    msa:["No growth is a real result: the organism can't tolerate 7.5% salt.", "Growth with red agar means salt-tolerant, but no mannitol fermentation (like <i>S. epidermidis</i>)."],
+    emb:["No growth means the dyes held back a gram-positive.", "Colorless colonies still count as growth: gram-negative, but no lactose fermentation.", "The dyes slow gram-positives but don't always fully stop them, so EMB is not proof of Gram status."],
+    starch:["Iodine stains the starch, not the bacteria. Clear = the starch there was digested.", "Blue-black right up to the edge of the growth is a negative."],
+    of:["Both tubes get the same organism. The only difference is the oil.", "The oil goes on before incubating, on one tube only.", "Neither tube yellow does not mean no growth: the organism used the peptone instead."],
+    durham:["Color and bubble are two separate readouts: yellow = acid, bubble = gas.", "The Durham tube should be full of broth before incubating. A bubble that was there from the start is not gas.", "Read on time: a slow fermenter can look orange, and a tube can swing back toward red if the organism runs out of sugar and digests peptones."],
+    mr:["Read right away after adding methyl red.", "MR and VP usually give opposite results.", "Yellow does not always mean no fermentation: butanediol fermenters (VP positive) also read yellow."],
+    vp:["Reagent I goes in before reagent II.", "Shake to add oxygen: the color needs it.", "Reading before 15 minutes can give a false negative."],
+    citrate:["Use a light inoculum on the slant.", "Blue with growth = positive. Green with no growth = negative."],
+    gel:["Never incubate it: gelatin melts above about 28°C, so even a negative would look liquid.", "Liquid before chilling is not a result yet. Chill it first.", "Tilt gently, do not shake."],
+    urea:["Always compare to the uninoculated control.", "Bright pink (magenta) = positive. Peach, unchanged = negative."],
+    phe:["Read immediately: the green fades within minutes.", "Yellow, no color change = negative."],
+    h2s:["Stab straight down: the black forms along the stab line.", "Nothing is added. The iron already in the medium makes the H₂S visible."],
+    mio:["Read motility and the medium color BEFORE adding Kovac's.", "Don't shake after Kovac's: it has to layer on top.", "Purple = ornithine positive. Yellow = ornithine negative."],
+    nitrate:["Wear gloves: Nitrate B is a carcinogen.", "Only add zinc if A + B gave no color.", "After zinc the logic flips: red = NEGATIVE, still no color = POSITIVE."]
+  };
+  /* expected results for this page's organisms, straight from the bench data */
+  function orgTableHTML(t){
+    const ctx = sg => ({sugar:sg, zinc:true, step:true});
+    const head = t.sugars ? `<tr><th>Organism</th>${SUGARS.map(sg => `<th>${SUGAR_LABEL[sg]}</th>`).join("")}</tr>` : `<tr><th>Organism</th><th>Result</th></tr>`;
+    const rows = t.orgs.map(o => `<tr><td><i>${o.name}</i></td>${(t.sugars ? SUGARS : ["glucose"]).map(sg => { const r = t.outcome(o, ctx(sg)); return `<td><span class="tdot ${r.cls}"></span>${r.tag}</td>`; }).join("")}</tr>`).join("");
+    return `<div class="ttblwrap"><table class="ttbl">${head}${rows}</table></div>`;
+  }
+
   /* ---------- theory graphics ---------- */
   const ahead = (x, y, ang) => { const h = 8; return `<path d="M${f1(x)},${f1(y)} L${f1(x - h * Math.cos(ang - .42))},${f1(y - h * Math.sin(ang - .42))} L${f1(x - h * Math.cos(ang + .42))},${f1(y - h * Math.sin(ang + .42))} Z" fill="#8a93a3"/>`; };
   const tNodeW = n => Math.max(n.t.length, (n.sub || "").length * .82) * 7.6 + 28;
@@ -1124,7 +1201,8 @@
     return o;
   }
   function flowSVG(rows){
-    const forkW = f => 70 + Math.max(...f.fork.map(b => tNodeW(b.n)));
+    const forkA = f => Math.max(66, ...f.fork.map(b => (b.a || "").length * 6.4 + 22));
+    const forkW = f => forkA(f) + 4 + Math.max(...f.fork.map(b => tNodeW(b.n)));
     const itemW = it => typeof it === "string" ? tArrW(it) : it.fork ? forkW(it) : tNodeW(it);
     const rowH = r => r.items.some(it => it.fork) ? 150 : 92;
     const widths = rows.map(r => r.items.reduce((w, it) => w + itemW(it), 0));
@@ -1142,7 +1220,7 @@
           if (it) s += `<text x="${f1(x + w / 2)}" y="${f1(y - 11)}" font-size="11" font-weight="700" fill="${ENZC}" text-anchor="middle" font-style="italic">${it}</text>`;
           x += w;
         } else if (it.fork){
-          const aLen = 66, dy = 38, nw = Math.max(...it.fork.map(b => tNodeW(b.n)));
+          const aLen = forkA(it), dy = 38, nw = Math.max(...it.fork.map(b => tNodeW(b.n)));
           it.fork.forEach((b, bi) => {
             const ny = y + (bi ? dy : -dy), nx = x + aLen + nw / 2, ex = x + aLen, ang = Math.atan2(ny - y, aLen);
             s += `<line x1="${f1(x + 4)}" y1="${f1(y)}" x2="${f1(ex - 4)}" y2="${f1(ny)}" stroke="#8a93a3" stroke-width="2.5"/>${ahead(ex, ny, ang)}`;
@@ -1183,6 +1261,12 @@
       if (o.col){ if (single) s += `<polyline ${poly(8)} stroke="${shade(o.col, -.3)}"/><polyline ${poly(6)} stroke="${o.col}"/>`;
         else pts.forEach(([x, y]) => { s += `<circle cx="${x}" cy="${y}" r="4.2" fill="${o.col}" stroke="${shade(o.col, -.25)}" stroke-width="1"/>` + (o.sheen ? `<path d="M${x - 3},${y} a3,3 0 0 1 4,-3" fill="none" stroke="#63e08f" stroke-width="1.6"/>` : ""); }); }
       s += `</g>`;
+    } else if (o.k === "pair"){
+      [[24, o.a, false, "open"], [66, o.b, true, "oil"]].forEach(([cx, fill, oil, lab]) => {
+        const w = 24, l = cx - w / 2, r = cx + w / 2, top = 10, b = 92, cid = "tq" + Math.random().toString(36).slice(2, 7);
+        s += `<clipPath id="${cid}"><path d="M${l + 2},${top} L${l + 2},${b - 11} A10,10 0 0 0 ${r - 2},${b - 11} L${r - 2},${top} Z"/></clipPath><g clip-path="url(#${cid})"><rect x="${l}" y="34" width="${w}" height="70" fill="${fill}"/>${oil ? `<rect x="${l}" y="24" width="${w}" height="10" fill="#f3e7a6"/>` : ""}</g>`;
+        s += `<path d="M${l},${top} L${l},${b - w / 2} A${w / 2},${w / 2} 0 0 0 ${r},${b - w / 2} L${r},${top}" fill="none" stroke="#8b93a3" stroke-width="2.2"/><text x="${cx}" y="103" font-size="10" fill="#5a6376" text-anchor="middle">${lab}</text>`;
+      });
     } else if (o.k === "strip"){
       s += `<rect x="6" y="22" width="78" height="56" rx="6" fill="#fbfaf2" stroke="#d9cfa6" stroke-width="2"/><circle cx="45" cy="50" r="18" fill="${o.spot}"/>`;
     } else {
@@ -1233,6 +1317,7 @@
       : `<div class="treads">${th.reads.map(r => `<div class="tread">${miniSVG(r)}<b>${r.tag}</b><span>${r.lab}</span></div>`).join("")}</div>`;
     return `<div class="thead"><div><div class="tkick">Understand the test</div><h2 id="tTitle">${t.title}</h2></div><button class="tclose" id="tClose" aria-label="Close">×</button></div>
       <div class="tasks"><span class="tlabel">The question it answers</span><p>${th.asks}</p></div>
+      ${RUN[t.key] ? `<div class="tsec"><h3>Run it, step by step</h3><ol class="trun">${RUN[t.key].map(x => `<li>${x}</li>`).join("")}</ol></div>` : ""}
       <div class="tsec"><h3>What's happening inside (and outside) the cell</h3><div class="tflowwrap">${flowSVG(th.flow)}</div></div>
       <div class="tsec"><h3>The key reactions</h3><div class="teqs">${th.eq.map(([e, n]) => `<div class="teq"><span class="tq">${e}</span>${n ? `<span class="tn">${n}</span>` : ""}</div>`).join("")}</div></div>
       <div class="tgrid">
@@ -1241,6 +1326,8 @@
       </div>
       <div class="tsec"><h3>Why it changes</h3><p>${th.why}</p>${th.extra ? `<p class="textra">💡 ${th.extra}</p>` : ""}</div>
       <div class="tsec"><h3>How to read it</h3>${readsBlock}${th.readNote ? `<p class="treadnote">📝 ${th.readNote}</p>` : ""}</div>
+      <div class="tsec"><h3>Results for the organisms on this bench</h3>${orgTableHTML(t)}</div>
+      ${TIPS[t.key] ? `<div class="tsec"><h3>Watch out for</h3><ul class="ttips">${TIPS[t.key].map(x => `<li>${x}</li>`).join("")}</ul></div>` : ""}
       <div class="tfoot"><button class="btn primary" id="tBack">Back to the bench</button></div>`;
   }
   function openTheory(){
