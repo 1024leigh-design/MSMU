@@ -223,7 +223,7 @@
      ],
      outcome:(o, c) => {
        const r = o.sug[c.sugar], sugar = SUGAR_LABEL[c.sugar].toLowerCase(), extra = o.note && o.note[c.sugar] ? " " + o.note[c.sugar] : "";
-       if (r === "AG") return {vis:{fill:C_YEL, gas:true, turbid:true}, cls:"pos", tag:"Acid + gas", text:`<b>Yellow broth and a bubble</b> in the Durham tube. <i>${o.short}</i> fermented ${sugar}: the acid it made dropped the pH so phenol red turned yellow, and the gas (CO₂ and H₂) it released rose into the little tube.`};
+       if (r === "AG") return {vis:{fill:C_YEL, gas:true, turbid:true}, cls:"pos", tag:"Acid + gas", text:`<b>Yellow broth and a bubble</b> in the Durham tube. <i>${o.short}</i> fermented ${sugar}: lactic acid dropped the pH so phenol red turned yellow, and alcohol fermentation made ethanol and CO₂ gas, which rose into the little tube as a bubble.`};
        if (r === "A") return {vis:{fill:C_YEL, gas:false, turbid:true}, cls:"pos", tag:"Acid, no gas", text:`<b>Yellow, but no bubble.</b> <i>${o.short}</i> fermented ${sugar} and made acid, but its fermentation pathway doesn't release gas. Color = acid; bubble = gas. They're two separate readouts.`};
        return {vis:{fill:o.alk ? "#e0457a" : C_RED, gas:false, turbid:true}, cls:"neg", tag:"No fermentation", text:`<b>Still red (or even pinker), no bubble.</b> <i>${o.short}</i> grew (the broth is cloudy) but didn't ferment ${sugar}, so no acid and no gas.${o.alk ? " The deeper pink means it broke down peptones instead, releasing ammonia, which raises the pH." : ""}${extra}`};
      },
@@ -232,7 +232,7 @@
      quiz:[q("What does the Durham sugar test tell you?", ["Whether the organism ferments that sugar (acid) and makes gas", "Whether the organism has urease", "Whether it can use citrate as its only carbon source", "Whether it is gram-negative"], 0, "It reads two things at once: acid from fermenting the sugar, and gas from the fermentation pathway."),
        q("What is the pH indicator?", ["Phenol red", "Methyl red", "Bromothymol blue", "Crystal violet"], 0, "Phenol red: red/pink at neutral or alkaline pH, yellow when acid builds up."),
        q("The broth turns yellow but the Durham tube has NO bubble. That means…", ["Acid was made, but no gas", "Gas was made, but no acid", "No fermentation at all", "The tube is contaminated"], 0, "Color = acid, bubble = gas. Yellow without a bubble means the sugar was fermented by a pathway that doesn't release gas."),
-       q("What does the bubble in the Durham tube actually show?", ["Gas (CO₂ and H₂) released by fermentation", "Oxygen being used up", "The pH dropped", "The bacteria are motile"], 0, "Fermentation pathways like mixed-acid fermentation release CO₂ and H₂, which rises into the upside-down tube."),
+       q("What does the bubble in the Durham tube actually show?", ["CO₂ gas released by fermentation", "Oxygen being used up", "The pH dropped", "The bacteria are motile"], 0, "Alcohol fermentation makes ethanol and CO₂. The CO₂ gas rises into the upside-down tube."),
        q("After incubation, what do you add before reading it?", ["Nothing: read it directly", "4 drops of methyl red", "Kovac's reagent", "Zinc dust"], 0, "The indicator is already in the broth and the Durham tube is already inside, so you just read the color and look for a bubble.")]},
     {key:"mr", tab:"Methyl Red", title:"Methyl Red (MR) Test", medium:"broth", tools:["loop"], incubate:true, base:{fill:C_BROTH},
      question:"Does this bacterium make lots of stable acid (mixed-acid fermentation)?",
@@ -1057,11 +1057,11 @@
     durham:{
       asks:"Can this organism ferment <b>this one sugar</b>, and does its fermentation pathway release <b>gas</b>?",
       flow:[{label:"Ferment the sugar, then restore NAD⁺", items:[N("Sugar", SUG), "glycolysis", N("Pyruvate", PYR, "3C"), "fermentation",
-        FORK({a:"", n:N("Acids", ACID, "lactic, acetic, formic → yellow")}, {a:"", n:N("CO₂ + H₂ gas", "#9a6212", "from formic acid → bubble")})]}],
-      eq:[["sugar → 2 pyruvate", "glycolysis"], ["pyruvate → acids (lactic, acetic, formic)", "acid drops the pH → yellow"], ["formic acid → CO₂ + H₂", "gas rises into the Durham tube → bubble"]],
+        FORK({a:"", n:N("Lactic acid", ACID, "acid → yellow")}, {a:"", n:N("Ethanol + CO₂", "#9a6212", "CO₂ gas → bubble")})]}],
+      eq:[["sugar → 2 pyruvate", "glycolysis"], ["pyruvate → lactic acid", "acid drops the pH → yellow"], ["pyruvate → ethanol + CO₂", "alcohol fermentation: CO₂ gas → bubble"]],
       ind:"phenol",
-      used:["the sugar (glucose, lactose, sucrose…)"], made:["acid (→ yellow)", "CO₂ and H₂ gas (→ bubble)"],
-      why:"Fermentation acids drop the pH below 6.8, so phenol red turns <b>yellow</b>. If the pathway also makes gas (CO₂ and H₂), it rises and gets trapped in the upside-down Durham tube as a <b>bubble</b>. Color (acid) and bubble (gas) are two <b>separate</b> readouts. Timing matters: a <b>slow fermenter</b> may turn <b>orange</b> first and go fully yellow only later, and some organisms make acid early, then run out of sugar and start digesting peptones, which raises the pH and swings the tube <b>back toward red/pink</b>. Read on time.",
+      used:["the sugar (glucose, lactose, sucrose…)"], made:["lactic acid (→ yellow)", "CO₂ gas (→ bubble)"],
+      why:"<b>Lactic acid</b> from fermentation drops the pH below 6.8, so phenol red turns <b>yellow</b>. <b>Alcohol fermentation</b> makes ethanol and <b>CO₂</b>, and the CO₂ gas rises and gets trapped in the upside-down Durham tube as a <b>bubble</b>. Color (acid) and bubble (gas) are two <b>separate</b> readouts. Timing matters: a <b>slow fermenter</b> may turn <b>orange</b> first and go fully yellow only later, and some organisms make acid early, then run out of sugar and start digesting peptones, which raises the pH and swings the tube <b>back toward red/pink</b>. Read on time.",
       reads:[{k:"tube", fill:"#f2d23c", durham:true, gas:true, tag:"A / G", lab:"acid + gas"}, {k:"tube", fill:"#f2d23c", durham:true, tag:"A", lab:"acid, no gas"}, {k:"tube", fill:"#e8603a", durham:true, gas:true, tag:"G", lab:"gas, no acid (rare)"}, {k:"tube", fill:"#d9443a", durham:true, tag:"−", lab:"no fermentation"}],
       readNote:"A slow grower caught early can look <b>orange</b> (partway to yellow). Give it the full incubation time before calling it.",
       extra:"Why ferment at all? Without oxygen, cells must turn NADH back into NAD⁺ or glycolysis stops. Making acids (or alcohol) is how they recycle it."},
