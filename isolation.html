@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streak Plate | MicroLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="metab.css">
+<link rel="stylesheet" href="lab.css">
+<style>
+  .drawpad{touch-action:none;user-select:none;-webkit-user-select:none}
+  .drawpad svg{cursor:crosshair}
+  .glow{animation:glow 1s ease-in-out infinite}
+  @keyframes glow{50%{opacity:.45}}
+  @media (prefers-reduced-motion:reduce){.glow{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script src="lab.js"></script>
+<script>
+(function(){
+  const {$, f1, clamp, rnd, esc, q, T, pictureGame, orderGame} = MicroLab;
+  const CX = 230, CY = 220, R = 180, AGAR = "#efe0b0";
+
+  /* ---------- geometry (plate frame: center at 0,0; quadrant 1 top-left, then clockwise) ---------- */
+  const quadOf = (x, y) => x < 0 && y < 0 ? 1 : x >= 0 && y < 0 ? 2 : x >= 0 && y >= 0 ? 3 : 4;
+  const rotPt = (x, y, deg) => { const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [x * c - y * s, x * s + y * c]; };
+  function lens(strokes){
+    const L = [0, 0, 0, 0, 0];
+    strokes.forEach(st => { for (let i = 1; i < st.length; i++){ const [a, b] = [st[i - 1], st[i]], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; if (Math.hypot(mx, my) <= R) L[quadOf(mx, my)] += Math.hypot(b[0] - a[0], b[1] - a[1]); } });
+    return L;
+  }
+
+  /* ---------- growth after incubation ----------
+     Quadrant 1 gets cells straight from the culture. Each later quadrant only gets the cells the loop drags out of the
+     quadrant before it, so each one is a dilution of the last. Skipping the flame carries the old load forward. */
+  function simulate(strokes, flamed){
+    const D = [0, 1, 0, 0, 0];
+    for (let n = 2; n <= 4; n++){
+      const pull = clamp(lens(strokes[n])[n - 1] / 120, 0, 1);
+      D[n] = D[n - 1] * .28 * (pull > 0 ? Math.max(pull, .45) : 0) + (flamed[n] ? 0 : D[n - 1] * .8);
+    }
+    const cols = [], lawns = [];
+    for (let n = 1; n <= 4; n++){
+      const d = D[n]; if (d <= 0) continue;
+      strokes[n].forEach((st, si) => {
+        let run = [];
+        const flush = () => { if (run.length > 1 && d >= .55) lawns.push(run); run = []; };
+        let acc = rnd(n * 31 + si) * 6, k = 0;
+        const gap = 3.2 / d;
+        for (let i = 1; i < st.length; i++){
+          const [a, b] = [st[i - 1], st[i]], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+          if (Math.hypot(mx, my) > R - 3 || quadOf(mx, my) !== n){ flush(); continue; }
+          if (!run.length) run.push(a); run.push(b);
+          if (d < .55){
+            const seg = Math.hypot(b[0] - a[0], b[1] - a[1]);
+            acc += seg;
+            while (acc >= gap){
+              acc -= gap * (.7 + rnd(n * 97 + si * 13 + k) * .6); k++;
+              const t = rnd(k * 7 + n) , x = a[0] + (b[0] - a[0]) * t + (rnd(k + 3) - .5) * 5, y = a[1] + (b[1] - a[1]) * t + (rnd(k + 9) - .5) * 5;
+              if (Math.hypot(x, y) < R - 6) cols.push([x, y, n]);
+            }
+          }
+        }
+        flush();
+      });
+    }
+    /* colonies with room around them grow bigger */
+    const sized = cols.map(([x, y, n], i) => { let nn = 1e9; cols.forEach(([x2, y2], j) => { if (j !== i) nn = Math.min(nn, Math.hypot(x - x2, y - y2)); }); return {x, y, n, iso:nn > 18, r:nn > 18 ? 6.5 : clamp(nn / 2.4, 3, 5.5)}; });
+    return {D, lawns, cols:sized, isolated:sized.filter(c => c.iso && c.n >= 3).length};
+  }
+
+  function growthSVG(sim, extra){
+    let s = "";
+    sim.lawns.forEach(run => { const pts = run.map(p => f1(p[0]) + "," + f1(p[1])).join(" "); s += `<polyline points="${pts}" fill="none" stroke="#bda56a" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${pts}" fill="none" stroke="#fffaf0" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/>`; });
+    sim.cols.forEach(c => { s += `<circle cx="${f1(c.x)}" cy="${f1(c.y)}" r="${f1(c.r)}" fill="#fbf6e6" stroke="#bda56a" stroke-width="1"/>`; });
+    return s + (extra || "");
+  }
+  /* the whole plate: content is drawn in plate coordinates inside a group centered on the plate */
+  function plateSVG(inner, o){
+    o = o || {};
+    const W = o.w || 460, H = o.h || 440;
+    let s = `<circle cx="${CX}" cy="${CY}" r="${R + 8}" fill="#e3e7ee" stroke="#aab3c2" stroke-width="2.5"/><circle cx="${CX}" cy="${CY}" r="${R}" fill="${AGAR}"/>`;
+    s += `<g id="${o.gid || MicroLab.id("pg")}" style="transform-origin:${CX}px ${CY}px;transform:rotate(${o.rot || 0}deg);transition:transform .6s ease"><g transform="translate(${CX} ${CY})">`;
+    s += `<line x1="${-R}" y1="0" x2="${R}" y2="0" stroke="#4b2a8a" stroke-width="1.6" stroke-dasharray="7 6" opacity=".55"/><line x1="0" y1="${-R}" x2="0" y2="${R}" stroke="#4b2a8a" stroke-width="1.6" stroke-dasharray="7 6" opacity=".55"/>`;
+    if (o.hot) s += `<path class="glow" d="M0,0 L${-R},0 A${R},${R} 0 0 1 0,${-R} Z" fill="#3f4cc0" opacity=".1" transform="rotate(${(o.hot - 1) * 90})"/>`;
+    s += inner;
+    [[-1, -1, 1], [1, -1, 2], [1, 1, 3], [-1, 1, 4]].forEach(([sx, sy, n]) => { const [x, y] = [sx * R * .78, sy * R * .78]; s += `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${-(o.rot || 0)})"><circle r="13" fill="#fff" opacity=".85"/>${T(0, 5, n, {fs:15, c:"#4b2a8a"})}</g>`; });
+    s += `</g></g>`;
+    return `<svg class="gsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria || "Streak plate")}">${s}${o.after || ""}</svg>`;
+  }
+
+  /* ---------- preset streaks for the reading game ---------- */
+  function zig(n, opts){
+    opts = opts || {};
+    const pts = [], loc = [];
+    if (n > 1 && opts.pull !== false) [-.3, -.45, -.6].forEach((x, i) => { loc.push([x * R, .22 * R], [x * R + .05 * R, -.25 * R]); });
+    for (let i = 0; i < 7; i++){ const y = -(.16 + i * .1) * R, a = -.14 * R, b = -(.88 - i * .06) * R; loc.push(i % 2 ? [b, y] : [a, y]); }
+    loc.forEach(([x, y]) => { const [u, v] = rotPt(x, y, (n - 1) * 90), d = Math.hypot(u, v), k = d > R * .92 ? R * .92 / d : 1; pts.push([u * k, v * k]); });
+    return [pts];
+  }
+  const presetStrokes = o => ({1:zig(1), 2:zig(2, o), 3:zig(3, o), 4:zig(4, o)});
+
+  /* ================================================================= the bench */
+  function renderStreak(body){
+    body.innerHTML = `
+      <div class="sect">1. Streak for isolation</div>
+      <p class="labq" style="margin:0 0 6px">Use the buttons for the loop and the plate, and <b>draw your streaks on the agar</b> with your mouse or finger. The quadrant you're working on is highlighted.</p>
+      <div class="bench2"><div class="panel tight drawpad" id="sPad" style="max-width:480px;justify-self:center;width:100%"></div>
+        <div><div class="benchsteps" id="sSteps"></div><div class="benchhint" id="sMsg" role="status"></div><div class="row" id="sBtns"></div><div class="row" id="sBtns2"></div></div></div>
+      <div class="sect">2. What went right, or wrong?</div>
+      <p class="labq" style="margin:0 0 6px">Practice plates after incubation. Read each one.</p><div id="sRead"></div>
+      <div class="sect">3. Put the quadrant streak in order</div><div id="sOrder"></div>`;
+    let st, drawing = null, msgTimer = 0;
+    const reset = () => {
+      st = {q:1, loop:"dirty", picked:false, rot:0, strokes:{1:[], 2:[], 3:[], 4:[]}, done:{}, flamed:{2:false, 3:false, 4:false}, endFlame:false, incubated:false, sim:null};
+      say("Start like every transfer: <b>flame the loop</b> until the whole wire glows red-hot.");
+      draw();
+    };
+    const say = (m, k) => { $("sMsg").className = "benchhint " + (k || ""); $("sMsg").innerHTML = m; };
+    const strokesSVG = () => [1, 2, 3, 4].map(n => st.strokes[n].map(p => `<polyline points="${p.map(a => f1(a[0]) + "," + f1(a[1])).join(" ")}" fill="none" stroke="${st.incubated ? "none" : "#a8925a"}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>`).join("")).join("") + `<polyline id="curStroke" points="" fill="none" stroke="#3f4cc0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    function draw(){
+      const inner = st.incubated ? growthSVG(st.sim) : strokesSVG();
+      const loopCol = st.loop === "hot" ? "#ff5a2a" : "#9aa3b2";
+      $("sPad").innerHTML = plateSVG(inner, {gid:"pg", rot:st.rot, hot:st.incubated || st.done[st.q] ? 0 : st.q, aria:"Agar plate divided into 4 quadrants. Draw streaks in the highlighted quadrant."}) +
+        `<p class="mini" style="text-align:center;margin:4px 0 0">Loop: <b style="color:${st.loop === "hot" ? "#b83a34" : st.loop === "loaded" ? "#9a6212" : "#343b4a"}">${{dirty:"not sterile", hot:"red-hot (let it cool)", cool:"sterile and cool", loaded:"loaded with cells", used:"used (has cells on it)"}[st.loop]}</b></p>`;
+      const names = ["Flame", "Pick up cells", "Quadrant 1", "Flame + rotate", "Quadrant 2", "Flame + rotate", "Quadrant 3", "Flame + rotate", "Quadrant 4", "Incubate"];
+      const cur = st.incubated ? 10 : st.q === 1 ? (st.done[1] ? 3 : st.picked ? 2 : st.loop === "dirty" ? 0 : 1) : (st.done[st.q] ? (st.q === 4 ? 9 : 2 * st.q + 1) : st.strokes[st.q].length ? 2 * st.q : 2 * st.q - 1 + (st.rot === -(st.q - 1) * 90 ? 1 : 0));
+      $("sSteps").innerHTML = names.map((n, i) => `<span class="bstep ${i < cur ? "ok" : i === cur ? "cur" : ""}">${n}</span>`).join("");
+      let b = "";
+      if (!st.incubated){
+        b += `<button class="btn secondary" data-a="flame">🔥 Flame the loop</button>`;
+        if (st.q === 1 && !st.strokes[1].length) b += `<button class="btn secondary" data-a="pick">🧪 Pick up cells from the culture</button>`;
+        else if (st.q > 1 || st.done[1]) b += `<button class="btn secondary" data-a="pick">🧪 Pick up more cells</button>`;
+        if (st.done[st.q] && st.q < 4) b += `<button class="btn secondary" data-a="rot">↻ Rotate the plate 90°</button>`;
+        if (st.strokes[st.q].length && !st.done[st.q]) b += `<button class="btn primary" data-a="done">Done with quadrant ${st.q}</button>`;
+        if (st.strokes[st.q].length && !st.done[st.q]) b += `<button class="btn secondary" data-a="undo">Erase my quadrant ${st.q} streaks</button>`;
+        if (st.done[4]) b += `<button class="btn primary" data-a="inc">Invert and incubate</button>`;
+      }
+      $("sBtns").innerHTML = b;
+      $("sBtns2").innerHTML = `<button class="btn secondary" data-a="reset">↺ Start over</button>`;
+    }
+    const svgPt = e => { const sv = $("sPad").querySelector("svg"), p = sv.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const r = p.matrixTransform(sv.getScreenCTM().inverse()); return rotPt(r.x - CX, r.y - CY, -st.rot); };
+    const canDraw = () => {
+      if (st.incubated) return "The plate is incubated. Tap Start over to streak another.";
+      if (st.done[st.q]) return st.q < 4 ? "Quadrant " + st.q + " is finished. Flame the loop and rotate the plate for the next quadrant." : "All 4 quadrants are streaked. Flame the loop, then invert and incubate.";
+      if (st.loop === "hot") return "The loop is still red-hot. A hot loop kills the cells. Give it a few seconds.";
+      if (st.q === 1 && !st.strokes[1].length && st.loop !== "loaded") return st.loop === "dirty" ? "Flame the loop first." : "Pick up cells from the culture first.";
+      if (st.q > 1 && st.rot !== -(st.q - 1) * 90) return "Rotate the plate 90° first, so the new quadrant is in front of you.";
+      return "";
+    };
+    const pad = $("sPad");
+    pad.onpointerdown = e => {
+      if (!e.target.closest("svg")) return;
+      const why = canDraw(); if (why){ say(why, "warn"); return; }
+      const [x, y] = svgPt(e); if (Math.hypot(x, y) > R){ say("Start on the agar.", "warn"); return; }
+      e.preventDefault(); drawing = [[x, y]];
+      try { pad.setPointerCapture(e.pointerId); } catch (_) {}
+    };
+    pad.onpointermove = e => {
+      if (!drawing) return;
+      const [x, y] = svgPt(e), l = drawing[drawing.length - 1];
+      if (Math.hypot(x - l[0], y - l[1]) < 3) return;
+      if (Math.hypot(x, y) > R){ return; }
+      drawing.push([x, y]);
+      const cs = $("curStroke"); if (cs) cs.setAttribute("points", drawing.map(a => f1(a[0]) + "," + f1(a[1])).join(" "));
+    };
+    pad.onpointerup = () => {
+      if (!drawing) return;
+      if (drawing.length > 2) st.strokes[st.q].push(drawing);
+      drawing = null;
+      if (st.q === 1) st.loop = "loaded";
+      const L = lens(st.strokes[st.q]);
+      say(`Keep zigzagging back and forth across quadrant ${st.q}${st.q > 1 ? `, starting with 2 or 3 passes back through quadrant ${st.q - 1}` : ""}. Press <b>Done with quadrant ${st.q}</b> when it's covered.${L[st.q] > 220 ? " Looks well covered!" : ""}`);
+      draw();
+    };
+    body.onclick = e => {
+      const a = e.target.closest("[data-a]"); if (!a) return;
+      const k = a.dataset.a;
+      if (k === "reset"){ reset(); return; }
+      if (k === "flame"){
+        if (st.loop === "loaded" && !st.strokes[1].length) st.picked = false;
+        if (st.done[st.q] && st.q < 4) st.flamed[st.q + 1] = true;
+        else if (st.q > 1 && !st.strokes[st.q].length) st.flamed[st.q] = true;
+        if (st.done[4]) st.endFlame = true;
+        st.loop = "hot"; draw();
+        say(st.done[4] ? "Red-hot. Flaming the loop before you set it down protects you and the bench." : st.done[st.q] || st.q > 1 ? "Red-hot. That kills the cells left on the loop, so the next quadrant only gets the cells you drag out of the last one." : "Red-hot. Now let it cool for a few seconds without touching anything.");
+        clearTimeout(msgTimer);
+        msgTimer = setTimeout(() => { if (st.loop === "hot"){ st.loop = "cool"; draw(); say(st.q === 1 && !st.done[1] ? "The loop is cool. <b>Pick up cells</b> from the culture." : st.done[4] ? "Loop flamed. Now <b>invert and incubate</b> the plate." : st.done[st.q] ? "The loop is cool. Now <b>rotate the plate 90°</b>." : `The loop is cool. Streak quadrant ${st.q}: start with 2 or 3 passes back through quadrant ${st.q - 1}.`, "good"); } }, 1100);
+        return;
+      }
+      if (k === "pick"){
+        if (st.q > 1 || st.done[1]){ say("No more culture! Quadrants 2, 3, and 4 get their cells <b>only by dragging the loop back through the previous quadrant</b>. That's what dilutes them.", "warn"); return; }
+        if (st.loop === "dirty"){ say("Flame the loop first, so you don't add contaminants.", "warn"); return; }
+        if (st.loop === "hot"){ say("Let the loop cool first. A red-hot loop kills the cells you pick up.", "warn"); return; }
+        st.loop = "loaded"; st.picked = true; draw();
+        say("Loop loaded. (Uncap the tube, flame the lip, pick up a loopful, flame the lip, recap.) Lift the lid partway, like a clamshell, and <b>zigzag across quadrant 1</b>. Keep the loop light and flat so you don't dig into the agar.", "good");
+        return;
+      }
+      if (k === "undo"){ st.strokes[st.q] = []; if (st.q === 1) st.loop = "loaded"; draw(); say(`Quadrant ${st.q} erased. Try again.`); return; }
+      if (k === "done"){
+        const L = lens(st.strokes[st.q]), qn = st.q, other = [1, 2, 3, 4].filter(n => n !== qn && n !== qn - 1).reduce((t, n) => t + L[n], 0);
+        if (qn === 4 && L[1] > 8){ say("Your last streak touched <b>quadrant 1</b>. Quadrant 1 is packed with cells, and touching it would undo all your dilution. Erase and keep quadrant 4 away from quadrant 1.", "warn"); return; }
+        if (other > 80){ say(`Keep this streak inside quadrant ${qn}${qn > 1 ? ` and the edge of quadrant ${qn - 1}` : ""}.`, "warn"); return; }
+        if (qn > 1 && L[qn - 1] < 25){ say(`Start by dragging the loop <b>back through quadrant ${qn - 1}</b> 2 or 3 times. That's the only place this streak can get its cells.`, "warn"); return; }
+        if (L[qn] < 200){ say(`Cover more of quadrant ${qn}: zigzag back and forth, close together.`, "warn"); return; }
+        st.done[qn] = true; st.loop = "used"; draw();
+        say(qn < 4 ? `Quadrant ${qn} done. Close the lid. Next: <b>flame the loop</b> and <b>rotate the plate 90°</b>.` : "All 4 quadrants streaked! <b>Flame the loop</b> before you set it down, then invert and incubate.", "good");
+        return;
+      }
+      if (k === "rot"){
+        st.q++; st.rot = -(st.q - 1) * 90;
+        const g = $("pg"); if (g) g.style.transform = `rotate(${st.rot}deg)`;
+        setTimeout(draw, 650);
+        say(st.flamed[st.q] ? `Plate rotated. Streak <b>quadrant ${st.q}</b>: 2 or 3 passes back through quadrant ${st.q - 1}, then zigzag across quadrant ${st.q} without touching ${st.q - 1} again.` : `Plate rotated. Heads up: you haven't flamed the loop since quadrant ${st.q - 1}. You can still flame it now.`, st.flamed[st.q] ? "good" : "warn");
+        return;
+      }
+      if (k === "inc"){
+        st.incubated = true; st.rot = 0; st.sim = simulate(st.strokes, st.flamed); draw();
+        const skipped = [2, 3, 4].filter(n => !st.flamed[n]);
+        const iso = st.sim.isolated;
+        say(skipped.length ? `Growth stays crowded into the later quadrants. You skipped flaming before quadrant${skipped.length > 1 ? "s" : ""} ${skipped.length > 2 ? skipped.slice(0, -1).join(", ") + ", and " + skipped[skipped.length - 1] : skipped.join(" and ")}, so the loop carried extra cells forward instead of diluting them.`
+          : iso >= 2 ? `<b>Isolated colonies!</b> Quadrant 1 is solid growth, and each quadrant after it has fewer cells. The separate colonies in quadrants 3 and 4 each grew from a single cell (or CFU). Pick one to subculture for a <b>pure culture</b>.`
+          : `Growth thins out across the quadrants, but there aren't many well-isolated colonies yet (${iso}). Try longer, closer zigzags in quadrants 3 and 4, with only 2 or 3 passes back into the quadrant before.`, skipped.length ? "warn" : iso >= 2 ? "good" : "");
+        if (!st.endFlame && !skipped.length) $("sMsg").innerHTML += " (Don't forget to flame the loop before you set it down!)";
+      }
+    };
+    reset();
+
+    /* reading game */
+    const good = presetStrokes(), mk = (strokes, flamed, extra) => plateSVG(growthSVG(simulate(strokes, flamed), extra), {aria:"Incubated streak plate"});
+    const allF = {2:true, 3:true, 4:true}, noneF = {2:false, 3:false, 4:false};
+    const contam = Array.from({length:9}, (_, i) => { const a = rnd(i + 60) * 6.28, d = R * (.2 + rnd(i + 80) * .7); return `<circle cx="${f1(Math.cos(a) * d)}" cy="${f1(Math.sin(a) * d)}" r="${f1(5 + rnd(i) * 3)}" fill="#f2b134" stroke="#c48a12"/>`; }).join("");
+    const MEAN = ["Good isolation: solid growth in quadrant 1 thinning to isolated colonies", "The loop wasn't flamed between quadrants, so growth stays crowded", "The streaks didn't drag back through the previous quadrant, so later quadrants got no cells", "Contamination: colonies that aren't on the streak lines"];
+    pictureGame($("sRead"), [
+      {svg:mk(good, allF), ask:"What does this plate show?", opts:MEAN, a:0, why:"Pick a well-isolated colony from quadrant 3 or 4 to subculture."},
+      {svg:mk(good, noneF), ask:"What went wrong here?", opts:MEAN, a:1, why:"Flame between quadrants so each one is a dilution of the last."},
+      {svg:mk(presetStrokes({pull:false}), allF), ask:"Quadrant 1 grew, but quadrants 2 to 4 are empty. What went wrong?", opts:MEAN, a:2, why:"Each new streak starts with 2 or 3 passes through the quadrant before it."},
+      {svg:mk(good, allF, contam), ask:"Look at the orange colonies. What are they?", opts:MEAN, a:3, why:"Colonies off the streak lines didn't come from your loop. Something landed on the plate."}], {picW:360});
+
+    orderGame($("sOrder"), [
+      {id:"a", cue:"labeling", text:"Label the bottom of the plate (agar side): name, date, organism.", why:""},
+      {id:"b", cue:"sterilizing", text:"Flame the loop red-hot and let it cool.", why:""},
+      {id:"c", cue:"getting cells", text:"Aseptically pick up a loopful from the culture.", why:"Uncap, flame the lip, sample, flame the lip, recap."},
+      {id:"d", cue:"quadrant 1", text:"Lift the lid partway and zigzag the loop across quadrant 1.", why:"Light and flat: don't dig into the agar."},
+      {id:"e", cue:"between quadrants", text:"Flame the loop, let it cool, and rotate the plate 90°.", why:"This kills the leftover cells on the loop."},
+      {id:"f", cue:"quadrants 2 and 3", text:"Drag back through the last quadrant 2 or 3 times, then zigzag into the new one. Repeat for quadrant 3.", why:"Each quadrant is a dilution of the one before."},
+      {id:"g", cue:"quadrant 4", text:"Flame, rotate, and streak quadrant 4 without touching quadrant 1.", why:""},
+      {id:"h", cue:"finishing", text:"Flame the loop, then incubate the plate inverted.", why:"Inverted, so condensation doesn't drip onto the agar."}]);
+  }
+
+  /* ================================================================= theory picture */
+  const PICS = {
+    dilute:() => {
+      const sim = simulate(presetStrokes(), {2:true, 3:true, 4:true});
+      const pic = plateSVG(growthSVG(sim), {w:460, h:440}).replace(/<svg[^>]*>|<\/svg>/g, "");
+      let s = `<g transform="scale(.5)">${pic}</g>`;
+      ["1: solid growth (straight from the culture)", "2: a dilution of quadrant 1", "3: fewer cells, colonies start to separate", "4: isolated colonies, each from one cell"].forEach((t, i) => { s += T(250, 50 + i * 40, t, {a:"start", fs:14, w:i === 3 ? 700 : 400}); });
+      return `<svg class="gsvg" viewBox="0 0 640 225" role="img" aria-label="Quadrant streak: growth thins from quadrant 1 to isolated colonies in quadrant 4">${s}</svg>`;
+    }
+  };
+
+  const TABS = {
+    streak:{tab:"11: Streak plate", title:"Isolation of Bacteria by Dilution Techniques: Streak Plate", ex:"Exercise 11", render:renderStreak,
+      question:"How do you get isolated colonies, and a pure culture, from a culture with lots of cells (or a mix of organisms)?",
+      how:["A <b>pure culture</b> contains only one kind of organism. Every stain and biochemical test you run assumes your culture is pure.",
+        "A <b>colony</b> is a population of cells that arose from a single cell, or from a small clump: a <b>colony-forming unit (CFU)</b>. If cells are spread far enough apart, each one grows into its own separate colony.",
+        "The <b>streak plate</b> is a dilution technique. In the <b>quadrant streak</b>, quadrant 1 gets cells straight from the culture. You <b>flame the loop</b> and <b>rotate the plate</b>, then drag back through the last quadrant 2 or 3 times to pick up a small number of cells and spread them into the next quadrant. Each quadrant is a dilution of the one before.",
+        "Result: heavy (solid) growth in quadrant 1, fewer cells in each quadrant after it, and <b>isolated colonies</b> in the last quadrants. Pick a well-isolated colony to subculture for a pure culture.",
+        "Keep the loop light and flat so you don't gouge the agar. Lift the lid only partway, like a clamshell. Incubate the plate <b>inverted</b>."],
+      more:[["Why it works", "dilute", ["Flaming between quadrants is the key step: it kills the cells left on the loop, so the only cells that reach the next quadrant are the few you drag out of the last one.", "You used this in Ex 17, too: you streaked a TSA plate for isolation with the quadrant streak method, then used isolated colonies for catalase and oxidase."]]],
+      quiz:[
+        q("What is a pure culture?", ["A culture containing only one kind of organism", "A culture with no cells", "A culture grown without agar", "A mix of two organisms"], 0, "Your tests assume a pure culture."),
+        q("What is the goal of a streak plate?", ["To get isolated colonies, so you can start a pure culture", "To count every cell", "To test for an enzyme", "To kill the bacteria"], 0, "It's a dilution technique."),
+        q("Why do you flame the loop between quadrants?", ["To kill the leftover cells, so the next quadrant only gets cells dragged from the last one", "To make the loop sticky", "To warm the agar", "To sterilize the plate"], 0, "Skip it and the growth stays crowded."),
+        q("Where does quadrant 2 get its cells?", ["By dragging the loop back through quadrant 1 two or three times", "From a new loopful of culture", "From the air", "From quadrant 4"], 0, "Never go back to the culture tube after quadrant 1."),
+        q("Where do you expect isolated colonies?", ["In the last quadrants (3 and 4)", "In quadrant 1", "Only in the center", "Nowhere"], 0, "Quadrant 1 is solid growth."),
+        q("Your last streak touches quadrant 1. What happens?", ["Cells from quadrant 1 get dragged in and you lose your isolation", "Nothing", "Quadrant 4 stays empty", "The plate is sterilized"], 0, "Keep quadrant 4 away from quadrant 1."),
+        q("What is a colony-forming unit (CFU)?", ["A single cell or small clump that grows into one colony", "A whole plate", "A loopful of broth", "A quadrant"], 0, "A colony may come from a group of attached cells."),
+        q("You see colonies that aren't on any streak line. What are they?", ["Contamination", "Isolated colonies", "Quadrant 1 growth", "Normal"], 0, "Something landed on the plate."),
+        q("How should the loop touch the agar?", ["Lightly and flat, without digging in", "Pressed hard into the agar", "Only the tip, stabbing", "It shouldn't touch it"], 0, "Gouging the agar ruins the streak."),
+        q("How is the plate incubated?", ["Inverted (upside down)", "Lid side down, right side up", "Standing on its edge", "Open"], 0, "So condensation doesn't drip onto the agar."),
+        q("Why rotate the plate between quadrants?", ["So each new quadrant is in a comfortable spot to streak, overlapping only the last one", "To mix the agar", "To dry the plate", "To cool the loop"], 0, "Each quadrant only overlaps the one before it.")]}
+  };
+
+  MicroLab.page({title:"Isolation", chap:"Exercise 11", tabs:TABS, pics:PICS});
+})();
+</script>
+</body>
+</html>
