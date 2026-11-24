@@ -57,7 +57,7 @@
 <script>
 (function(){
   /* To make a page live, give its tile an href. Tiles without one show as "Coming soon". */
-  const T = "biochem-tests.html", ST = "stains.html", B = "basics.html", ID = "identify.html", CT = "control.html";
+  const T = "biochem-tests.html", ST = "stains.html", B = "basics.html", ID = "identify.html", CT = "control.html", IS = "isolation.html";
   const GROUPS = [
     {title:"Microscopy and growth", items:[
       {pic:"scope", ex:"Exercise 1", name:"Parts of the Microscope", desc:"Parts, magnification, resolution, and oil immersion", href:B + "#scope"},
@@ -69,7 +69,7 @@
       {pic:"gram", ex:"Exercise 7", name:"Gram Stain", desc:"Gram-positive versus gram-negative", href:ST + "#gram"},
       {pic:"spore", ex:"Exercise 9", name:"Endospore Stain", desc:"Schaeffer-Fulton: green spores, pink cells", href:ST + "#spore"}]},
     {title:"Isolation and special media", items:[
-      {pic:"streak", ex:"Exercise 11", name:"Streak Plate", desc:"Isolating a pure culture"},
+      {pic:"streak", ex:"Exercise 11", name:"Streak Plate", desc:"Quadrant streak for isolated colonies", href:IS},
       {pic:"msa", ex:"Exercise 12", name:"Mannitol Salt Agar (MSA)", desc:"Selective and differential for staph", href:T + "#msa"},
       {pic:"emb", ex:"Exercise 12", name:"EMB Agar", desc:"Lactose fermenters and the green sheen", href:T + "#emb"}]},
     {title:"Biochemical tests: Exercises 13 to 15", items:[
