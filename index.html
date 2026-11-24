@@ -44,7 +44,7 @@
 <div class="wrap">
   <div class="hero">
     <h1>MicroLab</h1>
-    <div class="sub">BIO 3L General Microbiology Lab: Midterm Review, Exercises 1 through 17</div>
+    <div class="sub">BIO 3L General Microbiology Lab: Final Review, Exercises 1 through 45</div>
   </div>
 
   <div class="status" id="status"></div>
@@ -57,7 +57,7 @@
 <script>
 (function(){
   /* To make a page live, give its tile an href. Tiles without one show as "Coming soon". */
-  const T = "biochem-tests.html", ST = "stains.html", B = "basics.html";
+  const T = "biochem-tests.html", ST = "stains.html", B = "basics.html", ID = "identify.html", CT = "control.html";
   const GROUPS = [
     {title:"Microscopy and growth", items:[
       {pic:"scope", ex:"Exercise 1", name:"Parts of the Microscope", desc:"Parts, magnification, resolution, and oil immersion", href:B + "#scope"},
@@ -85,8 +85,17 @@
       {pic:"phe", ex:"Exercise 16", name:"Phenylalanine Deaminase", desc:"Ferric chloride turns the slant green", href:T + "#phe"},
       {pic:"h2s", ex:"Exercise 16", name:"Peptone Iron Deep (H₂S)", desc:"Black along the stab line", href:T + "#h2s"},
       {pic:"mio", ex:"Exercise 16", name:"MIO Medium", desc:"Motility, indole, and ornithine decarboxylase", href:T + "#mio"},
-      {pic:"resp", ex:"Exercise 17", name:"Respiration", desc:"Aerobic, anaerobic, and fermentation"},
-      {pic:"nitrate", ex:"Exercise 17", name:"Nitrate Reduction", desc:"Nitrate, nitrite, and zinc", href:T + "#nitrate"}]}
+      {pic:"catalase", ex:"Exercise 17", name:"Catalase and Oxidase", desc:"Bubbles from H₂O₂ and the purple oxidase strip", href:ID + "#resp"},
+      {pic:"nitrate", ex:"Exercise 17", name:"Nitrate Reduction", desc:"Nitrate, nitrite, and zinc", href:T + "#nitrate"}]},
+    {title:"Identifying bacteria", items:[
+      {pic:"unknown", ex:"Exercise 18", name:"Unknown Identification", desc:"Gram stain, then follow the key to one of 11", href:ID + "#unknown"},
+      {pic:"skin", ex:"Exercise 45", name:"Bacteria of the Skin", desc:"MSA, the yellow halo, and hunting for S. aureus", href:ID + "#skin"}]},
+    {title:"Controlling microbes", items:[
+      {pic:"heat", ex:"Exercise 22", name:"Heat", desc:"Time points, TDT, and heat-resistant endospores", href:CT + "#heat"},
+      {pic:"uv", ex:"Exercise 23", name:"Ultraviolet Radiation", desc:"Foil, 30 vs. 60 seconds, and light repair", href:CT + "#uv"},
+      {pic:"dis", ex:"Exercise 24", name:"Disinfectants and Antiseptics", desc:"The use-dilution test, 2.5 to 20 minutes", href:CT + "#dis"},
+      {pic:"kb", ex:"Exercise 25", name:"Antimicrobial Drugs", desc:"Kirby-Bauer zones and S, I, R", href:CT + "#drugs"},
+      {pic:"hands", ex:"Exercise 26", name:"Hand Scrubbing", desc:"Water vs. soap, resident vs. transient", href:CT + "#hands"}]}
   ];
 
   /* little pictures of what each lab looks like */
@@ -126,6 +135,14 @@
     phe:svg(slant("#2f6b3a", "#f1e6b8"), "Green phenylalanine slant"),
     h2s:svg(deep("#ecdcab", `<path d="M39,26 C37,40 30,54 29,64 L29,80 L51,80 L51,62 C48,52 43,40 41,26 Z" fill="#231e1b"/>`), "Black peptone iron deep"),
     mio:svg(deep("#7d55a8", `<rect x="28" y="20" width="24" height="7" fill="#d0243a"/><ellipse cx="40" cy="50" rx="9" ry="18" fill="#fff" opacity=".3"/>`), "Purple MIO with a red ring"),
+    catalase:svg(`<rect x="6" y="34" width="68" height="20" rx="3" fill="#eef4fb" stroke="#9aa5b8" stroke-width="1.6"/><ellipse cx="40" cy="44" rx="16" ry="7" fill="#efe6c8"/>` + dots([[33,42],[40,39],[46,43],[37,46],[44,47],[40,30],[34,24],[46,22],[41,14]], "#fff", 2.6, "#8fa3bf"), "Catalase bubbles on a slide"),
+    unknown:svg(`<rect x="31" y="6" width="18" height="12" rx="3" fill="#f2c94c"/><path d="M40,18 L40,28 M40,28 L18,40 M40,28 L62,40" stroke="#3f4cc0" stroke-width="2.6" fill="none"/><rect x="8" y="40" width="20" height="10" rx="3" fill="#e7e9fb"/><rect x="52" y="40" width="20" height="10" rx="3" fill="#e7e9fb"/><path d="M62,50 L62,58 M62,58 L52,66 M62,58 L72,66" stroke="#3f4cc0" stroke-width="2.2" fill="none"/><circle cx="52" cy="70" r="5" fill="#e1f3e8" stroke="#1b7f4e"/><circle cx="72" cy="70" r="5" fill="#fbe8ef" stroke="#b83a34"/><text x="18" y="74" font-size="22" font-weight="700" fill="#5b3fb0" text-anchor="middle">?</text>`, "A branching key"),
+    skin:svg(plate("#ef9a8c", `<circle cx="32" cy="34" r="12" fill="#f2d23c" opacity=".85"/><circle cx="50" cy="52" r="11" fill="#f2d23c" opacity=".85"/>` + dots([[32,34],[50,52]], "#e8b52a", 4.5, "#b8a067") + dots([[52,26],[26,54],[42,62]], "#f7f3ea", 3.6, "#b8a067")), "MSA plate with yellow halos"),
+    heat:svg(plate("#efe0b0", `<path d="M40,40 L40,11 M40,40 L67.6,31 M40,40 L57,63.5 M40,40 L23,63.5 M40,40 L12.4,31" stroke="#4b2a8a" stroke-width="1.8"/>` + dots([[47,22],[52,27],[45,30],[60,40],[55,46]], "#fbf3dc", 3, "#b8a067")) + `<path d="M66,78 C58,70 60,60 66,50 C72,60 74,70 66,78Z" fill="#ff8a3a"/><path d="M66,78 C62,73 63,67 66,61 C69,67 70,73 66,78Z" fill="#f2d23c"/>`, "Sectioned plate and a flame"),
+    uv:svg(`<rect x="14" y="4" width="52" height="9" rx="3" fill="#3b4250"/><path d="M24,14 L24,26 M34,14 L34,26 M44,14 L44,26 M54,14 L54,26" stroke="#a58bff" stroke-width="2.4" stroke-dasharray="3 3"/>` + `<g transform="translate(0 10)">${plate("#efe0b0", `<rect x="11" y="10" width="20" height="60" fill="#b9bfc9" opacity=".9"/><path d="M31,12 L31,68 M49,12 L49,68" stroke="#4b2a8a" stroke-width="1.6" stroke-dasharray="3 2"/>`)}</g>`, "UV lamp over a foil-covered plate"),
+    dis:svg(plate("#efe0b0", `<path d="M40,40 L40,11 M40,40 L67.6,31 M40,40 L57,63.5 M40,40 L23,63.5 M40,40 L12.4,31" stroke="#4b2a8a" stroke-width="1.8"/>` + dots([[47,22],[54,27],[60,38],[62,46]], "#fbf3dc", 3, "#b8a067") + `<text x="26" y="30" font-size="9" font-weight="700" fill="#4b2a8a">D</text>`), "Use-dilution plate"),
+    kb:svg(plate("#e2cf93", `<circle cx="30" cy="30" r="11" fill="#f4ebcc"/><circle cx="52" cy="34" r="7" fill="#f4ebcc"/><circle cx="40" cy="55" r="13" fill="#f4ebcc"/>` + dots([[30,30],[52,34],[40,55],[24,50]], "#fff", 3.6, "#8b93a3")), "Kirby-Bauer plate with zones"),
+    hands:svg(`<path d="M22,74 L22,40 C22,36 28,36 28,40 L28,24 C28,20 34,20 34,24 L34,18 C34,14 40,14 40,18 L40,22 C40,18 46,18 46,22 L46,44 L52,36 C55,32 61,35 58,40 L48,62 C45,70 40,74 32,74 Z" fill="#f3d2b8" stroke="#b98a6a" stroke-width="1.8"/>` + dots([[30,40],[38,30],[43,48],[33,58]], "#9bd2f2", 2.6, "#4f8fc0") + `<circle cx="62" cy="18" r="5" fill="#dff1fb" stroke="#9cc6e4"/><circle cx="70" cy="28" r="3.5" fill="#dff1fb" stroke="#9cc6e4"/><circle cx="56" cy="8" r="3" fill="#dff1fb" stroke="#9cc6e4"/>`, "Hand with soap bubbles"),
     resp:svg(`<circle cx="40" cy="40" r="30" fill="#e7e9fb"/><text x="40" y="47" font-size="20" font-weight="700" fill="#3f4cc0" text-anchor="middle">O₂</text><text x="22" y="30" font-size="11" font-weight="700" fill="#5b3fb0">e⁻</text><path d="M26,32 l6,4" stroke="#5b3fb0" stroke-width="2"/>`, "Respiration"),
     nitrate:svg(broth("#d9443a") + `<rect x="58" y="44" width="16" height="20" rx="3" fill="#f7f8fa" stroke="#8b93a3"/><rect x="58" y="40" width="16" height="6" rx="2" fill="#5a6376"/><rect x="60" y="54" width="12" height="8" fill="#b8bec8"/>`, "Red nitrate tube and zinc")
   };

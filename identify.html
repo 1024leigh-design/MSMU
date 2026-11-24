@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identifying Bacteria | MicroLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="metab.css">
+<link rel="stylesheet" href="lab.css">
+<style>
+  .fizz circle{animation:fizz 1.6s ease-in infinite}
+  @keyframes fizz{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-26px);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.fizz circle{animation:none}}
+  .keybox{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  @media (max-width:820px){.keybox{grid-template-columns:1fr}}
+  .pathlist{margin:6px 0 0;padding-left:20px;line-height:1.6}
+  .cols3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .cols3 .card ul{margin:4px 0 0;padding-left:18px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script src="lab.js"></script>
+<script>
+(function(){
+  const {$, f1, clamp, rnd, esc, shuffle, q, T, plateSVG, tubeSVG, orderGame, pictureGame} = MicroLab;
+  const C_RED = "#d9443a", C_YEL = "#f2d23c";
+
+  /* ================================================================= result pictures */
+  /* catalase: a slide with a suspension; stage 0 bare, 1 water, 2 suspension, 3 + peroxide */
+  function catalaseSVG(stage, pos){
+    let s = `<rect x="20" y="70" width="260" height="70" rx="6" fill="#eef4fb" stroke="#9aa5b8" stroke-width="2"/><rect x="24" y="74" width="40" height="62" fill="#e2e8f2"/>`;
+    if (stage >= 1) s += `<ellipse cx="160" cy="105" rx="${stage >= 3 ? 46 : 34}" ry="${stage >= 3 ? 22 : 16}" fill="${stage >= 2 ? "#efe6c8" : "#dcebfa"}" stroke="#b9c6d8"/>`;
+    if (stage >= 3 && pos){
+      s += `<g class="fizz">${Array.from({length:22}, (_, i) => `<circle cx="${f1(122 + rnd(i) * 76)}" cy="${f1(96 + rnd(i + 40) * 20)}" r="${f1(2.5 + rnd(i + 9) * 4)}" fill="#fff" stroke="#8fa3bf" stroke-width="1.2" style="animation-delay:${f1(rnd(i + 3) * 1.5)}s"/>`).join("")}</g>`;
+      s += Array.from({length:14}, (_, i) => `<circle cx="${f1(124 + rnd(i + 70) * 72)}" cy="${f1(98 + rnd(i + 90) * 16)}" r="${f1(2 + rnd(i + 5) * 3)}" fill="#fff" stroke="#8fa3bf" stroke-width="1"/>`).join("");
+    }
+    if (stage === 2) s += `<line x1="200" y1="40" x2="168" y2="100" stroke="#c8a46a" stroke-width="6" stroke-linecap="round"/>`;
+    s += T(150, 170, stage < 3 ? ["Clean slide", "Loopful of water", "Colony mixed in with a toothpick", ""][stage] : pos ? "Bubbles: catalase-positive" : "No bubbles: catalase-negative", {fs:15, c:stage < 3 ? "#5a6376" : pos ? "#1b7f4e" : "#b83a34"});
+    return `<svg class="gsvg" viewBox="0 0 300 180" role="img" aria-label="Catalase test on a slide">${s}</svg>`;
+  }
+  /* oxidase strip: stage 0 clean, 1 rubbed, 2 read */
+  function oxidaseSVG(stage, pos){
+    let s = `<rect x="40" y="40" width="220" height="90" rx="10" fill="#fbfaf2" stroke="#d9cfa6" stroke-width="2.5"/>` + T(150, 60, "oxidase test strip", {fs:12, c:"#8a7a4a"});
+    s += `<circle cx="150" cy="95" r="26" fill="#fffdf6" stroke="#e2d9b6"/>`;
+    if (stage >= 1) s += `<ellipse cx="150" cy="96" rx="16" ry="9" fill="${stage >= 2 && pos ? "#4b2a8a" : "#efe6c8"}"/>`;
+    if (stage >= 2 && pos) s += `<ellipse cx="150" cy="96" rx="22" ry="13" fill="#5b3fb0" opacity=".35"/>`;
+    s += T(150, 160, stage < 2 ? ["Clean reaction area", "Colony rubbed on with a wooden stick"][stage] : pos ? "Dark purple: oxidase-positive" : "No color change: oxidase-negative", {fs:15, c:stage < 2 ? "#5a6376" : pos ? "#1b7f4e" : "#b83a34"});
+    return `<svg class="gsvg" viewBox="0 0 300 172" role="img" aria-label="Oxidase strip">${s}</svg>`;
+  }
+  /* OF-dextrose pair, colors match the biochem bench: F both yellow, O open yellow / sealed red, N both red */
+  function ofSVG(r){
+    const open = r === "N" ? C_RED : C_YEL, openB = r === "O" ? "#e9923a" : open, sealed = r === "F" ? C_YEL : C_RED;
+    const t = (x, top, bot, oil) => tubeSVG(x, 20, 40, 150, top, `<rect x="${x - 20}" y="120" width="40" height="60" fill="${bot}"/>${oil ? `<rect x="${x - 20}" y="50" width="40" height="16" fill="#f3e7a6"/>` : ""}`);
+    return `<svg class="gsvg" viewBox="0 0 300 210" role="img" aria-label="OF-dextrose tubes">${t(100, open, openB, false)}${t(200, sealed, sealed, true)}${T(100, 196, "open", {fs:14})}${T(200, 196, "oil-sealed", {fs:14})}</svg>`;
+  }
+  function msaSVG(ferm){
+    const pts = [[110, 90], [150, 80], [190, 96], [120, 130], [165, 125], [140, 160], [185, 155], [105, 170]];
+    let inner = ferm ? `<circle cx="150" cy="125" r="78" fill="${C_YEL}" opacity=".85"/>` : "";
+    inner += pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7" fill="${ferm ? "#f0c13a" : "#f7f3ea"}" stroke="#b8a067"/>`).join("");
+    return `<svg class="gsvg" viewBox="0 0 300 260" role="img" aria-label="Mannitol salt agar plate">${plateSVG(150, 125, 105, "#ef9a8c", inner)}${T(150, 252, "Mannitol salt agar (MSA)", {fs:14})}</svg>`;
+  }
+  function vpSVG(pos){ return `<svg class="gsvg" viewBox="0 0 300 210" role="img" aria-label="MR-VP broth after Barritt's reagents">${tubeSVG(150, 20, 44, 160, pos ? "#d0455d" : "#b98a52")}${T(150, 202, "MR-VP broth + Barritt's reagents", {fs:13})}</svg>`; }
+  function lactoseSVG(ag){
+    const ex = `<path d="M140,186 L140,120 A10,10 0 0 1 160,120 L160,186" fill="${ag ? C_YEL : C_RED}" stroke="#6d7686" stroke-width="2"/>${ag ? `<rect x="142" y="112" width="16" height="26" rx="6" fill="#fbfcfe"/>` : ""}`;
+    return `<svg class="gsvg" viewBox="0 0 300 220" role="img" aria-label="Lactose broth with a Durham tube">${tubeSVG(150, 20, 50, 176, ag ? C_YEL : C_RED, ex)}${T(150, 214, "Lactose broth + Durham tube", {fs:13})}</svg>`;
+  }
+  function citrateSVG(pos){
+    const c = pos ? "#2f5fbf" : "#4f9a4a";
+    return `<svg class="gsvg" viewBox="0 0 300 210" role="img" aria-label="Simmons citrate slant">${tubeSVG(150, 20, 46, 170, c, `<path d="M127,60 L173,96 L173,200 L127,200 Z" fill="${c}"/><rect x="127" y="20" width="46" height="40" fill="#fff"/><path d="M127,60 L173,96 L173,40 L127,40 Z" fill="#fff"/>${pos ? `<path d="M134,70 l8,6 l-6,4 l10,7 l-6,4 l10,7" stroke="#f3f0e2" stroke-width="3" fill="none"/>` : ""}`)}${T(150, 204, "Simmons citrate slant", {fs:13})}</svg>`;
+  }
+  /* microscope field for the Gram stain and endospore stain */
+  function fieldSVG(kind){
+    let cells = "";
+    const rod = (x, y, a, c, L, W) => `<rect x="${f1(x - L / 2)}" y="${f1(y - W / 2)}" width="${L}" height="${W}" rx="${W / 2}" fill="${c}" transform="rotate(${f1(a)} ${f1(x)} ${f1(y)})"/>`;
+    const P = "#5a2a98", K = "#e5588a";
+    for (let i = 0; i < 9; i++){
+      const x = 60 + rnd(i * 3 + kind.length) * 180, y = 50 + rnd(i * 7 + 11 + kind.length) * 150, a = rnd(i + 5) * 180;
+      if (kind === "clusters") for (let j = 0; j < 6; j++) cells += `<circle cx="${f1(x + (rnd(i * 9 + j) - .5) * 20)}" cy="${f1(y + (rnd(i * 5 + j + 2) - .5) * 20)}" r="5" fill="${P}"/>`;
+      if (kind === "tetrads") [[0, 0], [10, 0], [0, 10], [10, 10]].forEach(([dx, dy]) => { cells += `<circle cx="${f1(x + dx)}" cy="${f1(y + dy)}" r="5" fill="${P}"/>`; });
+      if (kind === "chains") for (let j = 0; j < 4; j++) cells += `<circle cx="${f1(x + Math.cos(a) * j * 10)}" cy="${f1(y + Math.sin(a) * j * 10)}" r="4.6" fill="${P}"/>`;
+      if (kind === "rods") cells += rod(x, y, a, P, 26, 9);
+      if (kind === "bigrods") cells += rod(x, y, a, P, 40, 15);
+      if (kind === "gnr") cells += rod(x, y, a, K, 22, 8);
+      if (kind === "spores"){ cells += rod(x, y, a, K, 28, 10) + `<ellipse cx="${f1(x)}" cy="${f1(y)}" rx="5" ry="3.6" fill="#2f9e4f" transform="rotate(${f1(a)} ${f1(x)} ${f1(y)})"/>`; if (i % 3 === 0) cells += `<ellipse cx="${f1(x + 30)}" cy="${f1(y - 18)}" rx="5" ry="3.6" fill="#2f9e4f"/>`; }
+    }
+    const k = MicroLab.id("fc");
+    return `<svg class="gsvg" viewBox="0 0 300 260" role="img" aria-label="Microscope field at 1000x"><circle cx="150" cy="125" r="120" fill="#1d2030"/><circle cx="150" cy="125" r="112" fill="#f6f4f7"/><clipPath id="${k}"><circle cx="150" cy="125" r="112"/></clipPath><g clip-path="url(#${k})">${cells}</g>${T(150, 254, kind === "spores" ? "Endospore stain, 1000×" : "Gram stain, 1000×", {fs:13})}</svg>`;
+  }
+
+  /* ================================================================= EXERCISE 17: catalase and oxidase */
+  const CAT = [["Staphylococcus aureus", 1], ["Staphylococcus epidermidis", 1], ["Lactococcus lactis", 0], ["Bacillus subtilis", 1], ["Escherichia coli", 1], ["Pseudomonas aeruginosa", 1]];
+  const OXI = [["Pseudomonas aeruginosa", 1], ["Alcaligenes faecalis", 1], ["Escherichia coli", 0], ["Enterobacter aerogenes", 0], ["Proteus vulgaris", 0]];
+  function renderResp(body){
+    body.innerHTML = `
+      <div class="note">You streaked a TSA plate for isolation on Oct 13 so you'd have <b>isolated colonies</b> for these two tests, and a nitrate broth to read after the midterm.</div>
+      <div class="sect">1. Catalase test</div>
+      <div class="row"><span class="lbl">Colony from</span><span id="cOrg"></span></div>
+      <div class="bench2"><div class="panel tight" id="cPic" style="max-width:380px;justify-self:center;width:100%"></div><div><div class="benchhint" id="cMsg" role="status"></div><div class="row" id="cBtns"></div></div></div>
+      <div class="sect">2. Oxidase test</div>
+      <div class="row"><span class="lbl">Colony from</span><span id="oOrg"></span></div>
+      <div class="bench2"><div class="panel tight" id="oPic" style="max-width:380px;justify-self:center;width:100%"></div><div><div class="benchhint" id="oMsg" role="status"></div><div class="row" id="oBtns"></div></div></div>
+      <div class="sect">3. Nitrate reduction</div>
+      <div class="bridge"><b>The nitrate test is on the Biochemical Tests bench.</b><span>Add Reagent A, then B, wait 1 minute. Red = positive. No color? Add zinc and wait 5 minutes: red now = negative; still no color = positive (reduced past nitrite).</span><div class="links"><a class="btn primary" href="biochem-tests.html#nitrate">Open the nitrate bench</a></div></div>
+      <div class="sect">4. Which test is it?</div><div id="rGame"></div>`;
+    const bench = (key, list, pic, steps) => {
+      let org = 0, stage = 0;
+      const chips = () => { $(key + "Org").innerHTML = list.map(([n], i) => `<button class="chip ${i === org ? "on" : ""}" data-i="${i}"><i>${n.replace(/^(\w)\w+ /, "$1. ")}</i></button>`).join(" "); };
+      const draw = () => {
+        $(key + "Pic").innerHTML = pic(stage, list[org][1]);
+        const st = steps[stage];
+        $(key + "Msg").className = "benchhint " + (stage === steps.length - 1 ? "good" : "");
+        $(key + "Msg").innerHTML = typeof st.msg === "function" ? st.msg(list[org]) : st.msg;
+        $(key + "Btns").innerHTML = (st.btn ? `<button class="btn primary" data-go="1">${st.btn}</button>` : "") + `<button class="btn secondary" data-re="1">↺ Start over</button>`;
+      };
+      $(key + "Org").onclick = e => { const b = e.target.closest("[data-i]"); if (!b) return; org = +b.dataset.i; stage = 0; chips(); draw(); };
+      $(key + "Btns").onclick = e => { if (e.target.closest("[data-go]")) stage++; if (e.target.closest("[data-re]")) stage = 0; draw(); };
+      chips(); draw();
+    };
+    bench("c", CAT, catalaseSVG, [
+      {msg:"Start with a clean slide.", btn:"Put a loopful of water on the slide"},
+      {msg:"Now pick up one <b>isolated colony</b>.", btn:"Mix a colony into the water with a toothpick"},
+      {msg:"That's your suspension. Discard the toothpick in the biohazard container.", btn:"Add a drop of 3% H₂O₂"},
+      {msg:([n, p]) => p ? `<b>Bubbles!</b> <i>${n}</i> is <b>catalase-positive</b>. Catalase breaks hydrogen peroxide into water and oxygen gas: 2 H₂O₂ → 2 H₂O + O₂. The O₂ is the bubbles.` : `<b>No bubbles.</b> <i>${n}</i> is <b>catalase-negative</b>. With no catalase, the H₂O₂ isn't broken down, so no O₂ gas forms. In your unknown key, this is how <i>L. lactis</i> splits off from the other gram-positive cocci.`}]);
+    bench("o", OXI, oxidaseSVG, [
+      {msg:"Pick up one isolated colony with a <b>wooden stick or toothpick</b>. A metal loop can give a false positive.", btn:"Rub the colony onto the strip"},
+      {msg:"Watch the spot where you rubbed the colony. A positive changes color quickly, within seconds. Check your strip's directions for the exact time.", btn:"Read the strip"},
+      {msg:([n, p]) => p ? `<b>Dark purple.</b> <i>${n}</i> is <b>oxidase-positive</b>: it has cytochrome c oxidase, the ETC enzyme that hands electrons to O₂. The reagent in the strip gets oxidized and turns purple.` : `<b>No color change.</b> <i>${n}</i> is <b>oxidase-negative</b>: no cytochrome c oxidase. In the gram-negative key, oxidase is the first split: <i>P. aeruginosa</i> and <i>A. faecalis</i> are positive; <i>E. coli</i>, <i>E. aerogenes</i>, and <i>P. vulgaris</i> are negative.`}]);
+    const TESTS = ["Catalase", "Oxidase", "Nitrate reduction"];
+    pictureGame($("rGame"), [
+      {svg:catalaseSVG(3, true), ask:"Which test is this, and what enzyme does it detect?", opts:["Catalase: breaks down hydrogen peroxide", "Oxidase: cytochrome c oxidase", "Nitrate reductase", "Urease"], a:0, why:"Bubbles of O₂ after 3% H₂O₂."},
+      {svg:oxidaseSVG(2, true), ask:"Which test is this, and what does purple mean?", opts:["Oxidase: positive, it has cytochrome c oxidase", "Catalase: positive", "Oxidase: negative", "Nitrate: positive"], a:0, why:"Dark purple on the strip = oxidase-positive."},
+      {svg:oxidaseSVG(2, false), ask:"No color change on the oxidase strip. What's the result?", opts:["Oxidase-negative", "Oxidase-positive", "Catalase-negative", "Redo it with a metal loop"], a:0, why:"Use a wooden stick, not a metal loop, which can give a false positive."},
+      {svg:catalaseSVG(3, false), ask:"No bubbles after the H₂O₂. Which gram-positive coccus from your unknown list does this point to?", opts:["Lactococcus lactis", "Staphylococcus aureus", "Micrococcus luteus", "Staphylococcus epidermidis"], a:0, why:"In the key, catalase-negative gram-positive cocci = L. lactis."}], {picW:300});
+  }
+
+  /* ================================================================= EXERCISE 18: the unknown */
+  const ORGS = {
+    saur:{n:"Staphylococcus aureus", col:"gpc", gram:"clusters", path:{cat:1, glu:1, man:1}},
+    sepi:{n:"Staphylococcus epidermidis", col:"gpc", gram:"clusters", path:{cat:1, glu:1, man:0}},
+    mlut:{n:"Micrococcus luteus", col:"gpc", gram:"tetrads", path:{cat:1, glu:0}},
+    llac:{n:"Lactococcus lactis", col:"gpc", gram:"chains", path:{cat:0}},
+    bsub:{n:"Bacillus subtilis", col:"gpr", gram:"rods", path:{spore:1, vp:1}},
+    bmeg:{n:"Bacillus megaterium", col:"gpr", gram:"bigrods", path:{spore:1, vp:0}},
+    paer:{n:"Pseudomonas aeruginosa", col:"gnr", gram:"gnr", path:{oxi:1, ofo:1}},
+    afae:{n:"Alcaligenes faecalis", col:"gnr", gram:"gnr", path:{oxi:1, ofo:0}},
+    ecol:{n:"Escherichia coli", col:"gnr", gram:"gnr", path:{oxi:0, lac:1, cit:0}},
+    eaer:{n:"Enterobacter aerogenes", col:"gnr", gram:"gnr", path:{oxi:0, lac:1, cit:1}},
+    pvul:{n:"Proteus vulgaris", col:"gnr", gram:"gnr", path:{oxi:0, lac:0}}};
+  const COLS = {gpc:"Gram-positive cocci", gpr:"Gram-positive rods", gnr:"Gram-negative rods"};
+  /* the keys from the class slides (Figures H.1 and H.2) */
+  const KEYS = {
+    gpc:{t:"cat", fig:"Figure H.2", "+":{t:"glu", "+":{t:"man", "+":"saur", "-":"sepi"}, "-":"mlut"}, "-":"llac"},
+    gpr:{t:"spore", fig:"Figure H.2", "+":{t:"vp", "+":"bsub", "-":"bmeg"}},
+    gnr:{t:"oxi", fig:"Figure H.1", "+":{t:"ofo", "+":"paer", "-":"afae"}, "-":{t:"lac", "+":{t:"cit", "+":"eaer", "-":"ecol"}, "-":"pvul"}}};
+  const TINFO = {
+    cat:{n:"Catalase", how:"3% hydrogen peroxide", pic:p => catalaseSVG(3, p), read:"Bubbles = +, no bubbles = −."},
+    glu:{n:"Acid from glucose", how:"OF-dextrose tubes", pic:p => ofSVG(p ? "F" : "N"), read:"Yellow = acid = +. Red (no change) = −."},
+    man:{n:"Acid from mannitol", how:"MSA plate", pic:p => msaSVG(p), read:"Yellow around the growth = mannitol fermented = +. Stays red = −."},
+    spore:{n:"Endospore stain", how:"to confirm Bacillus", pic:() => fieldSVG("spores"), read:"Green endospores in pink cells = +."},
+    vp:{n:"V-P test", how:"MR-VP broth", pic:p => vpSVG(p), read:"Red after Barritt's reagents = +. No red = −."},
+    oxi:{n:"Oxidase", how:"oxidase strip", pic:p => oxidaseSVG(2, p), read:"Dark purple = +. No color change = −."},
+    ofo:{n:"Glucose oxidized", how:"OF-dextrose tubes", pic:p => ofSVG(p ? "O" : "N"), read:"Open tube yellow (oxidized) = +. No change = −."},
+    lac:{n:"Acid and gas from lactose", how:"lactose broth + Durham tube", pic:p => lactoseSVG(p), read:"Yellow AND a bubble = +. Red, no bubble = −."},
+    cit:{n:"Citrate", how:"Simmons citrate slant", pic:p => citrateSVG(p), read:"Blue = +. Stays green = −."}};
+  const short = k => ORGS[k].n.replace(/^(\w)\w+ /, "$1. ");
+
+  function keySVG(col, path, cur){
+    /* lay out the tree; path = list of node objects visited, cur = current node or leaf key */
+    const root = KEYS[col], nodes = [], edges = [];
+    const place = (nd, x, y, w, depth) => {
+      const isLeaf = typeof nd === "string", id = nodes.length;
+      nodes.push({nd, x, y, isLeaf});
+      if (!isLeaf){
+        const kids = ["+", "-"].filter(s => nd[s] !== undefined);
+        kids.forEach((s, i) => {
+          const cx = kids.length === 1 ? x : x + (i === 0 ? -w / 4 : w / 4);
+          const cid = place(nd[s], cx, y + 78, kids.length === 1 ? w : w / 2, depth + 1);
+          edges.push({a:id, b:cid, s});
+        });
+      }
+      return id;
+    };
+    place(root, 300, 34, 600, 0);
+    const H = Math.max(...nodes.map(n => n.y)) + 40;
+    const onPath = n => path.includes(n.nd) || n.nd === cur;
+    let s = "";
+    edges.forEach(({a, b, s:sg}) => { const A = nodes[a], B = nodes[b], hot = onPath(A) && onPath(B); s += `<line x1="${A.x}" y1="${A.y + 16}" x2="${B.x}" y2="${B.y - 16}" stroke="${hot ? "#3f4cc0" : "#c3c9d4"}" stroke-width="${hot ? 3.5 : 2}"/>` + T((A.x + B.x) / 2 + (B.x < A.x ? -10 : B.x > A.x ? 10 : 12), (A.y + B.y) / 2 + 4, sg === "-" ? "−" : "+", {fs:16, c:hot ? "#3f4cc0" : "#8b93a3"}); });
+    nodes.forEach(n => {
+      const label = n.isLeaf ? short(n.nd) : TINFO[n.nd.t].n, w = Math.max(96, label.length * 8.2 + 20), here = n.nd === cur, hot = onPath(n);
+      s += `<rect x="${f1(n.x - w / 2)}" y="${n.y - 16}" width="${f1(w)}" height="32" rx="8" fill="${here ? "#3f4cc0" : n.isLeaf ? (hot ? "#e1f3e8" : "#fbe8ef") : hot ? "#e7e9fb" : "#fff4d6"}" stroke="${here ? "#3f4cc0" : "#b9a8e0"}" stroke-width="1.5"/>` + T(n.x, n.y + 5, label, {fs:13, c:here ? "#fff" : "#343b4a", it:n.isLeaf});
+    });
+    return `<svg class="gsvg" viewBox="0 0 600 ${H}" role="img" aria-label="${esc(COLS[col])} key, based on ${root.fig}">${s}</svg><p class="mini" style="margin:4px 0 0">${COLS[col]}: based on ${root.fig}</p>`;
+  }
+
+  function renderUnknown(body){
+    body.innerHTML = `
+      <div class="sect">Your unknown is one of these 11</div>
+      <div class="cols3">${Object.keys(COLS).map(c => `<div class="card"><h4>${COLS[c]}</h4><ul>${Object.keys(ORGS).filter(k => ORGS[k].col === c).map(k => `<li><i>${ORGS[k].n}</i></li>`).join("")}</ul></div>`).join("")}</div>
+      <p class="mini">Your Gram stain tells you which column. Then go to Figure H.2 (positive) or Figure H.1 (negative).</p>
+      <div class="sect">1. Identify a mystery unknown</div>
+      <div class="row"><button class="btn primary" id="uNew">🎲 New mystery unknown</button><span class="mini" id="uCount"></span></div>
+      <div class="keybox"><div class="panel tight" id="uPic" style="max-width:320px;justify-self:center;width:100%"></div><div><div class="benchhint" id="uMsg" role="status"></div><div class="ans" id="uAns" style="flex-direction:column;align-items:stretch"></div><div id="uDone"></div></div></div>
+      <div class="panel" id="uKey" style="margin-top:12px"></div>
+      <div class="sect">2. Cheat sheet: what to set up</div>
+      <div class="cols3">
+        <div class="card"><h4>Gram-positive cocci</h4><ul><li>Catalase: 3% hydrogen peroxide</li><li>Acid from glucose: OF-dextrose tubes</li><li>Acid from mannitol: MSA plate</li></ul></div>
+        <div class="card"><h4>Gram-positive rods</h4><ul><li>V-P: MR-VP broth</li><li>Endospore stain to confirm <i>Bacillus</i></li></ul></div>
+        <div class="card"><h4>Gram-negative rods</h4><ul><li>Oxidase: oxidase strip</li><li>Glucose oxidized: OF-dextrose tubes</li><li>Lactose: lactose broth + Durham tube</li><li>Citrate: Simmons citrate slant</li></ul></div>
+        <div class="card"><h4>Gram-negative cocci</h4><ul><li>None of your 11 options</li><li>Redo your Gram stain</li></ul></div></div>
+      <p class="mini">Everything is up front. Inoculate from your <b>working slant</b> (slant 2). Slant 1 is your stock: fridge, emergency only.</p>
+      <div class="sect">3. Fix your Gram stain</div>
+      <p class="labq" style="margin:0 0 6px">The Gram stain is the one result your instructor checks. Put the redo in order.</p><div id="uGram"></div>
+      <div class="sect">4. Your Unknown Lab Report</div>
+      <div class="tblwrap"><table class="tbl" style="min-width:0"><tr><th>Section</th><th>Points</th></tr>
+        <tr><td>Title, UNKNOWN #, name, course and section, date submitted</td><td>4</td></tr>
+        <tr><td>Ex 18 Purpose, Results table, and Conclusions (manual pp. 151 to 152). Write "not tested" for tests you skipped</td><td>10</td></tr>
+        <tr><td>Flow chart of the tests you ran, in order (follows Appendix H)</td><td>5</td></tr>
+        <tr><td>Write-up of every test in your flow chart: name and date, purpose, methods, results</td><td>2 + 5 + 5 + 10</td></tr>
+        <tr><td>Discussion paragraph: your organism and its significance</td><td>5</td></tr>
+        <tr><td>References: at least 2, APA format (Wikipedia is not a credible source)</td><td>4</td></tr></table></div>
+      <div class="note"><b>Due Tuesday, Dec 1 at 11:59 PM on Canvas.</b> 50 points, plus 5 bonus for the correct ID. Minus 25% for each day late. Typed, double spaced, 12 point font, written in paragraphs (not bullet points). Keep your similarity score under 25%. Your instructor won't confirm your ID until after you turn it in.</div>`;
+    let org, stage, node, path, wrong, solved = 0, log;
+    const pick = () => {
+      const keys = Object.keys(ORGS); let k; do { k = keys[Math.floor(Math.random() * keys.length)]; } while (k === org && keys.length > 1);
+      org = k; stage = "gram"; node = null; path = []; wrong = 0; log = [];
+      draw("Here's your Gram stain at 100× oil immersion. Which column of the key does it send you to?");
+    };
+    const draw = (msg, kind) => {
+      const o = ORGS[org];
+      $("uMsg").className = "benchhint " + (kind || ""); $("uMsg").innerHTML = msg;
+      $("uDone").innerHTML = "";
+      if (stage === "gram"){
+        $("uPic").innerHTML = fieldSVG(o.gram);
+        $("uAns").innerHTML = Object.keys(COLS).concat(["gnc"]).map(c => `<button data-col="${c}" style="text-align:left">${COLS[c] || "Gram-negative cocci"}</button>`).join("");
+        $("uKey").innerHTML = `<p class="mini" style="margin:0">The key appears once you know your column.</p>`;
+      } else if (stage === "test"){
+        const ti = TINFO[node.t], res = o.path[node.t];
+        $("uPic").innerHTML = ti.pic(!!res);
+        $("uAns").innerHTML = `<p class="qq" style="margin:0 0 4px">${ti.n} <span class="mini">(${ti.how})</span>: read the result.</p>` + (node.t === "spore" ? `<button data-r="+" style="text-align:left">Positive: green endospores. It's a <i>Bacillus</i></button><button data-r="-" style="text-align:left">Negative: no endospores</button>` : `<button data-r="+">+ positive</button><button data-r="-">− negative</button>`);
+        $("uKey").innerHTML = keySVG(o.col, path, node);
+      } else {
+        $("uPic").innerHTML = fieldSVG(o.gram);
+        $("uAns").innerHTML = "";
+        $("uKey").innerHTML = keySVG(o.col, path, org);
+        $("uDone").innerHTML = `<p class="qq" style="margin:8px 0 4px">Your flow chart (this goes in your report, in order):</p><ol class="pathlist"><li>Gram stain: ${COLS[o.col].toLowerCase()}</li>${log.map(l => `<li>${l}</li>`).join("")}<li><b><i>${o.n}</i></b></li></ol>`;
+      }
+      $("uCount").textContent = solved ? `Solved: ${solved}` : "";
+    };
+    $("uAns").onclick = e => {
+      const c = e.target.closest("[data-col]"), r = e.target.closest("[data-r]"), o = ORGS[org];
+      if (c){
+        if (c.dataset.col !== o.col){ c.classList.add("wrong"); c.disabled = true; wrong++; draw(c.dataset.col === "gnc" ? "Gram-negative cocci aren't one of your 11 options. If you saw that, you'd redo your Gram stain. Look again: purple or pink? Round or rod?" : "Not quite. Check the color (purple = gram-positive, pink = gram-negative) and the shape (cocci are round, rods are rod-shaped).", "warn"); return; }
+        stage = "test"; node = KEYS[o.col];
+        draw(`<b>${COLS[o.col]}</b>${o.gram === "tetrads" ? " (in tetrads)" : o.gram === "chains" ? " (in pairs and short chains)" : o.gram === "clusters" ? " (in clusters)" : o.gram === "bigrods" ? " (big ones!)" : ""}. Go to ${KEYS[o.col].fig}. First test: <b>${TINFO[node.t].n}</b>.`, "good");
+        return;
+      }
+      if (r){
+        const res = o.path[node.t] ? "+" : "-", ti = TINFO[node.t];
+        if (r.dataset.r !== res){ r.classList.add("wrong"); r.disabled = true; wrong++; $("uMsg").className = "benchhint warn"; $("uMsg").innerHTML = `Look again. ${ti.read}`; return; }
+        log.push(`${ti.n} (${ti.how}): ${res === "+" ? "+" : "−"}`);
+        path.push(node);
+        const next = node[res];
+        if (typeof next === "string"){ stage = "done"; solved++; draw(`<b>It's <i>${ORGS[next].n}</i>!</b> ${next === "mlut" ? "Its yellow colonies back that up. " : next === "pvul" ? "Confirm it: <i>P. vulgaris</i> is H₂S + and indole +. " : next === "bmeg" ? "Its cells are much larger than <i>B. subtilis</i>. " : ""}Wrong turns: ${wrong}. Tap <b>New mystery unknown</b> for another.`, "good"); return; }
+        node = next;
+        draw(`${ti.n}: <b>${res === "+" ? "positive" : "negative"}</b>. Follow the ${res === "+" ? "+" : "−"} branch. Next test: <b>${TINFO[node.t].n}</b>.`, "good");
+      }
+    };
+    $("uNew").onclick = pick;
+    pick();
+    orderGame($("uGram"), [
+      {id:"a", cue:"the slide", text:"Clean your slide first.", why:"Old slides had debris on them."},
+      {id:"b", cue:"choosing cells", text:"Use an isolated colony, and use more bacteria than last time.", why:""},
+      {id:"c", cue:"drying", text:"Spread the cells and let the smear air dry completely.", why:""},
+      {id:"d", cue:"heat fixing", text:"Heat fix, then pass the slide through the flame one more time.", why:""},
+      {id:"e", cue:"the stain", text:"Follow your Exercise 7 steps. Do not over-decolorize.", why:"Over-decolorizing makes gram-positive cells look pink."},
+      {id:"f", cue:"looking", text:"Look at 100× and record the Gram reaction, shape, and arrangement.", why:""},
+      {id:"g", cue:"checking", text:"Show your instructor your slide.", why:"The Gram stain is the one result your instructor checks."}]);
+  }
+
+  /* ================================================================= EXERCISE 45: skin */
+  /* colonies on a first MSA plate: type a = golden colony with yellow halo, b = white colony with yellow halo, c = white colony no halo, d = yellow pigmented colony no halo */
+  const SKIN = [[105, 92, "a"], [168, 78, "c"], [205, 120, "b"], [120, 150, "c"], [175, 165, "d"], [140, 110, "a"], [92, 195, "c"], [210, 190, "c"], [150, 205, "b"]];
+  const SKINFB = {
+    a:["good", "<b>Great pick.</b> A golden colony with a <b>yellow halo</b>: it grew on high salt and fermented mannitol. Gram stain it and test it for catalase."],
+    b:["good", "<b>Good pick.</b> A white colony with a <b>yellow halo</b>. The halo is the pH indicator turning yellow from acid, so it fermented mannitol. Gram stain it and test it for catalase."],
+    c:["warn", "This colony grew, so it's salt-tolerant, but the agar around it is <b>still red</b>: no mannitol fermentation. Pick a colony with a yellow halo."],
+    d:["warn", "Careful! The colony itself is yellow, but the agar around it is <b>still red</b>. That's <b>pigment</b> (a color made by the cells), not acid. No mannitol fermentation. Pick a colony with a yellow halo."]};
+  function skinPlateSVG(sel){
+    let inner = "";
+    SKIN.forEach(([x, y, t]) => { if (t === "a" || t === "b") inner += `<circle cx="${x}" cy="${y}" r="24" fill="${C_YEL}" opacity=".8"/>`; });
+    SKIN.forEach(([x, y, t], i) => { inner += `<g class="svgbtn" data-sk="${i}"><circle cx="${x}" cy="${y}" r="26" fill="transparent"/><circle cx="${x}" cy="${y}" r="${t === "d" ? 9 : 10}" fill="${t === "a" ? "#e8b52a" : t === "d" ? "#f2d23c" : "#f7f3ea"}" stroke="${sel === i ? "#3f4cc0" : "#b8a067"}" stroke-width="${sel === i ? 3.5 : 1}"/></g>`; });
+    return `<svg class="gsvg" viewBox="0 0 300 300" role="img" aria-label="First mannitol salt agar plate from a skin swab: tap a colony">${plateSVG(150, 145, 128, "#ef9a8c", inner)}${T(150, 294, "Your first MSA plate: tap a colony to pick", {fs:13})}</svg>`;
+  }
+  function renderSkin(body){
+    body.innerHTML = `
+      <div class="sect">Why is skin a tough place to live?</div>
+      <div class="cards">${[["Dry keratin layers", "Epidermis cells are not easily colonized."], ["Sebum", "Oil gland secretions inhibit bacterial growth."], ["Salty sweat", "Creates a hypertonic environment."], ["Low pH (3 to 5)", "<i>Propionibacterium</i> makes propionic acid from sebum."]].map(([h, p]) => `<div class="card"><h4>${h}</h4><p>${p}</p></div>`).join("")}</div>
+      <p class="mini"><b>Who survives?</b> Most skin bacteria are gram-positive and salt-tolerant. Moist areas (axilla, sides of the nose) have more bacteria than dry arms and legs.</p>
+      <div class="sect">Day 1: swab and streak</div><div id="sOrder"></div>
+      <div class="sect">Day 2: read your MSA plate and pick a colony</div>
+      <p class="labq" style="margin:0 0 6px">Record colony appearance, <b>pigment</b> (a color made by the cells), and <b>mannitol fermentation</b> (yellow change in the indicator around colonies). Then pick a colony with a yellow halo.</p>
+      <div class="bench2"><div class="panel tight" id="sPlate" style="max-width:380px;justify-self:center;width:100%"></div><div><div class="benchhint" id="sMsg" role="status">Tap a colony.</div><div id="sNext"></div></div></div>
+      <div class="sect">Day 3: identification</div>
+      <p class="labq" style="margin:0 0 6px">Day 3 is short: drop the coagulase reagent onto your colonies on the plate and watch for clotting. Coagulase is an enzyme that clots fibrin in blood, and it separates <i>S. aureus</i> from other <i>Staphylococcus</i> species.</p>
+      <div id="sCoag"></div>
+      <div class="sect">From the bench to the bedside</div>
+      <div class="cards"><div class="card"><p><i>S. aureus</i> causes skin and wound infections and can spread to blood and bone. Many carriers have it in the nose with no symptoms.</p></div><div class="card"><p><b>MRSA</b> (methicillin-resistant <i>S. aureus</i>) is a major healthcare-associated infection. Resistance is checked with a Kirby-Bauer test, like Ex 25.</p></div><div class="card"><p>Ex 26 showed handwashing removes transient bacteria. Ex 45 shows what lives on skin permanently. Hand hygiene between patients stops you from carrying one patient's <i>S. aureus</i> to the next.</p></div></div>`;
+    orderGame($("sOrder"), [
+      {id:"a", cue:"wetting the swab", text:"Wet the sterile swab with saline, then push it against the wall of the tube to express the excess.", why:""},
+      {id:"b", cue:"swabbing", text:"Swab a skin surface (sides of the nose, axilla, an elbow, or a pus-filled sore). Write down the spot: it's your source of inoculum.", why:"Moist areas usually give more growth."},
+      {id:"c", cue:"inoculating", text:"Swab one-third of the MSA plate with the swab.", why:""},
+      {id:"d", cue:"the used swab", text:"Discard the swab in disinfectant.", why:""},
+      {id:"e", cue:"streaking", text:"With a sterile loop, streak back and forth into the swabbed area a few times, then streak away to cover about one-third of the agar.", why:""},
+      {id:"f", cue:"spreading", text:"Sterilize your loop and spread the bacteria over the rest of the agar.", why:"Swab, loop, spread: thirds of the plate."},
+      {id:"g", cue:"finishing", text:"Seal the plate with tape and label the bottom: name, date, section, swab site.", why:"Taped plates go on the tray up front."}]);
+    let sel = null, pickedOk = false;
+    const drawPlate = () => { $("sPlate").innerHTML = skinPlateSVG(sel); };
+    $("sPlate").onclick = e => {
+      const g = e.target.closest("[data-sk]"); if (!g) return;
+      sel = +g.dataset.sk; drawPlate();
+      const [kind, txt] = SKINFB[SKIN[sel][2]];
+      $("sMsg").className = "benchhint " + kind; $("sMsg").innerHTML = txt;
+      if (kind === "good" && !pickedOk){ pickedOk = true; steps(); }
+    };
+    const steps = () => {
+      $("sNext").innerHTML = `<div class="row"><button class="btn primary" id="sGram">1. Gram stain it</button></div>`;
+      $("sGram").onclick = () => {
+        $("sNext").innerHTML = `<div class="panel tight" style="max-width:260px">${fieldSVG("clusters")}</div><p class="mini">Gram-positive cocci in clusters. That's what you're looking for.</p><div class="row"><button class="btn primary" id="sCat">2. Catalase test it</button></div>`;
+        $("sCat").onclick = () => {
+          $("sNext").innerHTML = `<div class="panel tight" style="max-width:300px">${catalaseSVG(3, true)}</div><p class="mini">Suspension in a loopful of water on a slide (toothpick), plus a drop of 3% H₂O₂. Bubbles = catalase-positive. Toothpick goes in the biohazard container.</p>
+            <p class="qq" style="margin:8px 0 6px">Gram-positive coccus, catalase-positive, from a yellow-halo colony. Subculture it?</p><div class="ans"><button data-sub="1">Yes: subculture it onto another MSA plate</button><button data-sub="0">No: throw it out</button></div>`;
+          $("sNext").querySelector(".ans").onclick = e => {
+            const b = e.target.closest("[data-sub]"); if (!b) return;
+            if (b.dataset.sub === "1"){ b.classList.add("right"); $("sMsg").className = "benchhint good"; $("sMsg").innerHTML = "<b>Yes!</b> Subculture it onto another MSA plate, label the bottom, tape it, and put it on the tray. <b>Never subculture a colony that hasn't been tested for catalase.</b> (Your notebook asks why. Think about which genus you're trying to carry forward.)"; }
+            else { b.classList.add("wrong"); b.disabled = true; $("sMsg").className = "benchhint warn"; $("sMsg").innerHTML = "This is exactly the colony you want: a catalase-positive, gram-positive coccus from a yellow-halo colony."; }
+          };
+        };
+      };
+    };
+    drawPlate();
+    pictureGame($("sCoag"), [
+      {svg:coagSVG(true), ask:"You dropped coagulase reagent on this colony. What's the result?", opts:["Coagulase-positive: it clotted, so it's S. aureus", "Coagulase-negative: another Staphylococcus", "Catalase-positive", "Mannitol fermenter"], a:0, why:"Clotting = coagulase-positive. Coagulase is what separates S. aureus from the other staph."},
+      {svg:coagSVG(false), ask:"No clotting after the coagulase reagent. What's the result?", opts:["Coagulase-negative: a Staphylococcus other than S. aureus, like S. epidermidis", "Coagulase-positive: S. aureus", "The colony is dead", "Gram-negative"], a:0, why:"No clot = coagulase-negative."}], {picW:300, keepOrder:true});
+  }
+  /* coagulase on a colony: clumped (clotted) vs. smooth */
+  function coagSVG(pos){
+    let inner = `<circle cx="150" cy="120" r="70" fill="${C_YEL}" opacity=".8"/><circle cx="150" cy="120" r="36" fill="${pos ? "#e8b52a" : "#f7f3ea"}" stroke="#b8a067"/>`;
+    inner += `<ellipse cx="150" cy="120" rx="44" ry="40" fill="#f6e3c8" opacity=".55" stroke="#d9b98a"/>`;
+    if (pos) inner += Array.from({length:16}, (_, i) => `<circle cx="${f1(122 + rnd(i + 3) * 56)}" cy="${f1(92 + rnd(i + 30) * 56)}" r="${f1(4 + rnd(i + 8) * 5)}" fill="#c9a26a" opacity=".85"/>`).join("");
+    return `<svg class="gsvg" viewBox="0 0 300 260" role="img" aria-label="${pos ? "Clotted" : "Smooth"} coagulase drop on a colony">${plateSVG(150, 120, 105, "#ef9a8c", inner)}${T(150, 252, pos ? "Clumps: it clotted" : "Smooth: no clot", {fs:14, c:pos ? "#1b7f4e" : "#b83a34"})}</svg>`;
+  }
+
+  /* ================================================================= theory pictures */
+  const PICS = {
+    etc:() => {
+      let s = "";
+      const box = (x, t, c, sub) => `<rect x="${x}" y="24" width="160" height="56" rx="10" fill="${c}" stroke="#b9a8e0"/>` + T(x + 80, 48, t, {fs:13}) + (sub ? T(x + 80, 68, sub, {fs:11, w:400}) : "");
+      s += box(10, "Glucose → NADH", "#fff4d6", "electrons picked up") + box(200, "Electron transport chain", "#e7e9fb", "cytochromes") + box(390, "Cytochrome c oxidase", "#f3effd", "the OXIDASE test") + box(580, "O₂ → H₂O", "#e1f3e8", "final electron acceptor");
+      [170, 360, 550].forEach(x => { s += `<path d="M${x + 4},52 l22,0 m-6,-6 l6,6 l-6,6" stroke="#4b2a8a" stroke-width="2.5" fill="none"/>`; });
+      s += `<rect x="390" y="104" width="350" height="46" rx="10" fill="#fbe8e7" stroke="#e0b4b0"/>` + T(565, 124, "Side product: H₂O₂ (toxic)", {fs:13}) + T(565, 142, "catalase: 2 H₂O₂ → 2 H₂O + O₂ (bubbles)", {fs:12, w:400});
+      s += `<path d="M660,80 l0,20" stroke="#b83a34" stroke-width="2.5"/>`;
+      return `<svg class="gsvg" viewBox="0 0 750 160" role="img" aria-label="Aerobic respiration: electrons flow through the ETC to cytochrome c oxidase and oxygen; catalase breaks down hydrogen peroxide">${s}</svg>`;
+    }
+  };
+
+  /* ================================================================= tabs */
+  const TABS = {
+    resp:{tab:"17: Catalase and oxidase", title:"Respiration", ex:"Exercise 17", render:renderResp,
+      question:"Does this bacterium have catalase and cytochrome c oxidase, and can it use nitrate instead of oxygen?",
+      how:["In <b>aerobic respiration</b>, electrons travel down the electron transport chain (ETC) to a <b>final electron acceptor: O₂</b>. In <b>anaerobic respiration</b> the final acceptor is something else, like <b>nitrate</b> (the nitrate reduction test). Fermentation uses no ETC at all.",
+        "<b>Oxidase test:</b> detects <b>cytochrome c oxidase</b>, the ETC enzyme that passes electrons to O₂. Rub a colony on the oxidase strip with a wooden stick: <b>dark purple = positive</b>. A metal loop can give a false positive.",
+        "<b>Catalase test:</b> using O₂ can make toxic <b>hydrogen peroxide</b>. Catalase breaks it down: 2 H₂O₂ → 2 H₂O + O₂. Make a suspension of a colony in a loopful of water on a slide (toothpick), add a drop of <b>3% H₂O₂</b>: <b>bubbles = positive</b>.",
+        "<b>Nitrate reduction:</b> Reagent A (sulfanilic acid) + B (α-naphthylamine), wait 1 min. <b>Red = positive</b> (nitrate reduced to nitrite). No color? Add zinc, wait 5 min: <b>red = negative</b> (nitrate still there), <b>no color = positive</b> (reduced past nitrite, to N₂ gas or NH₃).",
+        "These tests show up again in your unknown key: <b>catalase</b> is the first split for gram-positive cocci, and <b>oxidase</b> is the first split for gram-negative rods."],
+      more:[["Where each enzyme fits", "etc", []]],
+      quiz:[
+        q("What is the final electron acceptor in aerobic respiration?", ["Oxygen (O₂)", "Nitrate", "Glucose", "Hydrogen peroxide"], 0, "In anaerobic respiration it can be nitrate instead."),
+        q("What does the oxidase test detect?", ["Cytochrome c oxidase", "Catalase", "Nitrate reductase", "Urease"], 0, "It's the ETC enzyme that passes electrons to O₂."),
+        q("What does a positive oxidase strip look like?", ["Dark purple", "Bubbles", "Red after zinc", "Yellow"], 0, "No color change = negative."),
+        q("Why use a wooden stick instead of a metal loop for oxidase?", ["A metal loop can give a false positive", "Wood is sterile", "Metal kills the bacteria", "It doesn't matter"], 0, "Pick up the colony with a wooden stick or toothpick."),
+        q("What does catalase do?", ["Breaks hydrogen peroxide into water and oxygen", "Passes electrons to O₂", "Reduces nitrate", "Ferments glucose"], 0, "2 H₂O₂ → 2 H₂O + O₂."),
+        q("What concentration of hydrogen peroxide is used for the catalase test?", ["3%", "30%", "0.5%", "70%"], 0, "From the cheat sheet: catalase, 3% hydrogen peroxide."),
+        q("What does a positive catalase test look like?", ["Bubbles", "Purple color", "Red color", "Black precipitate"], 0, "The bubbles are O₂ gas."),
+        q("Which gram-positive coccus on your unknown list is catalase-negative?", ["Lactococcus lactis", "Staphylococcus aureus", "Micrococcus luteus", "Staphylococcus epidermidis"], 0, "Catalase is the first split in the gram-positive cocci key."),
+        q("Which two gram-negative rods on your unknown list are oxidase-positive?", ["Pseudomonas aeruginosa and Alcaligenes faecalis", "E. coli and E. aerogenes", "P. vulgaris and E. coli", "All of them"], 0, "Oxidase is the first split in the gram-negative rods key."),
+        q("Nitrate test: red right after Reagents A and B. The result is…", ["Positive: nitrate reduced to nitrite", "Negative", "Positive: reduced to N₂ gas", "You need zinc to tell"], 0, "Stop there. No zinc needed."),
+        q("Nitrate test: no color after A + B, no color after zinc either. The result is…", ["Positive: nitrate reduced past nitrite (to N₂ gas or NH₃)", "Negative", "The test failed", "Positive: nitrite"], 0, "There was no nitrate left for the zinc to act on."),
+        q("Nitrate test: no color after A + B, red after zinc. The result is…", ["Negative: the nitrate was never reduced", "Positive", "Positive: N₂ gas", "Contaminated"], 0, "Zinc turned the leftover nitrate into nitrite."),
+        q("Why did you streak a TSA plate for isolation in Ex 17?", ["To get isolated colonies for the catalase and oxidase tests", "To test for nitrate", "To count colonies", "To test for hemolysis"], 0, "You used those isolated colonies two weeks later.")]},
+    unknown:{tab:"18: Unknown ID", title:"Unknown Identification", ex:"Exercise 18", render:renderUnknown,
+      question:"Which of the 11 possible bacteria is your unknown?",
+      how:["Your unknown is one of <b>11</b>: gram-positive cocci (<i>S. aureus</i>, <i>S. epidermidis</i>, <i>M. luteus</i>, <i>L. lactis</i>), gram-positive rods (<i>B. subtilis</i>, <i>B. megaterium</i>), and gram-negative rods (<i>P. aeruginosa</i>, <i>A. faecalis</i>, <i>E. coli</i>, <i>E. aerogenes</i>, <i>P. vulgaris</i>).",
+        "<b>The Gram stain picks your column.</b> Then follow Figure H.2 (gram-positive) or Figure H.1 (gram-negative), one test at a time.",
+        "<b>Gram-positive cocci:</b> catalase − → <i>L. lactis</i>. Catalase + → acid from glucose: − → <i>M. luteus</i> (yellow colonies). + → acid from mannitol (MSA): + <i>S. aureus</i>, − <i>S. epidermidis</i>.",
+        "<b>Gram-positive rods:</b> both make endospores (<i>B. megaterium</i> cells are much larger). V-P + → <i>B. subtilis</i>, V-P − → <i>B. megaterium</i>. V-P positive = red after Barritt's reagents.",
+        "<b>Gram-negative rods:</b> oxidase + → glucose oxidized (OF-dextrose): + <i>P. aeruginosa</i>, − <i>A. faecalis</i>. Oxidase − → acid and gas from lactose: − → <i>P. vulgaris</i> (H₂S +, indole +). + → citrate: + <i>E. aerogenes</i>, − <i>E. coli</i>."],
+      more:[["Working rules", null, ["Work alone. No hints or ID checks until your report is in. The Gram stain is the one result your instructor checks. Contamination? Tell your instructor right away.", "Each day: read the tests you set up last class and record them, follow the key to your next test, inoculate from your working slant, and repeat only the tests that were unclear.", "Label everything: date, section, initials, unknown #, time and temp. Stock slant goes to the fridge rack."]],
+        ["Writing up each test", null, ["For every test in your flow chart: <b>name and date</b> (the date you started it), <b>purpose</b> (the goal and possible results), <b>methods</b> (key steps as you did them: reagents, incubation time and temperature), and <b>results</b> (what you saw, what you concluded, and any tricky reads).", "Repeated a test? Write it up once, then say how many times you repeated it, why, and your final call."]]],
+      quiz:[
+        q("What tells you which column of the key to use?", ["The Gram stain", "The catalase test", "Colony color", "The oxidase test"], 0, "Then Figure H.2 (positive) or Figure H.1 (negative)."),
+        q("You see gram-negative cocci. What do you do?", ["Redo your Gram stain: none of the 11 options are gram-negative cocci", "Call it Micrococcus", "Use Figure H.1", "Run oxidase"], 0, "From the cheat sheet."),
+        q("Gram-positive cocci, catalase-negative. What is it?", ["Lactococcus lactis", "Staphylococcus aureus", "Micrococcus luteus", "Staphylococcus epidermidis"], 0, "Catalase is the first split for gram-positive cocci."),
+        q("Gram-positive cocci, catalase +, no acid from glucose, yellow colonies. What is it?", ["Micrococcus luteus", "Staphylococcus aureus", "Lactococcus lactis", "Staphylococcus epidermidis"], 0, "No acid from glucose in the OF-dextrose tubes."),
+        q("Which test separates S. aureus from S. epidermidis in the key?", ["Acid from mannitol on an MSA plate", "Catalase", "Oxidase", "V-P"], 0, "S. aureus ferments mannitol (yellow); S. epidermidis doesn't."),
+        q("Which test separates B. subtilis from B. megaterium?", ["V-P test", "Endospore stain", "Catalase", "Citrate"], 0, "V-P + = B. subtilis. Both make endospores."),
+        q("What does a positive V-P look like?", ["Red after Barritt's reagents", "Bubbles", "Blue slant", "Dark purple strip"], 0, "V-P negative = no red."),
+        q("What is the first test for gram-negative rods?", ["Oxidase", "Citrate", "Lactose", "Catalase"], 0, "Oxidase + goes to glucose oxidized; oxidase − goes to lactose."),
+        q("Gram-negative rod, oxidase +, glucose oxidized +. What is it?", ["Pseudomonas aeruginosa", "Alcaligenes faecalis", "Escherichia coli", "Proteus vulgaris"], 0, "Oxidase + and glucose oxidized − = A. faecalis."),
+        q("Gram-negative rod, oxidase −, no acid or gas from lactose. What is it?", ["Proteus vulgaris", "Escherichia coli", "Enterobacter aerogenes", "Pseudomonas aeruginosa"], 0, "Confirm: H₂S +, indole +."),
+        q("Oxidase −, lactose acid and gas +, citrate +. What is it?", ["Enterobacter aerogenes", "Escherichia coli", "Proteus vulgaris", "Alcaligenes faecalis"], 0, "Citrate − would be E. coli."),
+        q("Which slant do you inoculate your tests from?", ["Slant 2, the working culture", "Slant 1, the stock", "Either one", "Neither: use the broth"], 0, "Slant 1 is stock: fridge, emergency only."),
+        q("Which result will your instructor check for you?", ["Your Gram stain", "Your final ID", "Your catalase", "None"], 0, "No ID checks until your report is in."),
+        q("When is the Unknown Lab Report due?", ["Tuesday, Dec 1 at 11:59 PM on Canvas", "Friday, Nov 27", "At the final exam", "Monday, Dec 7"], 0, "50 points, plus 5 bonus for the correct ID. Minus 25% per day late."),
+        q("Which is NOT a credible reference for your report?", ["Wikipedia", "A journal article", "A professional website", "A textbook"], 0, "At least 2 references in APA format.")]},
+    skin:{tab:"45: Skin bacteria", title:"Bacteria of the Skin", ex:"Exercise 45", render:renderSkin,
+      question:"What bacteria live on your skin, and how do you find Staphylococcus aureus among them?",
+      how:["Objectives: isolate and identify bacteria from human skin, give an example of normal skin microbiota, list characteristics used to identify the staphylococci, and explain why many bacteria can't grow on skin.",
+        "Skin is tough to live on: <b>dry keratin layers</b>, <b>sebum</b> (inhibits growth), <b>salty sweat</b> (hypertonic), and <b>low pH (3 to 5)</b>, partly from propionic acid made by <i>Propionibacterium</i>. Most skin bacteria are <b>gram-positive and salt-tolerant</b>. Moist areas have more bacteria.",
+        "<b>Mannitol salt agar (MSA)</b> is <b>selective</b>: high salt lets only salt-tolerant organisms grow. It is <b>differential</b>: mannitol fermenters make acid, the pH drops, and phenol red turns <b>yellow</b>. <i>S. aureus</i>: yellow halo (ferments). <i>S. epidermidis</i>: stays red (grows only).",
+        "<b>Pigment vs. indicator:</b> pigment is a color made by the cells themselves. Mannitol fermentation is a yellow change in the <b>agar around</b> the colony.",
+        "<i>Staphylococcus aureus</i> forms golden yellow colonies, is part of the normal skin microbiota, and is also a pathogen. It makes <b>coagulase</b>, an enzyme that clots fibrin in blood. The coagulase test separates <i>S. aureus</i> from other <i>Staphylococcus</i> species.",
+        "Three periods: <b>Day 1</b> swab and streak on MSA. <b>Day 2</b> Gram stain and catalase on a yellow-halo colony, then subculture. <b>Day 3</b> drop coagulase on your colonies: clotting = <i>S. aureus</i>."],
+      more:[["Day 2 safety", null, ["BSL-2: these bacteria could be pathogens. Gloves on, and keep cultures on the bench.", "Do not subculture a colony that hasn't been tested for catalase."]],
+        ["Your notebook", null, ["Hypothesis (from the manual): \"You will culture ___ from your skin.\" Write down the exact spot you swabbed: that's your source of inoculum. Leave room for the First Mannitol Salt Plate table (colony description, pigment, mannitol fermentation)."]]],
+      quiz:[
+        q("Which of these makes skin a tough place for bacteria?", ["Salty sweat creates a hypertonic environment", "Skin is always wet", "Skin has a high pH", "Skin has no oils"], 0, "Also dry keratin, sebum, and low pH (3 to 5)."),
+        q("Which organism makes propionic acid from sebum?", ["Propionibacterium", "Staphylococcus aureus", "E. coli", "Bacillus subtilis"], 0, "That helps keep skin pH low."),
+        q("Most skin bacteria are…", ["Gram-positive and salt-tolerant", "Gram-negative rods", "Strict anaerobes only", "Endospore formers"], 0, "That's why MSA works for skin."),
+        q("Which skin areas usually give more growth?", ["Moist areas: axilla, sides of the nose", "Dry arms and legs", "Fingernails only", "They're all the same"], 0, "Moist areas have more bacteria."),
+        q("What makes MSA selective?", ["High salt lets only salt-tolerant organisms grow", "Mannitol", "Phenol red", "Its pH"], 0, "The mannitol + phenol red part is the differential part."),
+        q("What makes the yellow halo on MSA?", ["Mannitol fermentation makes acid, so phenol red turns yellow", "Pigment from the cells", "Salt crystals", "Dead cells"], 0, "Ferments mannitol → acid → pH drops → yellow."),
+        q("A yellow colony sits on agar that is still red. What is that?", ["Pigment, not mannitol fermentation", "Mannitol fermentation", "Contamination", "Coagulase"], 0, "Pigment is a color made by the cells, not a change in the indicator."),
+        q("What does coagulase do?", ["Clots fibrin in blood", "Breaks down hydrogen peroxide", "Ferments mannitol", "Makes pigment"], 0, "The coagulase test separates S. aureus from other staph."),
+        q("How do you prepare the swab?", ["Wet it with saline, then press it against the tube wall to express the excess", "Use it dry", "Dip it in alcohol", "Soak it in broth"], 0, "Then swab your skin and record the spot."),
+        q("How do you inoculate the MSA plate?", ["Swab one-third, streak back and forth into it with a loop, then sterilize the loop and spread over the rest", "Swab the whole plate", "Stab it with a needle", "Pour the swab into the agar"], 0, "Thirds of the plate: swab, loop, spread."),
+        q("How do you do the catalase test on Day 2?", ["Suspend a colony in a loopful of water on a slide with a toothpick, then add a drop of 3% H₂O₂", "Add H₂O₂ to the MSA plate", "Rub the colony on an oxidase strip", "Add Kovac's reagent"], 0, "Bubbles = catalase-positive."),
+        q("Which colony do you subculture onto a second MSA plate?", ["A catalase-positive, gram-positive coccus from a yellow-halo colony", "Any colony", "A colony that hasn't been tested yet", "A red, no-halo colony only"], 0, "Never subculture a colony that hasn't been tested for catalase."),
+        q("You drop coagulase reagent on a yellow-halo colony and it clots. What is it?", ["Staphylococcus aureus", "Staphylococcus epidermidis", "Micrococcus luteus", "Propionibacterium"], 0, "Coagulase-positive = S. aureus."),
+        q("What is MRSA?", ["Methicillin-resistant Staphylococcus aureus", "A mannitol salt agar recipe", "A type of skin pH", "A gram-negative rod"], 0, "Resistance is checked with a Kirby-Bauer test, like Ex 25.")]}
+  };
+
+  MicroLab.page({title:"Identifying Bacteria", chap:"Exercises 17, 18, and 45", tabs:TABS, pics:PICS});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controlling Microbes | MicroLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="metab.css">
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script src="drag.js"></script>
+<script src="lab.js"></script>
+<script>
+(function(){
+  const {$, f1, clamp, rnd, esc, shuffle, q, T, plateSVG, pie, sliceGrowth, tubeSVG, scoreTxt, orderGame, pictureGame, onCleanup} = MicroLab;
+  const AGAR = "#efe0b0";
+  const SCORE_TBL = `<table class="tbl" style="max-width:320px;min-width:0"><tr><th>Score</th><th>Growth</th></tr>${[["−", "none"], ["+", "minimum"], ["2+", "moderate"], ["3+", "heavy"], ["4+", "maximum"]].map(r => `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join("")}</table>`;
+
+  /* a pie-sectioned plate: labels[], scores[] (or null), opts {streaked:[bools], hot:[bools], click:true, tag} */
+  function sectPlate(labels, scores, o){
+    o = o || {};
+    const cx = 150, cy = 150, r = 118, sl = pie(cx, cy, r, labels.length);
+    let s = plateSVG(cx, cy, r, o.agar || AGAR);
+    sl.forEach((p, i) => {
+      if (o.hot && o.hot[i]) s += `<path d="${p.path}" fill="#3f4cc0" opacity=".12" class="pulse"/>`;
+      if (scores && scores[i] !== null && scores[i] !== undefined) s += sliceGrowth(cx, cy, r, p, scores[i], (o.seed || 1) * 31 + i * 17, o.col);
+      else if (o.streaked && o.streaked[i]){
+        const am = (p.a0 + p.a1) / 2, pts = [];
+        for (let k = 0; k < 7; k++){ const d = r * (.22 + k * .095), sw = (k % 2 ? 1 : -1) * .22; pts.push(`${f1(cx + Math.cos(am + sw) * d)},${f1(cy + Math.sin(am + sw) * d)}`); }
+        s += `<polyline points="${pts.join(" ")}" fill="none" stroke="#c9b26f" stroke-width="2.5" stroke-linejoin="round" opacity=".9"/>`;
+      }
+      const a = p.a0; s += `<line x1="${cx}" y1="${cy}" x2="${f1(cx + Math.cos(a) * r)}" y2="${f1(cy + Math.sin(a) * r)}" stroke="#4b2a8a" stroke-width="2"/>`;
+    });
+    sl.forEach((p, i) => {
+      const [mx, my] = p.mid;
+      s += `<rect x="${f1(mx - 30)}" y="${f1(my - 13)}" width="60" height="${scores ? 40 : 24}" rx="7" fill="#fff" opacity=".85"/>` + T(mx, my + 4, labels[i], {fs:14, c:"#4b2a8a"});
+      if (scores && scores[i] !== null && scores[i] !== undefined) s += T(mx, my + 22, scoreTxt(scores[i]), {fs:15, c:scores[i] ? "#1b7f4e" : "#b83a34"});
+      if (o.click) s += `<path d="${p.path}" fill="transparent" class="svgbtn" data-sec="${i}"><title>${labels[i]}</title></path>`;
+    });
+    return `<svg class="gsvg" viewBox="0 0 300 ${o.tag ? 322 : 300}" role="img" aria-label="${esc(o.aria || "Plate divided into sections")}">${s}${o.tag ? T(150, 316, o.tag, {fs:15, c:"#4b2a8a"}) : ""}</svg>`;
+  }
+
+  /* ================================================================= EXERCISE 22: heat */
+  const HORG = {bsub:{n:"Bacillus subtilis", s:"B. subtilis", note:"Makes endospores"}, ecoli:{n:"Escherichia coli", s:"E. coli", note:"No endospores"}, sepi:{n:"Staphylococcus epidermidis", s:"S. epidermidis", note:"No endospores"}};
+  const HTEMP = {t0:{n:"0°C ice up front", where:"on the ice"}, t4:{n:"4°C fridge up front", where:"in the fridge"}, t65:{n:"63 to 70°C water bath", where:"in the water bath"}, t75:{n:"about 75°C water bath", where:"in the water bath"}, t88:{n:"about 88°C water bath", where:"in the water bath"}};
+  const HSECT = ["0", "30 sec", "2 min", "5 min", "15 min"];
+  /* practice data that follows the class deck: E. coli dies fastest, S. epidermidis is more tolerant, B. subtilis spores can survive 15 min at about 88°C, cold only slows growth */
+  const HGROW = {
+    bsub:{t0:[4, 4, 4, 4, 4], t4:[4, 4, 4, 4, 4], t65:[4, 3, 2, 2, 1], t75:[4, 2, 1, 1, 1], t88:[4, 2, 1, 1, 1]},
+    ecoli:{t0:[4, 4, 4, 4, 4], t4:[4, 4, 4, 4, 4], t65:[4, 2, 0, 0, 0], t75:[4, 1, 0, 0, 0], t88:[4, 0, 0, 0, 0]},
+    sepi:{t0:[4, 4, 4, 4, 4], t4:[4, 4, 4, 4, 4], t65:[4, 3, 1, 0, 0], t75:[4, 2, 0, 0, 0], t88:[4, 1, 0, 0, 0]}};
+  const TDT_OPTS = ["Killed in under 30 sec", "Killed between 30 sec and 2 min", "Killed between 2 and 5 min", "Killed between 5 and 15 min", "Survived all 15 min"];
+
+  function tempScaleSVG(){
+    const x = c => 40 + c * 6.8;
+    let s = "";
+    [[0, 20, "Psychrophiles", "0 to 20°C", "#e7e9fb"], [25, 40, "Mesophiles", "25 to 40°C", "#fff4d6"], [45, 65, "Thermophiles", "45 to 65°C", "#fbe8e7"], [80, 100, "Hyperthermophiles", "above 80°C", "#e1f3ef"]].forEach(([a, b, n, r, c], i) => {
+      s += `<rect x="${x(a)}" y="${i % 2 ? 60 : 18}" width="${x(b) - x(a)}" height="36" rx="6" fill="${c}" stroke="#b9a8e0"/>` + T((x(a) + x(b)) / 2, (i % 2 ? 60 : 18) + 16, n, {fs:12}) + T((x(a) + x(b)) / 2, (i % 2 ? 60 : 18) + 30, r, {fs:11, w:400});
+    });
+    s += `<line x1="${x(0)}" y1="118" x2="${x(100)}" y2="118" stroke="#4b2a8a" stroke-width="2.5"/>`;
+    for (let c = 0; c <= 100; c += 20) s += `<line x1="${x(c)}" y1="112" x2="${x(c)}" y2="124" stroke="#4b2a8a" stroke-width="2"/>` + T(x(c), 140, c + "°C", {fs:12, w:400});
+    [[0, "0"], [4, "4"], [75, "75"], [88, "88"]].forEach(([c, l]) => { s += `<circle cx="${x(c)}" cy="118" r="7" fill="#4b2a8a"/>` + T(x(c) + (c === 0 ? -6 : c === 4 ? 8 : 0), 162, l, {fs:12, c:"#4b2a8a"}); });
+    s += `<rect x="${x(63)}" y="112" width="${x(70) - x(63)}" height="12" rx="3" fill="#4b2a8a"/>` + T(x(66.5), 162, "63 to 70", {fs:12, c:"#4b2a8a"});
+    s += T(380, 186, "Our test temperatures (dots). All three of our bacteria are mesophiles.", {fs:12, w:400, c:"#5a6376"});
+    return `<svg class="gsvg" viewBox="0 0 760 196" role="img" aria-label="Temperature scale with growth ranges and our test temperatures">${s}</svg>`;
+  }
+
+  function renderHeat(body){
+    body.innerHTML = `
+      <div class="sect">1. Run the heat test</div>
+      <p class="labq" style="margin:0 0 6px">You get one organism and two temperatures, so you make two plates. Here you run one plate at a time. Pick an organism and a temperature, then streak each section at the right moment.</p>
+      <div class="row"><span class="lbl">Organism</span><span id="hOrg"></span></div>
+      <div class="row"><span class="lbl">Temperature</span><span id="hTemp"></span></div>
+      <div class="bench2"><div class="panel tight" id="hPlate" style="max-width:400px;justify-self:center;width:100%"></div>
+        <div><div class="clock" id="hClock"></div><div class="benchhint" id="hMsg" role="status"></div><div class="row" id="hBtns"></div><div id="hAsk"></div></div></div>
+      <div class="sect">2. Where do our temperatures fall?</div>
+      <div class="panel">${tempScaleSVG()}</div>
+      <div class="sect">3. What does this plate mean?</div>
+      <p class="labq" style="margin:0 0 6px">These are the patterns from the "what your pattern means" slide. Read each plate and pick what it means.</p>
+      <div class="row" style="align-items:flex-start;gap:16px"><div style="flex:1;min-width:260px" id="hRead"></div></div>
+      <div class="sect">Scoring growth</div>${SCORE_TBL}`;
+    let org = "ecoli", temp = "t65", ph = 0, streaked = [];
+    const chips = () => {
+      $("hOrg").innerHTML = Object.keys(HORG).map(k => `<button class="chip ${k === org ? "on" : ""}" data-o="${k}"><i>${HORG[k].s}</i></button>`).join(" ");
+      $("hTemp").innerHTML = Object.keys(HTEMP).map(k => `<button class="chip ${k === temp ? "on" : ""}" data-t="${k}">${HTEMP[k].n}</button>`).join(" ");
+    };
+    const CLOCK = ["Start (before the heat)", "Start", "30 sec", "2 min", "5 min", "5 to 15 min", "15 min", "Done", "Next period"];
+    const draw = (msg, kind) => {
+      const res = ph >= 8 ? HGROW[org][temp] : null, want = {0:0, 2:1, 3:2, 4:3, 6:4}[ph];
+      $("hPlate").innerHTML = sectPlate(HSECT, res, {streaked, click:ph < 8, hot:HSECT.map((_, i) => i === want), tag:`${HORG[org].s} · ${HTEMP[temp].n}`, seed:Object.keys(HTEMP).indexOf(temp) + 3});
+      $("hClock").innerHTML = `⏱ ${CLOCK[ph]} <small>total time ${HTEMP[temp].where}</small>`;
+      const m = $("hMsg"); m.className = "benchhint " + (kind || ""); m.innerHTML = msg;
+      let b = "";
+      if (ph === 1) b = `<button class="btn primary" data-a="in">Both tubes go in ${HTEMP[temp].where}</button>`;
+      if (ph === 5) b = `<button class="btn primary" data-a="wait">Make your unknown smear (skip to 15 min)</button>`;
+      if (ph === 7) b = `<button class="btn primary" data-a="inc">Plate inverted on the tray. Read it next period</button>`;
+      b += `<button class="btn secondary" data-a="reset">↺ Start over</button>`;
+      $("hBtns").innerHTML = b;
+      $("hAsk").innerHTML = ph === 8 ? `<p class="qq" style="margin:10px 0 6px">Find the first section with no growth. What is your TDT estimate at this temperature?</p><div class="ans" style="flex-direction:column;align-items:stretch">${TDT_OPTS.map((t, i) => `<button data-tdt="${i}" style="text-align:left">${t}</button>`).join("")}</div>` : "";
+    };
+    const start = () => { ph = 0; streaked = [false, false, false, false, false]; draw(`Label the bottom: name, day, class time, organism, temperature. Then <b>streak the 0 section</b> before the tube goes ${HTEMP[temp].where}. Tap the 0 section.`); };
+    const instr = {2:"30 sec", 3:"2 min", 4:"5 min", 6:"15 min"};
+    body.onclick = e => {
+      const o = e.target.closest("[data-o]"); if (o){ org = o.dataset.o; chips(); start(); return; }
+      const t = e.target.closest("[data-t]"); if (t){ temp = t.dataset.t; chips(); start(); return; }
+      const a = e.target.closest("[data-a]");
+      if (a){
+        const k = a.dataset.a;
+        if (k === "reset") start();
+        if (k === "in"){ ph = 2; draw(`The tube has been ${HTEMP[temp].where} for <b>30 sec</b>. Remove it, mix, and streak a loopful on the right section. Tap it.`); }
+        if (k === "wait"){ ph = 6; draw(`<b>15 min</b>. Remove, mix, and streak the last section. Tap it.`); }
+        if (k === "inc"){ ph = 8; const g = HGROW[org][temp]; draw(`Here are the results: ${g.map((x, i) => `${HSECT[i]} <b>${scoreTxt(x)}</b>`).join(", ")}. The <b>0</b> section is your control, and it grew.`, "good"); }
+        return;
+      }
+      const td = e.target.closest("[data-tdt]");
+      if (td){
+        const g = HGROW[org][temp], first = g.findIndex(x => x === 0), right = first === -1 ? 4 : first - 1, ok = +td.dataset.tdt === right;
+        td.classList.add(ok ? "right" : "wrong");
+        const why = first === -1 ? (temp === "t0" || temp === "t4" ? "Cold did not kill it. Cold only slows growth." : `It grew in every section, so it survived 15 min at this temperature. ${org === "bsub" ? "<i>B. subtilis</i> makes endospores, the most heat-resistant form of bacterial life." : ""}`)
+          : `The last growth was at ${HSECT[first - 1]} and the first section with no growth was ${HSECT[first]}, so it was killed between them. That bracket is your TDT estimate.`;
+        if (ok){ $("hMsg").className = "benchhint good"; $("hMsg").innerHTML = `<b>Yes!</b> ${why} Try another temperature or organism and compare.`; $("hAsk").querySelectorAll("button").forEach(x => x.disabled = true); }
+        else { td.disabled = true; $("hMsg").className = "benchhint warn"; $("hMsg").innerHTML = "Not quite. Look for the first section with no growth (−), and the section just before it."; }
+        return;
+      }
+      const sec = e.target.closest("[data-sec]");
+      if (sec && ph !== 1 && ph !== 5 && ph < 7){
+        const i = +sec.dataset.sec, want = {0:0, 2:1, 3:2, 4:3, 6:4}[ph];
+        if (i !== want){ $("hMsg").className = "benchhint warn"; $("hMsg").innerHTML = `That's the <b>${HSECT[i]}</b> section. ${ph === 0 ? "The 0 section gets streaked first, before any heat." : `The clock says <b>${instr[ph]}</b>.`}`; return; }
+        streaked[i] = true;
+        if (ph === 0){ ph = 1; draw(`The 0 section is your control: no heat at all. Now put the tubes in. Both tubes go in at the same time.`); }
+        else if (ph === 2){ ph = 3; draw(`Return the tube to the heat. Now it's <b>2 min</b>. Remove, mix, streak. Tap the right section.`); }
+        else if (ph === 3){ ph = 4; draw(`Return it. <b>5 min</b> now. Remove, mix, streak.`); }
+        else if (ph === 4){ ph = 5; draw(`Back in the heat. Now there's a <b>10 minute wait</b> until 15 min. Use it to make your unknown smear.`); }
+        else if (ph === 6){ ph = 7; draw(`Tubes are done. Broth tubes go to the To Be Autoclaved area. Plates go inverted on the tray up front.`, "good"); }
+      }
+    };
+    chips(); start();
+    const RP = [[[4, 4, 4, 4, 4], 0, "Heavy growth everywhere, and this plate sat on ice (0°C)."], [[4, 3, 1, 0, 0], 1, ""], [[0, 3, 2, 1, 0], 2, ""], [[4, 2, 0, 0, 2], 3, ""], [[4, 3, 3, 2, 2], 4, "This plate came out of the 88°C bath."]];
+    const MEAN = ["Cold did not kill. It only slows growth", "Killed between the last growth and the first no growth section: your TDT estimate", "Control failed. Check your streak and ask your instructor", "Uneven loopful or contamination. Note it in your results", "Survived 15 min at that temperature (endospores?)"];
+    pictureGame($("hRead"), RP.map(([g, a, ctx], k) => ({svg:sectPlate(HSECT, g, {seed:k + 11}), ask:(ctx ? ctx + " " : "") + "What does this pattern mean?", opts:MEAN, a, why:MEAN[a] + "."})), {picW:300});
+  }
+
+  /* ================================================================= EXERCISE 23: UV */
+  function uvPlateSVG(st, o){
+    o = o || {};
+    const cx = 150, cy = 140, r = 112, xs = [cx - r, cx - r / 3, cx + r / 3, cx + r], k = MicroLab.id("uv");
+    let s = "";
+    if (o.lamp) s += `<rect x="70" y="0" width="160" height="22" rx="8" fill="#3b4250"/><rect x="82" y="16" width="136" height="8" rx="4" fill="${st.on ? "#c9b8ff" : "#8a90a0"}"/>` + (st.on ? Array.from({length:7}, (_, i) => `<line x1="${92 + i * 19}" y1="26" x2="${92 + i * 19}" y2="${cy - r - 2}" stroke="#a58bff" stroke-width="3" stroke-dasharray="6 5" opacity=".8"/>`).join("") : "");
+    s += `<g transform="translate(0 ${o.lamp ? 30 : 0})">`;
+    s += plateSVG(cx, cy, r, AGAR, "", {noshine:true});
+    s += `<clipPath id="${k}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath><g clip-path="url(#${k})">`;
+    if (st.swab) for (let i = 0; i < 12; i++){ s += `<line x1="${cx - r}" y1="${cy - r + 10 + i * 18}" x2="${cx + r}" y2="${cy - r + 10 + i * 18}" stroke="#d9c58a" stroke-width="3" opacity=".7"/>`; if (st.swab > 1) s += `<line x1="${cx - r + 10 + i * 18}" y1="${cy - r}" x2="${cx - r + 10 + i * 18}" y2="${cy + r}" stroke="#d9c58a" stroke-width="3" opacity=".7"/>`; }
+    if (o.growth) o.growth.forEach((g, i) => { for (let n = 0; n < [0, 8, 22, 50, 90][g]; n++){ const x = xs[i] + 6 + rnd(i * 97 + n) * (xs[i + 1] - xs[i] - 12), y = cy - r + 6 + rnd(i * 31 + n + 400) * (2 * r - 12); s += `<circle cx="${f1(x)}" cy="${f1(y)}" r="${g >= 3 ? 4.5 : 3.5}" fill="${o.col || "#fbf3dc"}" stroke="#b8a067" stroke-width=".7"/>`; } if (g >= 4) s += `<rect x="${xs[i] + 4}" y="${cy - r}" width="${xs[i + 1] - xs[i] - 8}" height="${2 * r}" fill="${o.col || "#fbf3dc"}" opacity=".55"/>`; });
+    if (st.lines){ s += `<line x1="${xs[1]}" y1="${cy - r}" x2="${xs[1]}" y2="${cy + r}" stroke="#4b2a8a" stroke-width="2" stroke-dasharray="6 4"/><line x1="${xs[2]}" y1="${cy - r}" x2="${xs[2]}" y2="${cy + r}" stroke="#4b2a8a" stroke-width="2" stroke-dasharray="6 4"/>`; }
+    if (st.foil){ const w = st.foil === "C" ? xs[1] : st.foil === "C30" ? xs[2] : xs[3]; s += `<rect x="${cx - r - 10}" y="${cy - r - 10}" width="${w - (cx - r) + 10}" height="${2 * r + 20}" fill="#b9bfc9" opacity=".93"/><path d="M${cx - r},${cy - r + 20} l${w - (cx - r) - 10},30 M${cx - r},${cy} l${w - (cx - r) - 10},-26 M${cx - r},${cy + 60} l${w - (cx - r) - 10},22" stroke="#e8ebf0" stroke-width="3" opacity=".8"/>`; }
+    s += `</g>`;
+    if (st.lid) s += `<circle cx="${cx}" cy="${cy}" r="${r + 6}" fill="#dfe6f2" opacity=".35" stroke="#9aa5b8" stroke-width="3"/>`;
+    if (st.lines) ["C", "30", "60"].forEach((l, i) => { s += `<rect x="${f1((xs[i] + xs[i + 1]) / 2 - 20)}" y="${cy - 14}" width="40" height="${o.growth ? 44 : 26}" rx="6" fill="#fff" opacity=".85"/>` + T((xs[i] + xs[i + 1]) / 2, cy + 5, l, {fs:17, c:"#4b2a8a"}); if (o.growth) s += T((xs[i] + xs[i + 1]) / 2, cy + 24, scoreTxt(o.growth[i]), {fs:15, c:o.growth[i] ? "#1b7f4e" : "#b83a34"}); });
+    if (st.dose && !o.growth) ["C", "30", "60"].forEach((l, i) => { s += T((xs[i] + xs[i + 1]) / 2, cy + r + 24, `UV: ${st.dose[i]} sec`, {fs:13, c:st.dose[i] ? "#5b3fb0" : "#5a6376"}); });
+    s += `</g>`;
+    if (o.tag) s += T(cx, o.lamp ? 340 : 290, o.tag, {fs:16, c:"#4b2a8a"});
+    return `<svg class="gsvg" viewBox="0 0 300 ${o.lamp ? 350 : 296}" role="img" aria-label="${esc(o.aria || "UV plate with strips C, 30 and 60")}">${s}</svg>`;
+  }
+  const UVSTEPS = [
+    {p:"You have 2 nutrient agar plates, 2 sterile swabs, foil, and safety glasses. How do you swab your culture onto the plate?", c:[["Swab the whole surface in two directions", 1, s => { s.swab = 2; }, "Two directions makes sure the whole surface is covered."], ["One quick swipe across the middle", 0, null, "Then parts of the plate would have no bacteria, and you couldn't tell UV killing from no swabbing. Cover the whole surface, in two directions."]]},
+    {p:"Where does the used swab go?", c:[["The red bin", 1, null, "Swabs go in the red bin."], ["Back in the culture tube", 0, null, "Never put a used swab back in the culture."], ["The regular trash", 0, null, "It has bacteria on it. It goes in the red bin."]]},
+    {p:"Label the plate. Where, and how?", c:[["Bottom: one plate \"Dark,\" one \"Light.\" Draw 2 straight lines to make 3 strips: C, 30, 60", 1, s => { s.lines = true; }, "C is the control. 30 and 60 are the seconds of UV each strip will get."], ["Write C, 30, 60 on the lid", 0, null, "Lids come off, and in this lab the lid comes off under the lamp. Label the bottom."]]},
+    {p:"Safety glasses on. How does the plate go under the UV lamp?", c:[["Lid off, agar side up, directly under the light, 24 cm away", 1, s => { s.lid = false; }, "Your manual asks why the lid comes off. Think about how well UV gets through things (poor penetrating ability)."], ["Lid on, so nothing falls in", 0, null, "UV has poor penetrating ability. The plastic lid would block it, and nothing would be exposed. Lid off."]]},
+    {p:"Where does the foil go for the first 30 seconds? (Rest it on the rim. Don't touch the agar.)", c:[["Over C and 30", 1, s => { s.foil = "C30"; }, "Only the 60 strip is uncovered for the first 30 sec."], ["Over C only", 0, null, "Then 30 would get UV now AND later, for 60 sec total. Cover C and 30 first."], ["Over all three strips", 0, null, "Then nothing gets UV in this round."]]},
+    {p:"Foil is on. What now?", c:[["Lamp on for 30 sec, then off", 1, s => { s.dose[2] += 30; s.on = true; }, "The 60 strip has its first 30 sec of UV."], ["Lamp on for 60 sec", 0, null, "Each exposure is 30 sec. The 60 strip gets two of them."]]},
+    {p:"Now move the foil. Where does it go for the second 30 seconds?", c:[["Slide it so it covers only C", 1, s => { s.foil = "C"; s.on = false; }, "C stays covered the whole time. That's what makes it the control."], ["Take the foil off completely", 0, null, "Then C would get UV too, and you'd lose your control."]]},
+    {p:"Foil covers only C. What now?", c:[["Lamp on for 30 more sec, then off", 1, s => { s.dose[1] += 30; s.dose[2] += 30; s.on = true; }, "30 got 30 sec total, 60 got 60 sec total, and C got none."], ["Leave the plate under the lamp until the next class", 0, null, "Exposure is timed: 30 sec, then off."]]},
+    {p:"Remove the foil and replace the lid. This is your Dark plate. Where does it go?", c:[["The back room, at room temperature", 1, s => { s.foil = null; s.lid = true; s.on = false; s.done = true; }, "Repeat everything with your second plate. The Light plate goes on the tray labeled \"Light,\" also at room temperature."], ["The tray labeled \"Light\"", 0, null, "That's where the Light plate goes. The Dark plate goes to the back room."], ["The 37°C incubator", 0, null, "Both plates stay at room temperature until the next period."]]}];
+
+  function renderUV(body){
+    body.innerHTML = `
+      <div class="note"><b>Safety:</b> do not look at the UV light, do not leave your hand exposed to it, and wear safety glasses.</div>
+      <div class="sect">1. Expose your plate</div>
+      <div class="bench2"><div class="panel tight" id="uvPlate" style="max-width:400px;justify-self:center;width:100%"></div><div><div class="benchsteps" id="uvSteps"></div><div class="benchhint" id="uvMsg" role="status"></div><div class="ans" id="uvAns" style="flex-direction:column;align-items:stretch"></div><div class="row"><button class="btn secondary" id="uvReset">↺ Start over</button></div></div></div>
+      <div class="sect">2. Read your plates (next period)</div>
+      <p class="labq" style="margin:0 0 6px">This is the example from the class deck. Compare C to 30 and 60 on the same plate, then compare Dark 30 to Light 30. In your manual's table: <b>Dark 30 = A, Light 30 = B, Dark 60 = C</b>.</p>
+      <div class="row" style="justify-content:center;gap:16px"><div class="panel tight" style="width:280px">${uvPlateSVG({lines:true}, {growth:[4, 1, 0], tag:"Dark plate"})}</div><div class="panel tight" style="width:280px">${uvPlateSVG({lines:true}, {growth:[4, 2, 1], tag:"Light plate"})}</div></div>
+      <div id="uvRead" style="margin-top:10px"></div>
+      <div class="sect">3. Compare the four species</div>
+      <div class="cards">${[["Bacillus subtilis", "Makes endospores, which are highly resistant. Expect more survival if the culture had sporulated."], ["Micrococcus luteus", "No endospores. Yellow pigment may help shield it from UV."], ["Serratia marcescens", "No endospores. Red pigment at room temperature may offer some protection."], ["Staphylococcus epidermidis", "No endospores and no strong pigment. Expect less survival."]].map(([n, d]) => `<div class="card"><h4><i>${n}</i></h4><p>${d}</p></div>`).join("")}</div>
+      <p class="mini">Your second hypothesis asked which species survives best. Use your class data to answer it.</p>`;
+    let st, i;
+    const reset = () => { st = {swab:0, lines:false, lid:true, foil:null, on:false, dose:[0, 0, 0], done:false}; i = 0; draw("Let's set up the plate. Pick the right move.", ""); };
+    const draw = (msg, kind) => {
+      $("uvPlate").innerHTML = uvPlateSVG(st, {lamp:true, tag:st.done ? "Dark plate: back room" : "Your plate"});
+      $("uvSteps").innerHTML = ["Swab", "Swab out", "Label", "Lid", "Foil", "UV 1", "Move foil", "UV 2", "Put away"].map((n, k) => `<span class="bstep ${k < i ? "ok" : k === i ? "cur" : ""}">${n}</span>`).join("");
+      $("uvMsg").className = "benchhint " + (kind || ""); $("uvMsg").innerHTML = msg;
+      const S = UVSTEPS[i];
+      $("uvAns").innerHTML = S ? `<p class="qq" style="margin:6px 0">${S.p}</p>` + shuffle(S.c.map((c, k) => k)).map(k => `<button data-k="${k}" style="text-align:left">${S.c[k][0]}</button>`).join("") : "";
+    };
+    $("uvAns").onclick = e => {
+      const b = e.target.closest("[data-k]"); if (!b) return;
+      const c = UVSTEPS[i].c[+b.dataset.k];
+      if (!c[1]){ b.classList.add("wrong"); b.disabled = true; $("uvMsg").className = "benchhint warn"; $("uvMsg").innerHTML = c[3]; return; }
+      if (c[2]) c[2](st);
+      i++;
+      if (i >= UVSTEPS.length) draw(`<b>Done!</b> ${c[3]} Final UV doses: C = 0 sec, 30 = 30 sec, 60 = 60 sec.`, "good");
+      else draw(`<b>Yes.</b> ${c[3]}`, "good");
+    };
+    $("uvReset").onclick = reset;
+    reset();
+    const dk = uvPlateSVG({lines:true}, {growth:[4, 1, 0], tag:"Dark plate"}), both = `<svg class="gsvg" viewBox="0 0 600 296">${dk.replace(/<svg[^>]*>|<\/svg>/g, "")}<g transform="translate(300 0)">${uvPlateSVG({lines:true}, {growth:[4, 2, 1], tag:"Light plate"}).replace(/<svg[^>]*>|<\/svg>/g, "")}</g></svg>`;
+    pictureGame($("uvRead"), [
+      {svg:both, ask:"C grew 4+. The 30 and 60 strips grew less. What does C vs. 30 and 60 tell you?", opts:["UV killed the exposed cells, and the foil blocked the UV", "UV went right through the foil", "The swabbing was uneven", "Light repair happened"], a:0, why:"C was under foil the whole time and grew 4+, so the foil blocked the UV."},
+      {svg:both, ask:"On the Dark plate, 60 (−) grew less than 30 (+). What does 30 vs. 60 tell you?", opts:["More exposure, more killing", "Less exposure, more killing", "UV has no effect", "The control failed"], a:0, why:"60 sec of UV killed more cells than 30 sec."},
+      {svg:both, ask:"Light 30 grew 2+, but Dark 30 grew only +. What does Dark vs. Light tell you?", opts:["Evidence of light repair: photolyases split the thymine dimers", "Evidence of dark repair only", "The Light plate got less UV", "UV works better in the light"], a:0, why:"Visible light activates photolyases, so more cells on the Light plate repaired their DNA and survived."}], {picW:520, keepOrder:true});
+  }
+
+  /* ================================================================= EXERCISE 24: use-dilution */
+  const DLAB = ["0", "D-2.5", "D-5", "D-10", "D-20"], TLAB = ["2.5", "5", "10", "20"];
+  function renderDis(body){
+    body.innerHTML = `
+      <div class="sect">1. Get set up</div>
+      <p class="labq" style="margin:0 0 6px">Work with another group: same disinfectant or antiseptic, two different bacteria. Put the setup in order.</p><div id="dOrder"></div>
+      <div class="sect">2. Start the clock</div>
+      <div class="row" style="gap:12px;align-items:flex-start;justify-content:center"><div class="panel tight" style="width:300px" id="dPlateD"></div><div class="panel tight" style="width:300px" id="dPlateT"></div></div>
+      <div class="row"><div class="clock" id="dClock"></div></div>
+      <div class="benchhint" id="dMsg" role="status"></div><div class="row" id="dBtns"></div><div id="dAsk"></div>
+      <div class="sect">3. What does the pattern mean?</div><div id="dRead"></div>
+      <div class="sect">Scoring growth</div>${SCORE_TBL}`;
+    orderGame($("dOrder"), [
+      {id:"a", cue:"diluting the test substance", text:"Dilute the test substance with sterile water to the strength it's normally used at (suspend a paste in water; don't dilute something used full strength).", why:"The test uses the concentration the manufacturer recommends."},
+      {id:"b", cue:"the test substance tube", text:"Transfer 5 ml of the test substance to a sterile tube and label it.", why:"Wear safety goggles when pipetting."},
+      {id:"c", cue:"the lab disinfectant tube", text:"Add 5 ml of your laboratory disinfectant to another sterile tube and label it.", why:"Record which disinfectant your lab uses on the bench."},
+      {id:"d", cue:"labeling plates", text:"Divide one plate into 5 sections (0, D-2.5, D-5, D-10, D-20) and the other into 4 (2.5, 5, 10, 20).", why:"D stands for laboratory disinfectant."},
+      {id:"e", cue:"the 0 sector", text:"Inoculate the 0 sector with a loopful of your assigned bacteria.", why:"0 = bacteria with no chemical. It's the control."},
+      {id:"f", cue:"starting the clock", text:"Aseptically add 0.5 ml of the culture to each tube and start the timer.", why:""},
+      {id:"g", cue:"the time points", text:"Transfer one loopful from each tube to its sector at 2.5, 5, 10, and 20 minutes, flaming the loop between transfers.", why:"Work on your unknown while you wait."}]);
+    let ph, done;
+    const TIMES = [null, null, "2.5", "5", "10", "20"];
+    const draw = (msg, kind) => {
+      const read = ph === 7;
+      const sD = read ? [4, 3, 1, 0, 0] : null, sT = read ? [4, 3, 2, 1] : null;
+      const want = ph >= 2 && ph <= 5 ? ph - 1 : -1;
+      $("dPlateD").innerHTML = sectPlate(DLAB, sD, {click:!read, streaked:DLAB.map((_, i) => i === 0 ? ph >= 1 : done.D[i - 1]), hot:DLAB.map((_, i) => (ph === 0 && i === 0) || (want >= 1 && i === want && !done.D[i - 1])), tag:"Lab disinfectant plate", seed:5});
+      $("dPlateT").innerHTML = sectPlate(TLAB, sT, {click:!read, streaked:done.T, hot:TLAB.map((_, i) => want >= 1 && i === want - 1 && !done.T[i]), tag:"Test substance plate", seed:9}).replace(/data-sec="/g, 'data-tsec="');
+      $("dClock").innerHTML = `⏱ ${ph < 2 ? "Not started" : ph < 6 ? TIMES[ph] + " min" : read ? "Next class" : "20 min: done"} <small>after the culture goes in</small>`;
+      $("dMsg").className = "benchhint " + (kind || ""); $("dMsg").innerHTML = msg;
+      $("dBtns").innerHTML = (ph === 1 ? `<button class="btn primary" data-a="go">Add 0.5 ml culture to each tube and start the timer</button>` : "") + (ph === 6 ? `<button class="btn primary" data-a="read">Tape the plates together, inverted, on the tray. Read next class</button>` : "") + `<button class="btn secondary" data-a="reset">↺ Start over</button>`;
+      $("dAsk").innerHTML = read ? `<p class="qq" style="margin:10px 0 6px">The test substance plate still has growth at 20 min. Fill in the hypothesis for this one: "The test substance killed all the bacteria in ___ minutes."</p><div class="ans" style="flex-direction:column;align-items:stretch">${["2.5", "5", "10", "20", "It did not kill this bacterium in 20 minutes"].map((t, i) => `<button data-h="${i}" style="text-align:left">${t}</button>`).join("")}</div>` : "";
+    };
+    const reset = () => { ph = 0; done = {D:[false, false, false, false], T:[false, false, false, false]}; draw("First, the control. Tap the <b>0</b> sector to inoculate it with a loopful of your bacteria (no chemical)."); };
+    const advance = () => {
+      const k = ph - 2;
+      if (done.D[k] && done.T[k]){
+        ph++;
+        if (ph === 6) draw("All four time points done, on both plates. Chemical and bacteria tubes go to the To Be Autoclaved area.", "good");
+        else draw(`Both plates got their loopful. Flame the loop. Now it's <b>${TIMES[ph]} min</b>: streak a loopful from each tube onto its sector.`, "good");
+      } else draw(`Good. Now the <b>other</b> plate's ${TIMES[ph]} min sector.`, "good");
+    };
+    body.querySelector(".row[style*='justify-content:center']").onclick = e => {
+      const a = e.target.closest("[data-sec]"), b = e.target.closest("[data-tsec]");
+      if (a){
+        const i = +a.dataset.sec;
+        if (ph === 0){ if (i === 0){ ph = 1; draw("The 0 sector shows what growth looks like with no chemical. Now start the clock.", "good"); } else draw("Start with the <b>0</b> sector: the control.", "warn"); return; }
+        if (ph < 2 || ph > 5) return;
+        if (i !== ph - 1){ draw(`That's <b>${DLAB[i]}</b>. The clock says <b>${TIMES[ph]} min</b>, so streak <b>D-${TIMES[ph]}</b>.`, "warn"); return; }
+        done.D[i - 1] = true; advance();
+      }
+      if (b){
+        const i = +b.dataset.tsec;
+        if (ph < 2 || ph > 5){ if (ph === 0) draw("Start with the <b>0</b> sector on the lab disinfectant plate.", "warn"); return; }
+        if (i !== ph - 2){ draw(`That's the <b>${TLAB[i]}</b> min sector. The clock says <b>${TIMES[ph]} min</b>.`, "warn"); return; }
+        done.T[i] = true; advance();
+      }
+    };
+    body.onclick = e => {
+      const a = e.target.closest("[data-a]");
+      if (a){ if (a.dataset.a === "reset") reset(); if (a.dataset.a === "go"){ ph = 2; draw("Timer running. At <b>2.5 min</b>, streak one loopful from each tube onto its 2.5 sector."); } if (a.dataset.a === "read"){ ph = 7; draw("Next class: score each sector (−) to (4+). Compare every sector to the 0 sector. The lab disinfectant results match the class deck example.", "good"); } return; }
+      const h = e.target.closest("[data-h]");
+      if (h){ const ok = +h.dataset.h === 4; h.classList.add(ok ? "right" : "wrong"); h.disabled = true; $("dMsg").className = "benchhint " + (ok ? "good" : "warn"); $("dMsg").innerHTML = ok ? "<b>Yes!</b> Growth in every sector, even 20 min, means it did not kill this bacterium in 20 minutes. Meanwhile the lab disinfectant killed between 5 min (+) and 10 min (−)." : "Look at the 20 sector. Is there still growth?"; }
+    };
+    reset();
+    const MEAN = ["That's about how long the chemical needs to kill this bacterium", "It did not kill this bacterium in 20 minutes", "It killed it fast, in 2.5 minutes or less", "Control failed: the results can't be read"];
+    pictureGame($("dRead"), [[[4, 3, 1, 0, 0], 0], [[4, 4, 3, 3, 2], 1], [[4, 0, 0, 0, 0], 2], [[0, 0, 0, 0, 0], 3]].map(([g, a], k) => ({svg:sectPlate(DLAB, g, {seed:k + 21}), ask:"What does this lab disinfectant plate tell you?", opts:MEAN, a, why:MEAN[a] + "."})), {picW:300});
+  }
+
+  /* ================================================================= EXERCISE 25: Kirby-Bauer */
+  const DRUGS = [["P", "Penicillin"], ["AM", "Ampicillin"], ["E", "Erythromycin"], ["Te", "Tetracycline"], ["C", "Chloramphenicol"], ["S", "Streptomycin"]];
+  /* practice cutoffs in mm: [R at or below, S at or above] (I is in between). Classic CLSI-style values; the penicillin row is the one for staphylococci */
+  const CUT = {P:[28, 29], AM:[13, 17], E:[13, 23], Te:[14, 19], C:[12, 18], S:[11, 15]};
+  const KORG = {sepi:{n:"Staphylococcus epidermidis", s:"S. epidermidis", g:"gram-positive", z:{P:34, AM:32, E:26, Te:25, C:23, S:18}},
+    ecoli:{n:"Escherichia coli", s:"E. coli", g:"gram-negative", z:{P:6, AM:18, E:10, Te:21, C:24, S:16}, inside:"Te"},
+    paer:{n:"Pseudomonas aeruginosa", s:"P. aeruginosa", g:"gram-negative (BSL-2)", z:{P:6, AM:6, E:6, Te:9, C:8, S:13}}};
+  const sir = (d, z) => z <= CUT[d][0] ? "R" : z >= CUT[d][1] ? "S" : "I";
+  const cutTxt = d => CUT[d][1] - CUT[d][0] === 1 ? `R ≤ ${CUT[d][0]}, S ≥ ${CUT[d][1]}` : `R ≤ ${CUT[d][0]}, I ${CUT[d][0] + 1} to ${CUT[d][1] - 1}, S ≥ ${CUT[d][1]}`;
+
+  function renderKB(body){
+    body.innerHTML = `
+      <div class="sect">1. Make a lawn, place the disks, read the zones</div>
+      <div class="row"><span class="lbl">Culture</span><span id="kOrg"></span></div>
+      <div class="bench2"><div class="panel tight" id="kStage" style="touch-action:none;max-width:440px;justify-self:center;width:100%"></div>
+        <div><div class="benchsteps" id="kSteps"></div><div class="benchhint" id="kMsg" role="status"></div><div class="row" id="kBtns"></div><div id="kMeasure"></div></div></div>
+      <div class="tblwrap" style="margin-top:12px"><table class="tbl" id="kTable"></table></div>
+      <details class="howbox" style="margin-top:12px" open><summary>Practice cutoffs (zone diameter in mm)</summary>
+        <p style="margin:8px 0">Every drug has its own cutoffs. These practice values follow the classic CLSI chart. On the final, use the chart you're given.</p>
+        <div class="tblwrap"><table class="tbl"><tr><th>Drug (code)</th><th>Resistant</th><th>Intermediate</th><th>Susceptible</th></tr>${DRUGS.map(([c, n]) => `<tr><td>${n} (${c})${c === "P" ? " <span class='mini'>staphylococci</span>" : ""}</td><td>≤ ${CUT[c][0]}</td><td>${CUT[c][1] - CUT[c][0] === 1 ? "none" : `${CUT[c][0] + 1} to ${CUT[c][1] - 1}`}</td><td>≥ ${CUT[c][1]}</td></tr>`).join("")}</table></div></details>
+      <div class="sect">2. Practice: S, I, or R?</div>
+      <p class="labq" style="margin:0 0 6px">Use the chart above. Compare the zone to the cutoffs for <b>that drug</b>: the same zone can be S for one drug and R for another.</p>
+      <div class="pad"><p class="qq" id="kdQ" style="margin:0 0 8px"></p><div class="ans" id="kdA"></div><div class="benchhint" id="kdMsg" role="status"></div><div class="row"><button class="btn primary sm" id="kdNext">Next zone</button><span class="score" id="kdScore"></span></div></div>
+      <div class="sect">3. Your hypotheses</div><div id="kHyp"></div>`;
+    const PX = 3.3, CX = 160, CY = 170, R = 45;          /* plate is 90 mm across; 1 mm = 3.3 px */
+    let org = "ecoli", ph, swabs, disks, sel, rec;
+    const svgEl = () => $("kStage").querySelector("svg");
+    const mm = (x, y) => [(x - CX) / PX, (y - CY) / PX];
+    const chips = () => { $("kOrg").innerHTML = Object.keys(KORG).map(k => `<button class="chip ${k === org ? "on" : ""}" data-o="${k}"><i>${KORG[k].s}</i></button>`).join(" "); };
+    const reset = () => { ph = 0; swabs = []; disks = {}; sel = null; rec = {}; msg("Swab the Mueller-Hinton plate in <b>three directions</b>. Pick your first swab."); draw(); };
+    const msg = (m, k) => { $("kMsg").className = "benchhint " + (k || ""); $("kMsg").innerHTML = m; };
+    let dragger = null;
+    function draw(){
+      const held = dragger && dragger.held();
+      let s = plateSVG(CX, CY, R * PX, "#e9d9a6", "", {noshine:true});
+      const k = "kbclip";
+      s += `<clipPath id="${k}"><circle cx="${CX}" cy="${CY}" r="${R * PX}"/></clipPath><g clip-path="url(#${k})">`;
+      if (ph >= 4) s += `<circle cx="${CX}" cy="${CY}" r="${R * PX}" fill="#e2cf93"/>` + Array.from({length:160}, (_, i) => `<circle cx="${f1(CX - R * PX + rnd(i) * 2 * R * PX)}" cy="${f1(CY - R * PX + rnd(i + 300) * 2 * R * PX)}" r="1.3" fill="#cdb672"/>`).join("");
+      swabs.forEach(d => { const ang = d === "h" ? 0 : d === "v" ? 90 : 45; s += `<g transform="rotate(${ang} ${CX} ${CY})">${Array.from({length:14}, (_, i) => `<line x1="${CX - 160}" y1="${CY - 150 + i * 23}" x2="${CX + 160}" y2="${CY - 150 + i * 23}" stroke="#b79d52" stroke-width="2" opacity=".55"/>`).join("")}</g>`; });
+      if (ph >= 4) Object.keys(disks).forEach(c => { const [x, y] = disks[c], z = KORG[org].z[c]; if (z > 6) s += `<circle cx="${f1(CX + x * PX)}" cy="${f1(CY + y * PX)}" r="${f1(z / 2 * PX)}" fill="#f4ebcc"/>`; if (KORG[org].inside === c) [[.55, .2], [-.3, .5], [.1, -.62]].forEach(([a, b]) => { s += `<circle cx="${f1(CX + (x + a * z / 2) * PX)}" cy="${f1(CY + (y + b * z / 2) * PX)}" r="2.8" fill="#fbf3dc" stroke="#b8a067"/>`; }); });
+      s += `</g>`;
+      Object.keys(disks).forEach(c => { if (held && held.item === c) return; const [x, y] = disks[c]; s += `<g ${ph >= 4 ? `class="svgbtn" data-disk="${c}"` : `data-item="${c}"`}><circle cx="${f1(CX + x * PX)}" cy="${f1(CY + y * PX)}" r="${3 * PX + 1}" fill="#fff" stroke="${sel === c ? "#f2b134" : "#8b93a3"}" stroke-width="${sel === c ? 3 : 1.5}"/>${T(CX + x * PX, CY + y * PX + 4, c, {fs:11})}</g>`; });
+      if (ph === 3){
+        let i = 0; DRUGS.forEach(([c]) => { if (disks[c] || (held && held.item === c)) return; const x = 30 + (i % 6) * 52, y = 350; i++; s += `<g data-item="${c}" class="svgbtn"><circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#3f4cc0" stroke-width="2"/>${T(x, y + 4, c, {fs:12})}</g>`; });
+        s += T(160, 385, "Disk dispenser: drag each disk onto the plate", {fs:12, w:400, c:"#5a6376"});
+      }
+      if (held) s += `<g pointer-events="none"><circle cx="${f1(held.x)}" cy="${f1(held.y)}" r="${3 * PX + 3}" fill="#fff" stroke="#3f4cc0" stroke-width="2.5"/>${T(held.x, held.y + 4, held.item, {fs:12})}</g>`;
+      $("kStage").innerHTML = `<svg viewBox="0 0 320 ${ph === 3 ? 395 : 340}" class="gsvg" role="img" aria-label="Mueller-Hinton plate">${s}</svg>`;
+      const cur = ph < 2.5 ? 0 : ph < 3 ? 1 : ph < 3.5 ? 2 : ph < 4 ? 3 : 4;
+      $("kSteps").innerHTML = ["Lawn", "Wait 5 min", "Disks", "Incubate", "Measure"].map((n, i) => `<span class="bstep ${i < cur ? "ok" : i === cur ? "cur" : ""}">${n}</span>`).join("");
+      let b = "";
+      if (ph < 2.5) b = [["h", "Swab ↔"], ["v", "Swab ↕"], ["d", "Swab ⤢ at 45°"]].map(([d, l]) => `<button class="btn secondary" data-sw="${d}">${l}</button>`).join("");
+      if (ph === 2.5) b = `<button class="btn primary" data-a="wait">Let it stand 5 minutes</button>`;
+      if (ph === 3) b = `<button class="btn hint" data-a="auto">💡 Place them for me</button>`;
+      if (ph === 3.5) b = `<button class="btn primary" data-a="inc">Plate inverted on the tray. Incubate</button>`;
+      b += `<button class="btn secondary" data-a="reset">↺ Start over</button>`;
+      $("kBtns").innerHTML = b;
+      $("kTable").innerHTML = `<tr><th>Drug (code)</th><th>Zone (mm)</th><th>S / I / R</th></tr>` + DRUGS.map(([c, n]) => `<tr><td>${n} (${c})</td><td>${rec[c] && rec[c].z ? KORG[org].z[c] : ""}</td><td>${rec[c] && rec[c].s ? sir(c, KORG[org].z[c]) : ""}</td></tr>`).join("");
+    }
+    function bindDrag(){
+      const host = $("kStage");
+      let drag = null;
+      const pt = e => { const sv = svgEl(), p = sv.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(sv.getScreenCTM().inverse()); };
+      dragger = {held:() => drag};
+      host.onpointerdown = e => {
+        if (ph !== 3) return;
+        const p = pt(e);
+        if (drag && drag.sticky){ drag.x = p.x; drag.y = p.y; const d = drag; drag = null; drop(d); draw(); return; }
+        const g = e.target.closest("[data-item]"); if (!g) return;
+        e.preventDefault();
+        drag = {item:g.dataset.item, x:p.x, y:p.y, sx:p.x, sy:p.y, moved:false, sticky:false, from:disks[g.dataset.item]};
+        try { host.setPointerCapture(e.pointerId); } catch (_) {}
+        delete disks[drag.item];
+        draw();
+      };
+      host.onpointermove = e => { if (!drag) return; const p = pt(e); drag.x = p.x; drag.y = p.y; if (Math.hypot(p.x - drag.sx, p.y - drag.sy) > 8) drag.moved = true; draw(); };
+      host.onpointerup = () => { if (!drag || drag.sticky) return; if (!drag.moved){ drag.sticky = true; msg(`Holding the <b>${drag.item}</b> disk. Tap the plate where it should go.`); draw(); return; } const d = drag; drag = null; drop(d); draw(); };
+    }
+    function drop(d){
+      const [x, y] = mm(d.x, d.y), dist = Math.hypot(x, y);
+      const back = () => { if (d.from) disks[d.item] = d.from; };
+      if (dist > R){ back(); msg("That's off the plate. Drop the disk on the agar.", "warn"); return; }
+      if (dist > R - 10){ back(); msg("Too close to the edge: the zone would run into the rim. Move it in a bit.", "warn"); return; }
+      const near = Object.keys(disks).find(c => Math.hypot(disks[c][0] - x, disks[c][1] - y) < 24);
+      if (near){ back(); msg(`Too close to the <b>${near}</b> disk: that's only ${Math.round(Math.hypot(disks[near][0] - x, disks[near][1] - y))} mm. Disks go at least <b>24 mm apart</b> so the zones don't overlap.`, "warn"); return; }
+      disks[d.item] = [x, y];
+      const left = DRUGS.length - Object.keys(disks).length;
+      if (left) msg(`Placed <b>${d.item}</b>. Gently tap it so it makes full contact with the agar. ${left} to go.`, "good");
+      else { ph = 3.5; msg("All 6 disks placed, at least 24 mm apart. Record the agents and disk codes in your Laboratory Report.", "good"); }
+    }
+    function measure(){
+      const c = sel, z = KORG[org].z[c], S2 = 8, w = Math.max(z, 6);
+      let s = `<rect x="0" y="0" width="340" height="150" fill="#e2cf93"/>` + Array.from({length:70}, (_, i) => `<circle cx="${f1(rnd(i + 900) * 340)}" cy="${f1(rnd(i + 1300) * 110)}" r="1.4" fill="#cdb672"/>`).join("");
+      const cx = 170, cy = 56;
+      if (z > 6) s += `<circle cx="${cx}" cy="${cy}" r="${z / 2 * S2}" fill="#f4ebcc"/>`;
+      if (KORG[org].inside === c) [[.55, .2], [-.3, .5], [.1, -.62]].forEach(([a, b]) => { s += `<circle cx="${f1(cx + a * z / 2 * S2)}" cy="${f1(cy + b * z / 2 * S2)}" r="4" fill="#fbf3dc" stroke="#b8a067"/>`; });
+      s += `<circle cx="${cx}" cy="${cy}" r="${3 * S2}" fill="#fff" stroke="#8b93a3"/>` + T(cx, cy + 5, c, {fs:14});
+      const x0 = cx - w / 2 * S2;
+      s += `<rect x="${x0 - 14}" y="104" width="${(w + 4) * S2 + 28}" height="40" fill="#fdfaf0" stroke="#8b93a3" opacity=".96"/>`;
+      for (let m2 = -2; m2 <= w + 2; m2++){ const x = x0 + m2 * S2, big = m2 % 5 === 0; if (m2 < 0) continue; s += `<line x1="${x}" y1="104" x2="${x}" y2="${big ? 120 : 112}" stroke="#343b4a" stroke-width="${big ? 1.5 : 1}"/>`; if (m2 % 10 === 0) s += T(x, 136, m2, {fs:11}); }
+      s += `<line x1="${x0}" y1="${cy}" x2="${x0}" y2="104" stroke="#b83a34" stroke-dasharray="3 3"/><line x1="${x0 + w * S2}" y1="${cy}" x2="${x0 + w * S2}" y2="104" stroke="#b83a34" stroke-dasharray="3 3"/>`;
+      const r0 = rec[c] || {};
+      $("kMeasure").innerHTML = `<div class="panel tight" style="margin-top:8px"><svg class="gsvg" viewBox="0 0 340 150" role="img" aria-label="Zoomed zone of inhibition with a mm ruler">${s}</svg></div>
+        <p class="mini" style="margin:6px 0">Zoomed view, underside of the plate. The ruler's 0 is lined up with one edge of the zone${z <= 6 ? " (or the disk, if there's no zone)" : ""}.</p>
+        <div class="numrow"><b>${DRUGS.find(d => d[0] === c)[1]} (${c})</b> zone diameter: <input class="numin ${r0.z ? "ok" : ""}" id="kZ" inputmode="numeric" value="${r0.z ? z : ""}" ${r0.z ? "disabled" : ""}> mm <button class="btn primary sm" id="kZgo" ${r0.z ? "hidden" : ""}>Check</button></div>
+        <div id="kSIR">${r0.z ? sirHTML(c) : ""}</div>`;
+      $("kZgo") && ($("kZgo").onclick = () => {
+        const v = parseFloat($("kZ").value), okv = z <= 6 ? (v === 6 || v === 0) : Math.abs(v - z) <= 1;
+        if (!okv){ $("kZ").classList.add("bad"); msg(isNaN(v) ? "Type the diameter in mm." : z <= 6 ? "Look again: is there any clear zone at all, or just the disk?" : "Not quite. Read where the second dashed line hits the ruler.", "warn"); return; }
+        rec[c] = {z:true}; msg(z <= 6 ? "Right: <b>no zone at all</b>, only the 6 mm disk. Bacteria grew right up to it. (Some labs record 0, others the disk size, 6 mm.)" : `Yes: <b>${z} mm</b>. ${KORG[org].inside === c ? "Notice the colonies <b>inside</b> the zone? Those colonies are resistant." : ""}`, "good");
+        draw(); measure();
+      });
+    }
+    const sirHTML = c => { const r0 = rec[c] || {}; return `<p class="qq" style="margin:8px 0 6px">Practice cutoffs for ${DRUGS.find(d => d[0] === c)[1]} (${c}): ${cutTxt(c)}. So this zone is…</p><div class="ans">${["S", "I", "R"].map(v => `<button data-sir="${v}" class="${r0.s && v === sir(c, KORG[org].z[c]) ? "right" : ""}" ${r0.s ? "disabled" : ""}>${v === "S" ? "S: susceptible" : v === "I" ? "I: intermediate" : "R: resistant"}</button>`).join("")}</div>`; };
+    body.onclick = e => {
+      const o = e.target.closest("[data-o]"); if (o){ org = o.dataset.o; chips(); reset(); hyp(); return; }
+      const sw = e.target.closest("[data-sw]");
+      if (sw){
+        const d = sw.dataset.sw;
+        if (swabs.length === 0){ if (d === "d"){ msg("Start with a straight swab across the agar, without leaving any gaps. The 45° swab comes last.", "warn"); return; } swabs.push(d); ph = 1; msg("First swab done, no gaps. Now swab <b>perpendicular</b> to the first.", "good"); }
+        else if (swabs.length === 1){ if (d === swabs[0] || d === "d"){ msg("The second swab goes <b>perpendicular</b> (at 90°) to the first.", "warn"); return; } swabs.push(d); ph = 2; msg("Now the third swab: at a <b>45° angle</b> to the first.", "good"); }
+        else if (swabs.length === 2){ if (d !== "d"){ msg("You already swabbed that way. The third swab is at <b>45°</b>.", "warn"); return; } swabs.push(d); ph = 2.5; msg("Complete plate coverage! Discard the swab in disinfectant. Then let the plate stand at least 5 minutes.", "good"); }
+        draw(); return;
+      }
+      const a = e.target.closest("[data-a]");
+      if (a){
+        const k = a.dataset.a;
+        if (k === "reset") reset();
+        if (k === "wait"){ ph = 3; msg("Now place up to 6 disks, <b>at least 24 mm apart</b>. Drag each disk from the dispenser onto the plate (or tap a disk, then tap the plate)."); draw(); }
+        if (k === "auto"){ disks = {}; DRUGS.forEach(([c], i) => { const an = -Math.PI / 2 + i * Math.PI / 3; disks[c] = [f1(Math.cos(an) * 28), f1(Math.sin(an) * 28)]; }); ph = 3.5; msg("Placed in a ring, about 28 mm apart. Real tip: touch each disk with a sterile loop (dispenser) or tap it with flamed forceps.", "good"); draw(); }
+        if (k === "inc"){ ph = 4; msg("Next class! Each clear ring is a <b>zone of inhibition</b>: where the drug was above the MIC, the bacteria couldn't grow. <b>Tap a disk</b> to measure its zone."); draw(); }
+        return;
+      }
+      const dk = e.target.closest("[data-disk]");
+      if (dk && ph >= 4){ sel = dk.dataset.disk; draw(); measure(); return; }
+      const sr = e.target.closest("[data-sir]");
+      if (sr && sel){
+        const right = sir(sel, KORG[org].z[sel]);
+        if (sr.dataset.sir === right){ rec[sel].s = true; draw(); measure(); const n = DRUGS.filter(([c]) => rec[c] && rec[c].s).length; msg(n === 6 ? `All 6 read for <i>${KORG[org].s}</i>! Switch cultures to get the other two bacteria, like getting data from classmates.` : `Yes, <b>${right}</b>. ${right === "R" ? "This drug is not likely to work." : right === "I" ? "It may work at a higher dose or where the drug concentrates." : "A standard dose should work."} Tap another disk.`, "good"); }
+        else { sr.classList.add("wrong"); sr.disabled = true; msg(`Compare ${KORG[org].z[sel]} mm to the ${DRUGS.find(d => d[0] === sel)[1]} cutoffs: ${cutTxt(sel)}.`, "warn"); }
+      }
+    };
+    function hyp(){
+      pictureGame($("kHyp"), [
+        {svg:kbTable(), ask:"Hypothesis 1: \"All antibiotics will be equally effective against gram-positive and gram-negative bacteria.\" Agree or disagree?", opts:["Disagree: penicillin and erythromycin worked on gram-positive S. epidermidis but not on gram-negative E. coli", "Agree: every drug worked the same on all of them", "Agree: zone sizes don't depend on the organism", "Can't tell from zones"], a:0, why:"The same drug can be S for one organism and R for another."},
+        {svg:kbTable(), ask:"Hypothesis 2: \"All antibiotics will be equally effective against gram-negative E. coli and P. aeruginosa.\" Agree or disagree?", opts:["Disagree: E. coli was susceptible to ampicillin, tetracycline, chloramphenicol, and streptomycin, but P. aeruginosa was resistant or intermediate to all of them", "Agree: both are gram-negative, so they react the same", "Agree: neither had any zones", "Can't tell from zones"], a:0, why:"Being gram-negative doesn't make two organisms equally susceptible."}], {picW:420, keepOrder:true});
+    }
+    function kbTable(){
+      let s = T(10, 22, "Practice zones (mm) and S / I / R", {a:"start", fs:14});
+      const cols = [["Drug", 10], ["S. epi", 120], ["E. coli", 215], ["P. aer", 310]];
+      cols.forEach(([n, x]) => { s += T(x, 48, n, {a:"start", fs:13, it:x > 10}); });
+      DRUGS.forEach(([c], i) => { const y = 74 + i * 24; s += T(10, y, c, {a:"start", fs:13}); ["sepi", "ecoli", "paer"].forEach((o, j) => { const z = KORG[o].z[c], v = sir(c, z); s += T(cols[j + 1][1], y, `${z} ${v}`, {a:"start", fs:13, w:700, c:v === "S" ? "#1b7f4e" : v === "I" ? "#9a6212" : "#b83a34"}); }); });
+      return `<svg class="gsvg" viewBox="0 0 400 220" role="img" aria-label="Practice zone table">${s}</svg>`;
+    }
+    /* S, I, R drill: zones land near the cutoffs so students have to check the chart */
+    let dq = null, dRight = 0, dTried = 0, dFirst = true;
+    const drill = () => {
+      const [c, n] = DRUGS[Math.floor(Math.random() * DRUGS.length)], [r, sMin] = CUT[c];
+      const pool = [r - 3, r - 1, r, r + 1, sMin - 1, sMin, sMin + 2, sMin + 5].filter(z => z >= 6);
+      let z; do { z = pool[Math.floor(Math.random() * pool.length)]; } while (dq && dq.c === c && dq.z === z);
+      dq = {c, n, z}; dFirst = true;
+      $("kdQ").innerHTML = `${n} (${c}): zone diameter <b>${z} mm</b>. Is it S, I, or R?`;
+      $("kdA").innerHTML = ["S", "I", "R"].map(v => `<button data-dv="${v}">${v === "S" ? "S: susceptible" : v === "I" ? "I: intermediate" : "R: resistant"}</button>`).join("");
+      $("kdMsg").className = "benchhint"; $("kdMsg").innerHTML = `Find the ${n} (${c}) row in the chart.`;
+    };
+    $("kdA").onclick = e => {
+      const b = e.target.closest("[data-dv]"); if (!b || !dq) return;
+      const right = sir(dq.c, dq.z);
+      if (dFirst){ dTried++; if (b.dataset.dv === right) dRight++; dFirst = false; }
+      if (b.dataset.dv === right){ b.classList.add("right"); $("kdA").querySelectorAll("button").forEach(x => x.disabled = true); $("kdMsg").className = "benchhint good"; $("kdMsg").innerHTML = `<b>Yes: ${right}.</b> ${dq.n} cutoffs: ${cutTxt(dq.c)}, and ${dq.z} mm ${right === "R" ? `is at or below ${CUT[dq.c][0]}` : right === "S" ? `is at or above ${CUT[dq.c][1]}` : "falls in between"}.`; }
+      else { b.classList.add("wrong"); b.disabled = true; $("kdMsg").className = "benchhint warn"; $("kdMsg").innerHTML = `Check the ${dq.n} (${dq.c}) row again: ${cutTxt(dq.c)}.`; }
+      $("kdScore").textContent = `Right on the first try: ${dRight} of ${dTried}`;
+    };
+    $("kdNext").onclick = drill;
+    chips(); bindDrag(); reset(); hyp(); drill();
+  }
+
+  /* ================================================================= EXERCISE 26: hand scrubbing */
+  const WATER = [24, 19, 16, 14], SOAP = [26, 15, 9, 6, 4];
+  function handPlate(counts, o){
+    o = o || {};
+    const cx = 150, cy = 150, r = 118, sl = pie(cx, cy, r, counts.length), cols = ["#fbf3dc", "#f6f1e6", "#f2d23c", "#efe1c4"];
+    let s = plateSVG(cx, cy, r, AGAR);
+    sl.forEach((p, i) => {
+      for (let k = 0; k < counts[i]; k++){
+        const a = p.a0 + .14 + rnd(i * 53 + k) * (p.a1 - p.a0 - .28), d = r * (.2 + rnd(i * 71 + k + 9) * .7);
+        s += `<circle cx="${f1(cx + Math.cos(a) * d)}" cy="${f1(cy + Math.sin(a) * d)}" r="${f1(2.6 + rnd(k + i) * 2.4)}" fill="${cols[Math.floor(rnd(i * 13 + k * 3) * 4)]}" stroke="#b8a067" stroke-width=".7"/>`;
+      }
+      s += `<line x1="${cx}" y1="${cy}" x2="${f1(cx + Math.cos(p.a0) * r)}" y2="${f1(cy + Math.sin(p.a0) * r)}" stroke="#4b2a8a" stroke-width="2"/>`;
+    });
+    sl.forEach((p, i) => { const [mx, my] = p.mid; s += `<circle cx="${f1(mx)}" cy="${f1(my)}" r="13" fill="#fff" opacity=".9"/>` + T(mx, my + 5, i + 1, {fs:15, c:"#4b2a8a"}); if (o.click) s += `<path d="${p.path}" fill="transparent" class="svgbtn" data-hs="${o.key}:${i}"/>`; });
+    return `<svg class="gsvg" viewBox="0 0 300 322" role="img" aria-label="${o.tag}">${s}${T(150, 316, o.tag, {fs:15, c:"#4b2a8a"})}</svg>`;
+  }
+  function renderHands(body){
+    body.innerHTML = `
+      <div class="sect">1. Count your plates</div>
+      <p class="labq" style="margin:0 0 6px">Read the sections <b>in the order you touched them</b>. Tap a section to zoom in, then tap each colony to mark it, the way you'd dot the bottom of the plate with a marker. These are practice plates.</p>
+      <div class="row" style="justify-content:center;gap:16px"><div class="panel tight" style="width:290px">${handPlate(WATER, {click:true, key:"w", tag:"Water plate (4 sections)"})}</div><div class="panel tight" style="width:290px">${handPlate(SOAP, {click:true, key:"s", tag:"Soap plate (5 sections)"})}</div></div>
+      <div id="hsZoom"></div>
+      <div class="benchhint" id="hsMsg" role="status">Tap any numbered section to start counting.</div>
+      <div class="sect">2. Compare the trends</div><div class="panel" id="hsGraph"></div><div id="hsAsk" style="margin-top:10px"></div>
+      <div class="sect">3. Resident or transient?</div><div id="hsSort"></div>`;
+    const got = {w:[null, null, null, null], s:[null, null, null, null, null]};
+    let cur = null, marks = new Set();
+    const graph = () => {
+      const X = i => 60 + i * 120, Y = v => 200 - v * 6;
+      let s = `<line x1="50" y1="200" x2="590" y2="200" stroke="#8b93a3"/><line x1="50" y1="30" x2="50" y2="200" stroke="#8b93a3"/>`;
+      [0, 10, 20, 30].forEach(v => { s += T(42, Y(v) + 4, v, {a:"end", fs:11, w:400}) + `<line x1="50" y1="${Y(v)}" x2="590" y2="${Y(v)}" stroke="#eef1f5"/>`; });
+      [1, 2, 3, 4, 5].forEach(i => { s += T(X(i - 1), 218, "Section " + i, {fs:11, w:400}); });
+      [["w", "#3f7bd1", "Water"], ["s", "#1b7f4e", "Soap"]].forEach(([k, c, n]) => {
+        const pts = got[k].map((v, i) => v === null ? null : [X(i), Y(v)]);
+        for (let i = 1; i < pts.length; i++) if (pts[i] && pts[i - 1]) s += `<line x1="${pts[i - 1][0]}" y1="${pts[i - 1][1]}" x2="${pts[i][0]}" y2="${pts[i][1]}" stroke="${c}" stroke-width="3"/>`;
+        pts.forEach((p, i) => { if (p) s += `<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="${c}"/>` + T(p[0], p[1] - 10, got[k][i], {fs:11, c}); });
+      });
+      s += `<rect x="440" y="24" width="12" height="12" fill="#3f7bd1"/>` + T(458, 34, "Water", {a:"start", fs:12}) + `<rect x="510" y="24" width="12" height="12" fill="#1b7f4e"/>` + T(528, 34, "Soap", {a:"start", fs:12});
+      s += T(16, 115, "Colonies", {fs:11, w:400}).replace("<text", `<text transform="rotate(-90 16 115)"`);
+      $("hsGraph").innerHTML = `<svg class="gsvg" viewBox="0 0 600 228" role="img" aria-label="Colony counts per section, water vs soap">${s}</svg><div class="row"><button class="btn hint sm" id="hsFill">💡 Count the rest for me</button></div>`;
+      $("hsFill").onclick = () => { WATER.forEach((v, i) => got.w[i] = v); SOAP.forEach((v, i) => got.s[i] = v); graph(); ask(); };
+      if (got.w.every(v => v !== null) && got.s.every(v => v !== null)) ask();
+    };
+    const ask = () => {
+      if ($("hsAsk").dataset.on) return; $("hsAsk").dataset.on = "1";
+      pictureGame($("hsAsk"), [
+        {svg:$("hsGraph").querySelector("svg").outerHTML, ask:"What happened on the water plate?", opts:["Counts dropped some with each wash, as transient bacteria rinsed off", "Counts went up with each wash", "Counts dropped to zero right away", "Nothing changed"], a:0, why:"Water alone rinses off some transient bacteria."},
+        {svg:$("hsGraph").querySelector("svg").outerHTML, ask:"How does the soap trend compare?", opts:["Counts usually drop faster: soap lifts oils and debris that hold bacteria", "Soap kills every bacterium on the skin", "Soap counts drop slower than water", "Soap adds bacteria"], a:0, why:"Soap helps remove the oils and debris that bacteria stick to."},
+        {svg:$("hsGraph").querySelector("svg").outerHTML, ask:"Even the last soap section isn't zero. Why?", opts:["Expected: resident microbiota live deeper in skin layers and hair follicles", "The soap was contaminated", "The plate was too old", "You didn't touch the plate"], a:0, why:"Skin is never sterile, which is why surgeons also wear gloves."}], {picW:520, keepOrder:true});
+    };
+    const zoom = () => {
+      if (!cur) { $("hsZoom").innerHTML = ""; return; }
+      const n = (cur.k === "w" ? WATER : SOAP)[cur.i];
+      let s = `<rect width="520" height="200" rx="14" fill="${AGAR}"/>`;
+      for (let k = 0; k < n; k++){
+        const x = 30 + rnd(cur.i * 53 + k + (cur.k === "s" ? 500 : 0)) * 460, y = 24 + rnd(cur.i * 71 + k + 9 + (cur.k === "s" ? 500 : 0)) * 150, on = marks.has(k);
+        s += `<g class="svgbtn" data-col="${k}"><circle cx="${f1(x)}" cy="${f1(y)}" r="13" fill="${["#fbf3dc", "#f6f1e6", "#f2d23c", "#efe1c4"][Math.floor(rnd(cur.i * 13 + k * 3) * 4)]}" stroke="#b8a067"/>${on ? `<circle cx="${f1(x)}" cy="${f1(y)}" r="5" fill="#1d2433"/>` : ""}</g>`;
+      }
+      $("hsZoom").innerHTML = `<div class="panel tight" style="margin-top:10px"><svg class="gsvg" viewBox="0 0 520 200" role="img" aria-label="Zoomed section: tap each colony">${s}</svg></div><p class="mini" style="margin:4px 0">${cur.k === "w" ? "Water" : "Soap"} plate, section ${cur.i + 1}. Marked: <b>${marks.size}</b>. Notice the different colony types (color and size).</p>`;
+    };
+    body.onclick = e => {
+      const h = e.target.closest("[data-hs]");
+      if (h){ const [k, i] = h.dataset.hs.split(":"); cur = {k, i:+i}; marks = new Set(); zoom(); $("hsMsg").className = "benchhint"; $("hsMsg").innerHTML = `Counting ${k === "w" ? "water" : "soap"} section ${+i + 1}. Tap every colony once.`; return; }
+      const c = e.target.closest("[data-col]");
+      if (c && cur){
+        marks.add(+c.dataset.col); zoom();
+        const n = (cur.k === "w" ? WATER : SOAP)[cur.i];
+        if (marks.size === n){ got[cur.k][cur.i] = n; $("hsMsg").className = "benchhint good"; $("hsMsg").innerHTML = `<b>${n} colonies</b> in ${cur.k === "w" ? "water" : "soap"} section ${cur.i + 1}. Recorded. Tap another section.`; graph(); }
+      }
+    };
+    graph();
+    const STM = [["Permanent residents of the skin (the skin microbiome)", 0], ["Picked up from contact with the environment", 1], ["Removed by a 3 to 5 minute clinical scrub with antimicrobial soap", 1], ["Live deeper in skin layers and hair follicles", 0], ["Rinse off a little more with each water wash", 1], ["The reason colony counts never reach zero", 0]];
+    pictureGame($("hsSort"), STM.map(([t, a]) => ({svg:`<svg class="gsvg" viewBox="0 0 300 120"><rect width="300" height="120" rx="14" fill="#f3effd"/>${T(150, 52, "Resident or transient?", {fs:16, c:"#5b3fb0"})}${T(150, 80, "microbiota", {fs:14, w:400, c:"#5b3fb0"})}</svg>`, ask:`"${t}"`, opts:["Resident (normal) microbiota", "Transient microbiota"], a, why:a ? "Transient microbiota come from the environment and wash off." : "Resident microbiota are permanent and live deeper in the skin."})), {picW:240});
+  }
+
+  /* ================================================================= theory pictures */
+  const PICS = {
+    spectrum:() => {
+      let s = "";
+      [["Below 200 nm", "absorbed by air", "#eef1f5"], ["UVC 200 to 290", "most lethal: 260 nm", "#fbe8e7"], ["UVB 290 to 320", "can damage DNA", "#fff4d6"], ["UVA 320 to 400", "less active", "#f3effd"]].forEach(([a, b, c], i) => { s += `<rect x="${10 + i * 185}" y="10" width="175" height="70" rx="8" fill="${c}" stroke="#b9a8e0"/>` + T(97 + i * 185, 40, a, {fs:14}) + T(97 + i * 185, 62, b, {fs:12, w:400}); });
+      return `<svg class="gsvg" viewBox="0 0 760 90" role="img" aria-label="UV spectrum">${s}</svg>`;
+    },
+    dimer:() => {
+      let s = "";
+      const box = (x, t, c) => `<rect x="${x}" y="20" width="160" height="50" rx="10" fill="${c}" stroke="#b9a8e0"/>` + T(x + 80, 50, t, {fs:13});
+      s += box(10, "UV light", "#fff4d6") + box(200, "Thymine dimers in DNA", "#fbe8e7") + box(390, "Mutation in a critical gene", "#fbe8e7") + box(580, "Cell death unless repaired", "#fbe8e7");
+      [170, 360, 550].forEach(x => { s += `<path d="M${x + 4},45 l22,0 m-6,-6 l6,6 l-6,6" stroke="#4b2a8a" stroke-width="2.5" fill="none"/>`; });
+      return `<svg class="gsvg" viewBox="0 0 750 90" role="img" aria-label="UV causes thymine dimers, mutation, and death unless repaired">${s}</svg>`;
+    },
+    kb:() => {
+      let s = `<circle cx="120" cy="110" r="95" fill="#e2cf93" stroke="#4b2a8a" stroke-width="2"/><circle cx="120" cy="110" r="45" fill="#f4ebcc"/><circle cx="120" cy="110" r="10" fill="#fff" stroke="#8b93a3"/>`;
+      s += T(120, 92, "disk", {fs:11}) + T(120, 140, "zone of inhibition", {fs:11}) + T(120, 222, "lawn of bacteria", {fs:12, c:"#9a6212"});
+      ["Each paper disk holds a known amount of one drug", "The drug diffuses out into the agar,", "most concentrated next to the disk", "Where the drug is above the MIC, bacteria can't grow", "That clear ring is the zone of inhibition"].forEach((t, i) => { s += T(250, 60 + i * 30, t, {a:"start", fs:14, w:i === 4 ? 700 : 400}); });
+      return `<svg class="gsvg" viewBox="0 0 700 230" role="img" aria-label="How the Kirby-Bauer test works">${s}</svg>`;
+    }
+  };
+
+  /* ================================================================= tabs */
+  const TABS = {
+    heat:{tab:"22: Heat", title:"Physical Methods of Control: Heat", ex:"Exercise 22", render:renderHeat,
+      question:"How long does it take each temperature to kill a bacterium, and which bacteria hold out longest?",
+      how:["<b>Moist heat</b> denatures (coagulates) proteins. It is <b>more effective</b> than dry heat. <b>Dry heat</b> kills by oxidation and dehydration, which denatures enzymes.",
+        "<b>Autoclave</b> (moist): 121°C, 15 psi, 15 min. <b>Boiling</b> (moist): 100°C kills vegetative cells, <b>not endospores</b>. <b>Pasteurization</b> (moist): kills pathogens in a liquid without sterilizing it. <b>Hot-air oven</b> (dry): 170°C for 2 hours. <b>Incineration</b> (dry): burns contaminated materials and sterilizes loops.",
+        "<b>Thermal death time (TDT):</b> the shortest time to kill all cells in a culture at a given temperature. <b>Thermal death point (TDP):</b> the lowest temperature that kills all bacteria in a liquid culture in 10 minutes. <b>Decimal reduction time (D-value):</b> the time to kill 90% of the population at a given temperature.",
+        "Your plates estimate <b>TDT</b>. There's no 10 minute point, so your 5 and 15 min sections bracket it for TDP.",
+        "All three of our bacteria are <b>mesophiles</b> (25 to 40°C). Cold slows growth; heat above the growth range kills. <b>Endospores</b> are the most heat-resistant form of bacterial life."],
+      more:[["What to expect from each", null, ["<b><i>Escherichia coli</i>:</b> no endospores. Should die fastest in the water baths.", "<b><i>Staphylococcus epidermidis</i>:</b> no endospores. Often more heat tolerant than <i>E. coli</i>, but still killed with enough time and heat.", "<b><i>Bacillus subtilis</i>:</b> makes endospores. May keep growing even after 15 min at about 88°C.", "Hotter or longer = fewer survivors. The water baths ranged in temperature, so compare with the class."]],
+        ["How you ran it", null, ["One organism, two temperatures (0°C ice, 4°C fridge, 63 to 70°C, about 75°C, or about 88°C). Two nutrient agar plates, each in 5 sections: 0, 30 sec, 2 min, 5 min, 15 min.", "Streak 0 on both plates <b>before</b> the tubes go in. At each time point, for both tubes: remove, mix, streak a loopful on that tube's plate, and return it to the heat. During the 5 to 15 min wait, make your unknown smear."]]],
+      quiz:[
+        q("Why is moist heat more effective than dry heat?", ["Moist heat denatures (coagulates) proteins", "Moist heat is always hotter", "Dry heat can't reach 100°C", "Moist heat dissolves cell walls"], 0, "Dry heat kills by oxidation and dehydration instead."),
+        q("What are the standard autoclave conditions?", ["121°C, 15 psi, 15 min", "100°C, 0 psi, 10 min", "170°C for 2 hours", "63°C for 30 min"], 0, "170°C for 2 hours is the hot-air oven (dry heat)."),
+        q("What does boiling at 100°C fail to kill?", ["Endospores", "Vegetative cells", "E. coli", "Most pathogens"], 0, "Boiling kills vegetative cells, not endospores."),
+        q("What does pasteurization do?", ["Kills pathogens in a liquid without sterilizing it", "Sterilizes the liquid", "Kills endospores", "Uses dry heat"], 0, "It isn't sterilization."),
+        q("How does dry heat kill?", ["Oxidation and dehydration, which denatures enzymes", "Coagulating proteins with steam", "Making thymine dimers", "Dissolving membranes with alcohol"], 0, "Examples: hot-air oven (170°C, 2 hr) and incineration."),
+        q("What is the thermal death time (TDT)?", ["The shortest time to kill all cells in a culture at a given temperature", "The lowest temperature that kills all bacteria in 10 minutes", "The time to kill 90% of the population", "The time it takes to boil"], 0, "Your plates estimate TDT."),
+        q("What is the thermal death point (TDP)?", ["The lowest temperature that kills all bacteria in a liquid culture in 10 minutes", "The shortest time to kill all cells", "The time to kill 90%", "The highest temperature bacteria grow at"], 0, "We had no 10 minute point, so 5 and 15 min bracket it."),
+        q("What is the decimal reduction time (D-value)?", ["The time to kill 90% of the population at a given temperature", "The time to kill all cells", "The lowest killing temperature", "The time to sterilize"], 0, "90% = one log (decimal) reduction."),
+        q("Which organism may keep growing even after 15 min at about 88°C?", ["Bacillus subtilis", "Escherichia coli", "Staphylococcus epidermidis", "None of them"], 0, "B. subtilis makes endospores."),
+        q("Which organism should die fastest in the water baths?", ["Escherichia coli", "Bacillus subtilis", "Staphylococcus epidermidis", "They all die at the same rate"], 0, "No endospores, and less heat tolerant than S. epidermidis."),
+        q("Heavy growth at 0°C and 4°C means…", ["Cold did not kill. It only slows growth", "Cold sterilized the culture", "The control failed", "The organism is a thermophile"], 0, "Cold is bacteriostatic, not bactericidal."),
+        q("What is the 0 section for?", ["It's the control: bacteria with no heat, so it should grow", "It's where the hottest sample goes", "It's left blank", "It's for the unknown"], 0, "No growth at 0 means the control failed."),
+        q("All three of our bacteria are…", ["Mesophiles: they grow best at 25 to 40°C", "Psychrophiles", "Thermophiles", "Hyperthermophiles"], 0, "Heat above their growth range kills."),
+        q("Growth at 30 sec and 2 min, then none at 5 and 15 min. Your TDT estimate is…", ["Between 2 and 5 min", "Under 30 sec", "Between 5 and 15 min", "More than 15 min"], 0, "Killed between the last growth and the first no-growth section.")]},
+    uv:{tab:"23: UV", title:"Physical Methods of Control: Ultraviolet Radiation", ex:"Exercise 23", render:renderUV,
+      question:"Does UV kill bacteria, does more UV kill more, can UV get through foil, and does light afterward help survival?",
+      how:["UV is <b>nonionizing</b>: less energy and a longer wavelength. X rays and gamma rays are <b>ionizing</b>: they make free radicals that break DNA strands.",
+        "<b>UVC (200 to 290 nm)</b> is the most lethal: DNA absorbs it best. Our lamp is <b>260 nm</b>. UVB (290 to 320) can also damage DNA. UVA (320 to 400) is not readily absorbed and is less active. Below 200 nm is absorbed by air.",
+        "UV makes <b>thymine dimers</b> in DNA → mutation in a critical gene → cell death unless repaired.",
+        "<b>Light repair (photoreactivation):</b> visible light activates <b>photolyases</b>, which split the dimers. <b>Dark repair</b> needs no light: <b>endonuclease</b> removes the dimers, <b>DNA polymerase</b> replaces the nucleotides, and <b>DNA ligase</b> seals the backbone.",
+        "UV is used to sterilize heat-labile solutions, decontaminate hospital operating rooms and food-processing areas, and disinfect water. Its limit: <b>poor penetrating ability</b>."],
+      more:[["The UV spectrum", "spectrum", []], ["How UV kills", "dimer", ["This is why the Light plate matters: if light repair works, the Light plate should grow more than the Dark plate."]],
+        ["What your two plates test", null, ["<b>C vs. 30 and 60:</b> did UV penetrate the foil? <b>30 vs. 60:</b> does more UV kill more? <b>Dark vs. Light:</b> does light after UV help survival (light repair)?", "Your hypotheses: \"UV radiation ___ bacteria. Incubation in light will increase/decrease/not affect survival.\" and \"The bacterial species that will survive UV radiation the best is ___.\""]]],
+      quiz:[
+        q("Which UV range is the most lethal?", ["UVC, 200 to 290 nm", "UVA, 320 to 400 nm", "UVB, 290 to 320 nm", "Below 200 nm"], 0, "DNA absorbs it best. Our lamp: 260 nm."),
+        q("What happens to UV below 200 nm?", ["It's absorbed by air and doesn't reach living organisms", "It's the most lethal", "It passes through foil", "It repairs DNA"], 0, "That's why our lamp uses 260 nm."),
+        q("UV vs. X rays: which statement is right?", ["UV is nonionizing; X rays and gamma rays are ionizing and make free radicals that break DNA", "UV is ionizing", "X rays make thymine dimers only", "They have the same energy"], 0, "UV has less energy and a longer wavelength."),
+        q("What damage does UV cause in DNA?", ["Thymine dimers", "Double-strand breaks from free radicals", "Extra phosphate groups", "Protein coagulation"], 0, "Dimers → mutation → death unless repaired."),
+        q("What is light repair?", ["Visible light activates photolyases, which split the dimers", "Endonuclease cuts out the dimers in the dark", "UV light repairs DNA", "Heat repairs DNA"], 0, "Also called photoreactivation."),
+        q("Which enzymes carry out dark repair?", ["Endonuclease, DNA polymerase, and DNA ligase", "Photolyases only", "Catalase and oxidase", "Amylase and gelatinase"], 0, "Dark repair doesn't need light."),
+        q("What is the main limit of UV?", ["Poor penetrating ability", "It's too expensive", "It only works in water", "It's ionizing"], 0, "Today you test whether UV gets through aluminum foil."),
+        q("Why is the lid removed under the lamp?", ["UV penetrates poorly, so the lid would block it", "So the plate dries out", "To let air in", "It isn't removed"], 0, "Your manual asks this one. Write it in your notebook!"),
+        q("For the first 30 seconds, the foil covers…", ["C and 30", "C only", "All three strips", "Nothing"], 0, "Then slide it to cover only C for the second 30 sec."),
+        q("Which strip is covered by foil the whole time?", ["C, the control", "30", "60", "None"], 0, "C shows what growth looks like with no UV."),
+        q("In your manual's table, Dark 30 = A, Light 30 = B, and Dark 60 = …", ["C", "D", "A", "B"], 0, "From the class slides."),
+        q("The Light plate grew more than the Dark plate. That's evidence of…", ["Light repair: photolyases split the dimers", "Dark repair", "Contamination", "UV penetrating the foil"], 0, "If they look the same, there's no clear light repair."),
+        q("Where does the Light plate go?", ["The tray labeled \"Light,\" at room temperature", "The back room", "The 37°C incubator", "The fridge"], 0, "The Dark plate goes to the back room. Both stay at room temperature."),
+        q("Which species is expected to survive UV least?", ["Staphylococcus epidermidis: no endospores and no strong pigment", "Bacillus subtilis", "Micrococcus luteus", "Serratia marcescens"], 0, "Spores (B. subtilis) and pigments (M. luteus, S. marcescens) may protect."),
+        q("Name one use of UV.", ["Disinfecting water", "Sterilizing the inside of a sealed bottle", "Killing bacteria through foil", "Pasteurizing milk"], 0, "Also: heat-labile solutions, operating rooms, food-processing areas.")]},
+    dis:{tab:"24: Disinfectants", title:"Chemical Methods of Control: Disinfectants and Antiseptics", ex:"Exercise 24", render:renderDis,
+      question:"How long does a disinfectant or antiseptic need to kill bacteria, and does it work equally on every organism?",
+      how:["<b>Disinfectants</b> are used on inanimate objects to lower the level of microbes on their surfaces. <b>Antiseptics</b> are used on living tissue to decrease the number of microbes.",
+        "<b>Bactericidal</b> agents result in bacterial death. <b>Bacteriostatic</b> agents cause temporary inhibition of growth.",
+        "No single chemical is best in all situations. Important criteria: <b>concentration</b>, <b>length of contact</b>, and whether it is <b>-cidal or -static</b>. Also consider pH, solubility, toxicity, organic material present, and cost.",
+        "<b>Decimal reduction time (DRT):</b> the time to kill 90% of the microbial population. Determine it for the most common and persistent microbes at a health care facility before choosing a disinfectant.",
+        "<b>The use-dilution test:</b> dip metal rings in culture and dry them, place them in disinfectant for 10 min at 20°C, then transfer them to nutrient medium. Growth shows how effective it is. The disinfectant is used at the manufacturer's recommended concentration. The test is limited to bactericidal compounds: it <b>cannot evaluate bacteriostatic</b> compounds.",
+        "Today is a <b>modified</b> use-dilution test: a loopful moves from each tube to a plate at each time point."],
+      more:[["Your hypothesis", null, ["\"The disinfectants tested will kill all bacteria in ___ minutes.\"", "Cultures, as assigned: <i>Escherichia coli</i>, <i>Staphylococcus epidermidis</i>, <i>Pseudomonas aeruginosa</i>, <i>Staphylococcus aureus</i>. Work with another group: same chemical, two different bacteria."]]],
+      quiz:[
+        q("What is the difference between a disinfectant and an antiseptic?", ["Disinfectants go on inanimate objects; antiseptics go on living tissue", "Disinfectants are stronger", "Antiseptics go on surfaces", "There is no difference"], 0, "From the class slides."),
+        q("A bacteriostatic agent…", ["Temporarily inhibits growth", "Kills bacteria", "Kills endospores", "Sterilizes"], 0, "Bactericidal agents kill."),
+        q("Which can the use-dilution test evaluate?", ["Bactericidal compounds only", "Bacteriostatic compounds only", "Both", "Neither"], 0, "Growth after exposure only shows whether cells were killed."),
+        q("In the standard use-dilution test, the rings sit in disinfectant for…", ["10 min at 20°C", "20 min at 37°C", "2.5 min at 4°C", "15 min at 121°C"], 0, "Then they go to nutrient medium."),
+        q("What concentration is the disinfectant used at?", ["The concentration the manufacturer recommends", "Full strength always", "Diluted 1:1000", "Whatever is left in the bottle"], 0, "Dilute the test substance to the strength it's normally used at."),
+        q("What is the decimal reduction time (DRT)?", ["The time to kill 90% of the microbial population", "The time to kill 100%", "The dilution of the disinfectant", "The time before growth starts"], 0, "Determine it for the most common, persistent microbes before choosing a disinfectant."),
+        q("What is the 0 sector?", ["Bacteria with no chemical: the control", "The longest exposure", "Lab disinfectant at 0 minutes", "An empty sector"], 0, "No growth on 0 means the control failed."),
+        q("When do you transfer a loopful from each tube?", ["At 2.5, 5, 10, and 20 minutes", "At 1, 2, 3, and 4 minutes", "Only at 20 minutes", "At 10 minutes only"], 0, "Flame your loop between every transfer."),
+        q("How much culture goes into each 5 ml tube?", ["0.5 ml", "5 ml", "1 loopful", "10 ml"], 0, "Aseptically add 0.5 ml of the assigned culture to each tube."),
+        q("Growth fades, then stops at 10 min. What does that mean?", ["That's about how long the chemical needs to kill this bacterium", "It never killed the bacterium", "The control failed", "It killed it in 2.5 min or less"], 0, "Growth stops at one time point = the kill time."),
+        q("Your two bacteria give different results with the same chemical. What does that show?", ["The same chemical does not work equally on every organism", "One group made a mistake", "The chemical was contaminated", "Both should always match"], 0, "That's why there's no single best disinfectant."),
+        q("What does D stand for on the plate labels?", ["Laboratory disinfectant", "Dilution", "Dead", "Day"], 0, "The other plate is for the test substance.")]},
+    drugs:{tab:"25: Kirby-Bauer", title:"Chemical Methods of Control: Antimicrobial Drugs", ex:"Exercise 25", render:renderKB,
+      question:"Which antimicrobial drugs inhibit each bacterium, and are they equally effective against gram-positive and gram-negative bacteria?",
+      how:["<b>Antibiotic:</b> a substance produced by a microorganism that inhibits other microorganisms. <b>Antimicrobial drug:</b> any chemical, natural or synthetic, used in the body to kill or inhibit microbes. <b>MIC</b> (minimum inhibitory concentration): the lowest concentration of a drug that inhibits growth.",
+        "Disinfectants and antiseptics (Ex 24) go <b>on</b> surfaces and skin. Antimicrobial drugs go <b>into</b> the patient.",
+        "<b>1928:</b> Alexander Fleming sees <i>Penicillium</i> mold inhibit <i>Staphylococcus</i>. <b>1940:</b> Selman Waksman isolates streptomycin, made by an actinomycete. <b>Today:</b> <i>Streptomyces</i> bacteria produce nearly 70% of all antibiotics.",
+        "Each paper disk holds a known amount of one drug. The drug diffuses into the agar and is most concentrated next to the disk. Where it's above the MIC, bacteria can't grow: that clear ring is the <b>zone of inhibition</b>.",
+        "Zone size depends on the diffusion rate of the drug, the growth rate of the organism, and how susceptible the organism is. So the method is standardized: <b>Mueller-Hinton agar</b> every time (it lets the drug diffuse freely) and complete plate coverage.",
+        "A bigger zone is not always a better drug: every drug has its own cutoffs in <b>Table 25.1</b>. <b>S</b> = standard dose should work. <b>I</b> = may work at a higher dose or where the drug concentrates. <b>R</b> = not likely to work."],
+      more:[["How the test works", "kb", []],
+        ["From the bench to the bedside", null, ["Culture and sensitivity (C&S) reports use this same S, I, R language. Collect cultures <b>before</b> the first antibiotic dose, or results can be wrong. Results let the team switch to the right, narrowest drug, and using the right drug slows antibiotic resistance."]],
+        ["Your setup", null, ["Cultures: <i>Staphylococcus epidermidis</i>, <i>Escherichia coli</i>, <i>Pseudomonas aeruginosa</i> (BSL-2). Disks: penicillin (P), ampicillin (AM), erythromycin (E), tetracycline (Te), chloramphenicol (C), streptomycin (S).",
+          "Hypotheses (agree or disagree): 1. All antibiotics will be equally effective against gram-positive and gram-negative bacteria. 2. All antibiotics will be equally effective against gram-negative <i>E. coli</i> and <i>P. aeruginosa</i>."]]],
+      quiz:[
+        q("What is an antibiotic?", ["A substance produced by a microorganism that inhibits other microorganisms", "Any synthetic drug", "A disinfectant", "The lowest concentration that inhibits growth"], 0, "An antimicrobial drug can be natural or synthetic."),
+        q("What is the MIC?", ["The lowest concentration of a drug that inhibits growth", "The highest safe dose", "The zone diameter", "The disk size"], 0, "Minimum inhibitory concentration."),
+        q("Who isolated streptomycin, made by an actinomycete, in 1940?", ["Selman Waksman", "Alexander Fleming", "Ignaz Semmelweis", "Louis Pasteur"], 0, "Fleming saw Penicillium inhibit Staphylococcus in 1928."),
+        q("Which bacteria produce nearly 70% of all antibiotics?", ["Streptomyces", "Penicillium", "Escherichia", "Bacillus"], 0, "Streptomyces are actinomycetes."),
+        q("Why use Mueller-Hinton agar?", ["It allows the antimicrobial agent to diffuse freely", "It's selective for staph", "It changes color", "It's cheaper"], 0, "It's part of the standardized method."),
+        q("How do you swab the lawn?", ["Three directions: no gaps, then perpendicular, then at 45° to the first", "One direction only", "Just the center", "Stab with a needle"], 0, "Complete plate coverage. Then let it stand at least 5 minutes."),
+        q("How far apart do the disks go?", ["At least 24 mm apart", "Touching", "At least 5 mm apart", "Distance doesn't matter"], 0, "Up to 6 disks per plate."),
+        q("How do you sterilize the forceps?", ["Dip in alcohol and burn it off, holding the forceps pointed down", "Hold them in the flame until red-hot", "Wipe them on your coat", "Rinse in water"], 0, "Keep the beaker of alcohol away from the flame."),
+        q("How do you measure a zone?", ["Diameter in mm with a ruler on the underside (or radius × 2)", "Radius in cm on the lid", "Count the colonies", "Estimate by eye"], 0, "Then compare to Table 25.1."),
+        q("Colonies are growing inside a zone of inhibition. They are…", ["Resistant", "Susceptible", "Contaminants that don't matter", "Dead"], 0, "From the class slides: colonies inside a zone are resistant."),
+        q("Is a bigger zone always a better drug?", ["No: every drug diffuses differently, so each has its own cutoffs", "Yes, always", "Only for gram-negatives", "Only on blood agar"], 0, "The same zone size can be S for one drug and R for another."),
+        q("What does \"I\" (intermediate) mean?", ["May work at a higher dose or where the drug concentrates", "Standard dose should work", "Not likely to work", "The test failed"], 0, "S = should work, R = not likely to work."),
+        q("When should cultures for a C&S be collected?", ["Before the first antibiotic dose", "After a week of antibiotics", "Only after symptoms go away", "It doesn't matter"], 0, "Otherwise results can be wrong."),
+        q("Antimicrobial drugs vs. disinfectants: which goes into the patient?", ["Antimicrobial drugs", "Disinfectants", "Antiseptics", "Both disinfectants and antiseptics"], 0, "Disinfectants and antiseptics go on surfaces and skin.")]},
+    hands:{tab:"26: Hand scrubbing", title:"Effectiveness of Hand Scrubbing", ex:"Exercise 26", render:renderHands,
+      question:"How well do water and soap remove bacteria from your hands, and why never all of them?",
+      how:["<b>Normal (resident) microbiota:</b> permanent residents of the skin (the skin microbiome). <b>Transient microbiota:</b> picked up from contact with the environment.",
+        "<b>Semmelweis, 1846:</b> handwashing cut puerperal fever deaths from 12% to 1.2%. The <b>CDC</b>: handwashing is the single most important way to prevent infection.",
+        "A clinical scrub of <b>3 to 5 minutes</b> with antimicrobial soap removes transient microbiota, but <b>not all resident</b> microbiota. Skin is never sterile, which is why surgeons also wear gloves.",
+        "<b>Water only:</b> colony counts drop some with each wash as transient bacteria rinse off. <b>Soap:</b> counts usually drop faster, because soap lifts oils and debris that hold bacteria. <b>Never zero?</b> Expected! Resident microbiota live deeper in skin layers and hair follicles."],
+      more:[["Reading your plates", null, ["Water plate: 4 sections. Soap plate: 5 sections. Read the sections in the order you touched them, count colonies in each (or estimate if crowded), note different colony types (color, size, shape), and compare the water trend to the soap trend.", "In your notebook: record colony counts for every section of both plates, then answer the Exercise 26 Conclusions and Questions from your lab manual."]]],
+      quiz:[
+        q("What are transient microbiota?", ["Microbes picked up from contact with the environment", "Permanent residents of the skin", "Bacteria inside hair follicles only", "Endospores"], 0, "Resident microbiota are the permanent skin microbiome."),
+        q("What did Semmelweis show in 1846?", ["Handwashing cut puerperal fever deaths from 12% to 1.2%", "Penicillin kills staph", "UV kills bacteria", "Soap sterilizes skin"], 0, "One of the first proofs that hand hygiene saves lives."),
+        q("According to the CDC, what is the single most important way to prevent infection?", ["Handwashing", "Antibiotics", "Masks", "Vaccines"], 0, "From the class slides."),
+        q("A 3 to 5 minute clinical scrub with antimicrobial soap removes…", ["Transient microbiota, but not all resident microbiota", "All microbes on the skin", "Only resident microbiota", "Nothing"], 0, "That's why surgeons also wear gloves."),
+        q("Why do soap counts usually drop faster than water counts?", ["Soap lifts oils and debris that hold bacteria", "Soap is hotter", "Water adds bacteria", "Soap sterilizes the hands"], 0, "Soap helps remove what bacteria cling to."),
+        q("Why do counts never reach zero?", ["Resident microbiota live deeper in skin layers and hair follicles", "The plates were contaminated", "Water adds bacteria", "You need 30 minutes of scrubbing"], 0, "Skin is never sterile."),
+        q("How many sections are on the water plate and the soap plate?", ["Water: 4, soap: 5", "Water: 5, soap: 4", "Both: 4", "Both: 5"], 0, "Read them in the order you touched them."),
+        q("Why do surgeons wear gloves even after scrubbing?", ["Skin is never sterile", "Gloves are warmer", "Scrubbing adds bacteria", "Gloves replace scrubbing"], 0, "Resident microbiota survive the scrub."),
+        q("What should you note besides the number of colonies?", ["Different colony types: color, size, and shape", "The smell", "The plate's weight", "Nothing else"], 0, "Different types suggest different organisms.")]}
+  };
+
+  MicroLab.page({title:"Controlling Microbes", chap:"Exercises 22 to 26", tabs:TABS, pics:PICS});
+})();
+</script>
+</body>
+</html>

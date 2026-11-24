@@ -167,7 +167,6 @@
     safranin:{label:"Safranin", g:"stain", c:"#d8456b", code:"S", name:["Safranin"]},
     mb:{label:"Methylene blue", g:"stain", c:"#2a4fb0", code:"MB", name:["Methylene", "blue"]},
     mg:{label:"Malachite green", g:"stain", c:"#2f9e4f", code:"MG", name:["Malachite", "green"]},
-    cf:{label:"Carbolfuchsin", g:"stain", c:"#c2185b", code:"CF", name:["Carbol-", "fuchsin"]},
     eosin:{label:"Eosin", g:"stain", c:"#e0507a", code:"E", name:["Eosin"]}
   };
   /* what to do on the bench for each step (used by the hint button) */
@@ -183,7 +182,6 @@
   const DISTRACT = {
     mb:"Methylene blue is a simple stain. It isn't part of this procedure.",
     mg:"Malachite green is the endospore stain. It isn't part of this procedure.",
-    cf:"Carbolfuchsin is the acid-fast stain. It isn't part of this procedure.",
     cv:"Crystal violet isn't part of this procedure.",
     safranin:"Safranin isn't part of this procedure.",
     eosin:"Eosin is an acidic dye. Acidic dyes are repelled by the negatively charged cell surface, so they don't stain the cells directly. Use a basic dye.",
@@ -242,7 +240,7 @@
         "<b>Gram-positive = purple.</b> The thick peptidoglycan traps the crystal violet-iodine complex. <b>Gram-negative = pink.</b> Ethanol dissolves the outer lipid membrane, and the complex washes out of the thin peptidoglycan.",
         "Decolorizing is the <b>trickiest step</b>: ethanol until the runoff runs clear (about 10 seconds), and don't overdo it. It guides antibiotic choice before culture results are back."],
       cultures:[{o:"se", src:"slant", sub:"slant"}, {o:"bs", src:"slant", sub:"slant"}, {o:"ec", src:"broth", sub:"broth"}],
-      pal:{slide:["water", "loopflame", "open", "take", "close", "cells", "dry", "flame", "rinse", "blot"], stain:["cv", "iodine", "etoh", "safranin", "mb", "mg", "cf"]},
+      pal:{slide:["water", "loopflame", "open", "take", "close", "cells", "dry", "flame", "rinse", "blot"], stain:["cv", "iodine", "etoh", "safranin", "mb", "mg"]},
       seq:c => prep(c)
         .concat(reagent("cv", "Crystal violet", "Cover the smear with crystal violet (the primary stain) for 60 seconds.", "60 seconds", "#5a2a98"))
         .concat(reagent("iodine", "Gram's iodine", "Cover the smear with Gram's iodine (the mordant) for 30 seconds.", "30 seconds", "#8a5a1a"))
@@ -268,7 +266,7 @@
         "<b>Endospores = green. Vegetative cells = pink/red.</b> A 72-hour culture has more endospores than a 24-hour culture."],
       cultures:[{o:"bs", age:"24-hr", spore:"some", frac:.2}, {o:"bs", age:"72-hr", spore:"many", frac:.72}, {o:"bm", age:"24-hr", spore:"some", frac:.24},
         {o:"ec", age:"24-hr", spore:"none", frac:0}, {o:"ec", age:"72-hr", spore:"none", frac:0}, {o:"ea", age:"24-hr", spore:"none", frac:0}],
-      pal:{slide:["loopflame", "open", "take", "close", "cells", "dry", "flame", "paper", "steam", "addstain", "unpaper", "rinse", "blot"], stain:["mg", "safranin", "cv", "mb", "cf"]},
+      pal:{slide:["loopflame", "open", "take", "close", "cells", "dry", "flame", "paper", "steam", "addstain", "unpaper", "rinse", "blot"], stain:["mg", "safranin", "cv", "mb"]},
       seq:c => prep(c).concat([
         st("paper", "Malachite green + steam", "Lay a small piece of absorbent paper over the smear.", "The paper holds the stain on the smear while it steams."),
         st("mg", "Malachite green + steam", "Cover the paper with malachite green.", "", {wait:"stain applied", color:"#2f9e4f"}),
@@ -279,7 +277,7 @@
         st("rinse", "Safranin", "Wash with distilled water.", "Rinse after the counterstain."),
         st("blot", "Safranin", "Blot gently dry.", "Blot, don't rub.")]),
       quiz:[
-        q("What are the primary stain and the counterstain in the endospore stain?", ["Malachite green and safranin", "Crystal violet and safranin", "Carbolfuchsin and methylene blue", "Methylene blue and eosin"], 0, "Malachite green goes into the spores, and safranin colors the vegetative cells."),
+        q("What are the primary stain and the counterstain in the endospore stain?", ["Malachite green and safranin", "Crystal violet and safranin", "Crystal violet and iodine", "Methylene blue and eosin"], 0, "Malachite green goes into the spores, and safranin colors the vegetative cells."),
         q("Why is the slide steamed with malachite green?", ["Heat drives the stain into the endospore", "To kill the vegetative cells", "To dry the smear", "To remove the stain"], 0, "The spore coat is impermeable, so simple stains can't get in."),
         q("What color are endospores and vegetative cells?", ["Endospores green, vegetative cells pink/red", "Endospores pink/red, vegetative cells green", "Both purple", "Both blue"], 0, "Malachite green stays in the spores. Safranin colors the vegetative cells."),
         q("What are the red structures in an endospore stain?", ["Vegetative cells", "Endospores", "Capsules", "Flagella"], 0, "Vegetative cells take up the safranin counterstain."),
