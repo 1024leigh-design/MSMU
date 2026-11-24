@@ -305,7 +305,8 @@
       <p class="labq" style="margin:0 0 6px">Record colony appearance, <b>pigment</b> (a color made by the cells), and <b>mannitol fermentation</b> (yellow change in the indicator around colonies). Then pick a colony with a yellow halo.</p>
       <div class="bench2"><div class="panel tight" id="sPlate" style="max-width:380px;justify-self:center;width:100%"></div><div><div class="benchhint" id="sMsg" role="status">Tap a colony.</div><div id="sNext"></div></div></div>
       <div class="sect">Day 3: identification</div>
-      <div class="cards"><div class="card"><h4>Coagulase</h4><p>An enzyme that clots fibrin in blood. The coagulase test separates <i>S. aureus</i> from other <i>Staphylococcus</i> species.</p></div><div class="card"><h4>Fermentation tubes</h4><p>The last step after coagulase, from the class plan: "coagulase + fermentation."</p></div><div class="card"><h4><i>S. aureus</i></h4><p>Golden yellow colonies. Part of the normal skin microbiota, and also a pathogen. Makes coagulase.</p></div></div>
+      <p class="labq" style="margin:0 0 6px">Day 3 is short: drop the coagulase reagent onto your colonies on the plate and watch for clotting. Coagulase is an enzyme that clots fibrin in blood, and it separates <i>S. aureus</i> from other <i>Staphylococcus</i> species.</p>
+      <div id="sCoag"></div>
       <div class="sect">From the bench to the bedside</div>
       <div class="cards"><div class="card"><p><i>S. aureus</i> causes skin and wound infections and can spread to blood and bone. Many carriers have it in the nose with no symptoms.</p></div><div class="card"><p><b>MRSA</b> (methicillin-resistant <i>S. aureus</i>) is a major healthcare-associated infection. Resistance is checked with a Kirby-Bauer test, like Ex 25.</p></div><div class="card"><p>Ex 26 showed handwashing removes transient bacteria. Ex 45 shows what lives on skin permanently. Hand hygiene between patients stops you from carrying one patient's <i>S. aureus</i> to the next.</p></div></div>`;
     orderGame($("sOrder"), [
@@ -341,6 +342,16 @@
       };
     };
     drawPlate();
+    pictureGame($("sCoag"), [
+      {svg:coagSVG(true), ask:"You dropped coagulase reagent on this colony. What's the result?", opts:["Coagulase-positive: it clotted, so it's S. aureus", "Coagulase-negative: another Staphylococcus", "Catalase-positive", "Mannitol fermenter"], a:0, why:"Clotting = coagulase-positive. Coagulase is what separates S. aureus from the other staph."},
+      {svg:coagSVG(false), ask:"No clotting after the coagulase reagent. What's the result?", opts:["Coagulase-negative: a Staphylococcus other than S. aureus, like S. epidermidis", "Coagulase-positive: S. aureus", "The colony is dead", "Gram-negative"], a:0, why:"No clot = coagulase-negative."}], {picW:300, keepOrder:true});
+  }
+  /* coagulase on a colony: clumped (clotted) vs. smooth */
+  function coagSVG(pos){
+    let inner = `<circle cx="150" cy="120" r="70" fill="${C_YEL}" opacity=".8"/><circle cx="150" cy="120" r="36" fill="${pos ? "#e8b52a" : "#f7f3ea"}" stroke="#b8a067"/>`;
+    inner += `<ellipse cx="150" cy="120" rx="44" ry="40" fill="#f6e3c8" opacity=".55" stroke="#d9b98a"/>`;
+    if (pos) inner += Array.from({length:16}, (_, i) => `<circle cx="${f1(122 + rnd(i + 3) * 56)}" cy="${f1(92 + rnd(i + 30) * 56)}" r="${f1(4 + rnd(i + 8) * 5)}" fill="#c9a26a" opacity=".85"/>`).join("");
+    return `<svg class="gsvg" viewBox="0 0 300 260" role="img" aria-label="${pos ? "Clotted" : "Smooth"} coagulase drop on a colony">${plateSVG(150, 120, 105, "#ef9a8c", inner)}${T(150, 252, pos ? "Clumps: it clotted" : "Smooth: no clot", {fs:14, c:pos ? "#1b7f4e" : "#b83a34"})}</svg>`;
   }
 
   /* ================================================================= theory pictures */
@@ -412,7 +423,7 @@
         "<b>Mannitol salt agar (MSA)</b> is <b>selective</b>: high salt lets only salt-tolerant organisms grow. It is <b>differential</b>: mannitol fermenters make acid, the pH drops, and phenol red turns <b>yellow</b>. <i>S. aureus</i>: yellow halo (ferments). <i>S. epidermidis</i>: stays red (grows only).",
         "<b>Pigment vs. indicator:</b> pigment is a color made by the cells themselves. Mannitol fermentation is a yellow change in the <b>agar around</b> the colony.",
         "<i>Staphylococcus aureus</i> forms golden yellow colonies, is part of the normal skin microbiota, and is also a pathogen. It makes <b>coagulase</b>, an enzyme that clots fibrin in blood. The coagulase test separates <i>S. aureus</i> from other <i>Staphylococcus</i> species.",
-        "Three periods: <b>Day 1</b> swab and streak on MSA. <b>Day 2</b> Gram stain and catalase on a yellow-halo colony, then subculture. <b>Day 3</b> coagulase and fermentation."],
+        "Three periods: <b>Day 1</b> swab and streak on MSA. <b>Day 2</b> Gram stain and catalase on a yellow-halo colony, then subculture. <b>Day 3</b> drop coagulase on your colonies: clotting = <i>S. aureus</i>."],
       more:[["Day 2 safety", null, ["BSL-2: these bacteria could be pathogens. Gloves on, and keep cultures on the bench.", "Do not subculture a colony that hasn't been tested for catalase."]],
         ["Your notebook", null, ["Hypothesis (from the manual): \"You will culture ___ from your skin.\" Write down the exact spot you swabbed: that's your source of inoculum. Leave room for the First Mannitol Salt Plate table (colony description, pigment, mannitol fermentation)."]]],
       quiz:[
@@ -428,6 +439,7 @@
         q("How do you inoculate the MSA plate?", ["Swab one-third, streak back and forth into it with a loop, then sterilize the loop and spread over the rest", "Swab the whole plate", "Stab it with a needle", "Pour the swab into the agar"], 0, "Thirds of the plate: swab, loop, spread."),
         q("How do you do the catalase test on Day 2?", ["Suspend a colony in a loopful of water on a slide with a toothpick, then add a drop of 3% H₂O₂", "Add H₂O₂ to the MSA plate", "Rub the colony on an oxidase strip", "Add Kovac's reagent"], 0, "Bubbles = catalase-positive."),
         q("Which colony do you subculture onto a second MSA plate?", ["A catalase-positive, gram-positive coccus from a yellow-halo colony", "Any colony", "A colony that hasn't been tested yet", "A red, no-halo colony only"], 0, "Never subculture a colony that hasn't been tested for catalase."),
+        q("You drop coagulase reagent on a yellow-halo colony and it clots. What is it?", ["Staphylococcus aureus", "Staphylococcus epidermidis", "Micrococcus luteus", "Propionibacterium"], 0, "Coagulase-positive = S. aureus."),
         q("What is MRSA?", ["Methicillin-resistant Staphylococcus aureus", "A mannitol salt agar recipe", "A type of skin pH", "A gram-negative rod"], 0, "Resistance is checked with a Kirby-Bauer test, like Ex 25.")]}
   };
 

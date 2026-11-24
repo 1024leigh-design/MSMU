@@ -303,9 +303,12 @@
         <div><div class="benchsteps" id="kSteps"></div><div class="benchhint" id="kMsg" role="status"></div><div class="row" id="kBtns"></div><div id="kMeasure"></div></div></div>
       <div class="tblwrap" style="margin-top:12px"><table class="tbl" id="kTable"></table></div>
       <details class="howbox" style="margin-top:12px" open><summary>Practice cutoffs (zone diameter in mm)</summary>
-        <p style="margin:8px 0">Every drug has its own cutoffs. These practice values follow the classic CLSI chart. <b>For quizzes and your report, use Table 25.1 in your lab manual.</b></p>
+        <p style="margin:8px 0">Every drug has its own cutoffs. These practice values follow the classic CLSI chart. On the final, use the chart you're given.</p>
         <div class="tblwrap"><table class="tbl"><tr><th>Drug (code)</th><th>Resistant</th><th>Intermediate</th><th>Susceptible</th></tr>${DRUGS.map(([c, n]) => `<tr><td>${n} (${c})${c === "P" ? " <span class='mini'>staphylococci</span>" : ""}</td><td>≤ ${CUT[c][0]}</td><td>${CUT[c][1] - CUT[c][0] === 1 ? "none" : `${CUT[c][0] + 1} to ${CUT[c][1] - 1}`}</td><td>≥ ${CUT[c][1]}</td></tr>`).join("")}</table></div></details>
-      <div class="sect">2. Your hypotheses</div><div id="kHyp"></div>`;
+      <div class="sect">2. Practice: S, I, or R?</div>
+      <p class="labq" style="margin:0 0 6px">Use the chart above. Compare the zone to the cutoffs for <b>that drug</b>: the same zone can be S for one drug and R for another.</p>
+      <div class="pad"><p class="qq" id="kdQ" style="margin:0 0 8px"></p><div class="ans" id="kdA"></div><div class="benchhint" id="kdMsg" role="status"></div><div class="row"><button class="btn primary sm" id="kdNext">Next zone</button><span class="score" id="kdScore"></span></div></div>
+      <div class="sect">3. Your hypotheses</div><div id="kHyp"></div>`;
     const PX = 3.3, CX = 160, CY = 170, R = 45;          /* plate is 90 mm across; 1 mm = 3.3 px */
     let org = "ecoli", ph, swabs, disks, sel, rec;
     const svgEl = () => $("kStage").querySelector("svg");
@@ -395,7 +398,7 @@
         draw(); measure();
       });
     }
-    const sirHTML = c => { const r0 = rec[c] || {}; return `<p class="qq" style="margin:8px 0 6px">Practice cutoffs for ${c}: ${cutTxt(c)}. So this zone is…</p><div class="ans">${["S", "I", "R"].map(v => `<button data-sir="${v}" class="${r0.s && v === sir(c, KORG[org].z[c]) ? "right" : ""}" ${r0.s ? "disabled" : ""}>${v === "S" ? "S: susceptible" : v === "I" ? "I: intermediate" : "R: resistant"}</button>`).join("")}</div>`; };
+    const sirHTML = c => { const r0 = rec[c] || {}; return `<p class="qq" style="margin:8px 0 6px">Practice cutoffs for ${DRUGS.find(d => d[0] === c)[1]} (${c}): ${cutTxt(c)}. So this zone is…</p><div class="ans">${["S", "I", "R"].map(v => `<button data-sir="${v}" class="${r0.s && v === sir(c, KORG[org].z[c]) ? "right" : ""}" ${r0.s ? "disabled" : ""}>${v === "S" ? "S: susceptible" : v === "I" ? "I: intermediate" : "R: resistant"}</button>`).join("")}</div>`; };
     body.onclick = e => {
       const o = e.target.closest("[data-o]"); if (o){ org = o.dataset.o; chips(); reset(); hyp(); return; }
       const sw = e.target.closest("[data-sw]");
@@ -421,7 +424,7 @@
       if (sr && sel){
         const right = sir(sel, KORG[org].z[sel]);
         if (sr.dataset.sir === right){ rec[sel].s = true; draw(); measure(); const n = DRUGS.filter(([c]) => rec[c] && rec[c].s).length; msg(n === 6 ? `All 6 read for <i>${KORG[org].s}</i>! Switch cultures to get the other two bacteria, like getting data from classmates.` : `Yes, <b>${right}</b>. ${right === "R" ? "This drug is not likely to work." : right === "I" ? "It may work at a higher dose or where the drug concentrates." : "A standard dose should work."} Tap another disk.`, "good"); }
-        else { sr.classList.add("wrong"); sr.disabled = true; msg(`Compare ${KORG[org].z[sel]} mm to the cutoffs: ${cutTxt(sel)}.`, "warn"); }
+        else { sr.classList.add("wrong"); sr.disabled = true; msg(`Compare ${KORG[org].z[sel]} mm to the ${DRUGS.find(d => d[0] === sel)[1]} cutoffs: ${cutTxt(sel)}.`, "warn"); }
       }
     };
     function hyp(){
@@ -436,7 +439,27 @@
       DRUGS.forEach(([c], i) => { const y = 74 + i * 24; s += T(10, y, c, {a:"start", fs:13}); ["sepi", "ecoli", "paer"].forEach((o, j) => { const z = KORG[o].z[c], v = sir(c, z); s += T(cols[j + 1][1], y, `${z} ${v}`, {a:"start", fs:13, w:700, c:v === "S" ? "#1b7f4e" : v === "I" ? "#9a6212" : "#b83a34"}); }); });
       return `<svg class="gsvg" viewBox="0 0 400 220" role="img" aria-label="Practice zone table">${s}</svg>`;
     }
-    chips(); bindDrag(); reset(); hyp();
+    /* S, I, R drill: zones land near the cutoffs so students have to check the chart */
+    let dq = null, dRight = 0, dTried = 0, dFirst = true;
+    const drill = () => {
+      const [c, n] = DRUGS[Math.floor(Math.random() * DRUGS.length)], [r, sMin] = CUT[c];
+      const pool = [r - 3, r - 1, r, r + 1, sMin - 1, sMin, sMin + 2, sMin + 5].filter(z => z >= 6);
+      let z; do { z = pool[Math.floor(Math.random() * pool.length)]; } while (dq && dq.c === c && dq.z === z);
+      dq = {c, n, z}; dFirst = true;
+      $("kdQ").innerHTML = `${n} (${c}): zone diameter <b>${z} mm</b>. Is it S, I, or R?`;
+      $("kdA").innerHTML = ["S", "I", "R"].map(v => `<button data-dv="${v}">${v === "S" ? "S: susceptible" : v === "I" ? "I: intermediate" : "R: resistant"}</button>`).join("");
+      $("kdMsg").className = "benchhint"; $("kdMsg").innerHTML = `Find the ${n} (${c}) row in the chart.`;
+    };
+    $("kdA").onclick = e => {
+      const b = e.target.closest("[data-dv]"); if (!b || !dq) return;
+      const right = sir(dq.c, dq.z);
+      if (dFirst){ dTried++; if (b.dataset.dv === right) dRight++; dFirst = false; }
+      if (b.dataset.dv === right){ b.classList.add("right"); $("kdA").querySelectorAll("button").forEach(x => x.disabled = true); $("kdMsg").className = "benchhint good"; $("kdMsg").innerHTML = `<b>Yes: ${right}.</b> ${dq.n} cutoffs: ${cutTxt(dq.c)}, and ${dq.z} mm ${right === "R" ? `is at or below ${CUT[dq.c][0]}` : right === "S" ? `is at or above ${CUT[dq.c][1]}` : "falls in between"}.`; }
+      else { b.classList.add("wrong"); b.disabled = true; $("kdMsg").className = "benchhint warn"; $("kdMsg").innerHTML = `Check the ${dq.n} (${dq.c}) row again: ${cutTxt(dq.c)}.`; }
+      $("kdScore").textContent = `Right on the first try: ${dRight} of ${dTried}`;
+    };
+    $("kdNext").onclick = drill;
+    chips(); bindDrag(); reset(); hyp(); drill();
   }
 
   /* ================================================================= EXERCISE 26: hand scrubbing */
