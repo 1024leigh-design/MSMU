@@ -107,7 +107,7 @@ window.MicroLab = (function(){
   function ideas(title, cards, o){
     o = o || {};
     return (title ? `<div class="sect">${title}</div>` : "") + (o.lead ? `<p class="lead">${o.lead}</p>` : "") +
-      `<div class="cards">${cards.map(([h, p, tag]) => `<div class="card${o.vocab ? " vocab" : ""}"><h4>${h}</h4>${tag ? `<div class="tagline">${tag}</div>` : ""}<p>${p}</p></div>`).join("")}</div>`;
+      `<div class="ideas">${cards.map(([h, p, tag], i) => `<div class="idea c${(i + (o.shift || 0)) % 6}"><h4>${h}</h4>${tag ? `<span class="tagline">${tag}</span>` : ""}<p>${p}</p></div>`).join("")}</div>`;
   }
   /* ---------- tap-to-learn picture: any element with data-x="key" shows INFO[key] = [title, text] ---------- */
   function explore(host, svg, INFO, intro){
@@ -149,20 +149,21 @@ window.MicroLab = (function(){
     }
 
     function quizHTML(t){
-      return `<section class="quiz"><div class="quizhead"><h3>Test yourself</h3><button class="btn secondary sm" id="theoryBtn2">📖 Review the theory first</button></div>` + t.quiz.map((qq, i) => {
+      return `<section class="quiz"><div class="quizhead"><h3>Test yourself${t.quiz.length > 10 ? ` <span style="font-weight:400;font-size:.9rem;color:var(--muted)">(10 of ${t.quiz.length})</span>` : ""}</h3><div class="row" style="margin:0">${t.quiz.length > 10 ? `<button class="btn secondary sm" id="quizNew">🔀 New set of 10</button>` : ""}<button class="btn secondary sm" id="theoryBtn2">📖 Review the theory first</button></div></div>` + (t._cur = t.quiz.length > 10 ? shuffle(t.quiz).slice(0, 10) : t.quiz.slice()).map((qq, i) => {
         const order = qq.opts.map((_, k) => k).sort((a, b) => rnd(i * 7 + a + tabKey.length) - rnd(i * 7 + b + tabKey.length));
         return `<div class="qcard" data-q="${i}"><p class="qq">${i + 1}. ${qq.q}</p><div class="qopts">${order.map(k => `<button class="qopt" data-k="${k}">${qq.opts[k]}</button>`).join("")}</div><div class="qfb" hidden></div></div>`;
       }).join("") + `<p class="qscore" id="qScore"></p></section>`;
     }
     function bindQuiz(t){
       const box = $("quizBox"), got = {};
+      const nb = $("quizNew"); if (nb) nb.onclick = () => { box.innerHTML = quizHTML(t); bindQuiz(t); const b2 = $("theoryBtn2"); if (b2) b2.onclick = openTheory; box.scrollIntoView({behavior:"smooth", block:"start"}); };
       box.querySelectorAll(".qcard").forEach(card => card.addEventListener("click", e => {
         const b = e.target.closest(".qopt"); if (!b || card.classList.contains("done")) return;
-        const qq = t.quiz[+card.dataset.q], ok = +b.dataset.k === qq.a, fb = card.querySelector(".qfb");
+        const qq = t._cur[+card.dataset.q], ok = +b.dataset.k === qq.a, fb = card.querySelector(".qfb");
         if (ok){ card.classList.add("done"); b.classList.add("right"); fb.className = "qfb good"; fb.innerHTML = `<b>Yes!</b> ${qq.why}`; if (!(card.dataset.q in got)) got[card.dataset.q] = true; }
         else { b.classList.add("wrong"); b.disabled = true; fb.className = "qfb bad"; fb.innerHTML = "Not quite. Try another answer."; if (!(card.dataset.q in got)) got[card.dataset.q] = false; }
         fb.hidden = false;
-        if (box.querySelectorAll(".qcard.done").length === t.quiz.length) $("qScore").textContent = `Finished! ${Object.values(got).filter(Boolean).length} of ${t.quiz.length} right on the first try.`;
+        if (box.querySelectorAll(".qcard.done").length === t._cur.length) $("qScore").textContent = `Finished! ${Object.values(got).filter(Boolean).length} of ${t._cur.length} right on the first try.`;
       }));
     }
 

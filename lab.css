@@ -138,3 +138,17 @@
 [data-x]:hover{filter:brightness(.96)}
 [data-x].xsel .xhit{stroke:#f2b134;stroke-width:4}
 .xinfo{min-height:3.2em}
+
+/* main idea boxes: soft colored tiles, centered */
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:8px 0 6px}
+.idea{border-radius:18px;padding:16px 14px 15px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid rgba(29,36,51,.06)}
+.idea h4{margin:0;font-size:1.08rem;line-height:1.25;color:#1d2433}
+.idea p{margin:0;font-size:.97rem;line-height:1.48;color:#2b3242}
+.idea .tagline{display:inline-block;background:rgba(255,255,255,.8);border-radius:999px;padding:3px 11px;font-size:.84rem;font-weight:700;color:#7a4b00;margin:0}
+.idea.c0{background:#ebe8fb} .idea.c0 h4{color:#3d2f9e}
+.idea.c1{background:#fff2cf} .idea.c1 h4{color:#7a4b00}
+.idea.c2{background:#dcf2e6} .idea.c2 h4{color:#14593a}
+.idea.c3{background:#fde4e8} .idea.c3 h4{color:#8e2639}
+.idea.c4{background:#dfeefb} .idea.c4 h4{color:#1f4f86}
+.idea.c5{background:#f2e9fb} .idea.c5 h4{color:#5b3fb0}
+.lead{text-align:center;max-width:72ch;margin:0 auto 8px}

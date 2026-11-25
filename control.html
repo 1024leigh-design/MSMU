@@ -264,16 +264,117 @@
     return `<svg class="gsvg" viewBox="0 0 754 290" role="img" aria-label="The electromagnetic spectrum from gamma rays to radio waves, with a zoom into UV and visible light. Tap a band to learn more.">${s}</svg>`;
   }
 
+  /* ---------- DNA pictures: UV damage and repair ---------- */
+  const BASEC = {A:"#3fae5a", T:"#d9443a", G:"#d69a12", C:"#3f7bd1"}, TOP = "CGATTAGC", BOT = "GCTAATCG", DX = 22;
+  const wrapT = (x, y, text, n, o) => { o = o || {}; const words = text.split(" "), lines = [""]; words.forEach(w => { if ((lines[lines.length - 1] + " " + w).trim().length > n) lines.push(w); else lines[lines.length - 1] = (lines[lines.length - 1] + " " + w).trim(); }); return lines.map((l, i) => T(x, y + i * (o.lh || 16), l, o)).join(""); };
+  /* st: {dimer, cut:[a,b], excised, newb:[a,b], nick, breaks:[i], uv, light} */
+  function miniDNA(x, y, st){
+    st = st || {};
+    const cx = i => x + 11 + i * DX, gone = i => st.cut && i >= st.cut[0] && i <= st.cut[1], isD = i => st.dimer && (i === 3 || i === 4);
+    let g = "";
+    /* backbones */
+    const seg = (y0, a, b, col) => `<line x1="${a}" y1="${y0}" x2="${b}" y2="${y0}" stroke="${col || "#6d7686"}" stroke-width="4" stroke-linecap="round"/>`;
+    const left = x, right = x + 8 * DX;
+    if (st.cut){ g += seg(y, left, cx(st.cut[0]) - 11) + seg(y, cx(st.cut[1]) + 11, right); }
+    else if (st.dimer){ g += seg(y, left, cx(3) - 8) + `<path d="M${cx(3) - 8},${y} Q${cx(3) + 11},${y - 16} ${cx(4) + 8},${y}" fill="none" stroke="#6d7686" stroke-width="4" stroke-linecap="round"/>` + seg(y, cx(4) + 8, right); }
+    else if (st.breaks){ let last = left; st.breaks.forEach(bi => { const bx = cx(bi) + 11; g += seg(y, last, bx - 4) + `<path d="M${bx - 4},${y - 5} l3,5 l-3,5 M${bx + 4},${y - 5} l-3,5 l3,5" stroke="#b83a34" stroke-width="2" fill="none"/>`; last = bx + 4; }); g += seg(y, last, right); }
+    else if (st.nick !== undefined){ const nx = cx(st.nick) + 11; g += seg(y, left, nx - 3) + seg(y, nx + 3, right) + `<circle cx="${nx}" cy="${y}" r="7" fill="none" stroke="#1f4f86" stroke-width="2" stroke-dasharray="3 2"/>`; }
+    else g += seg(y, left, right);
+    if (st.breaks2){ let last = left; st.breaks2.forEach(bi => { const bx = cx(bi) + 11; g += seg(y + 52, last, bx - 4) + `<path d="M${bx - 4},${y + 47} l3,5 l-3,5 M${bx + 4},${y + 47} l-3,5 l3,5" stroke="#b83a34" stroke-width="2" fill="none"/>`; last = bx + 4; }); g += seg(y + 52, last, right); }
+    else g += seg(y + 52, left, right);
+    /* bases */
+    for (let i = 0; i < 8; i++){
+      const bx = cx(i);
+      g += `<rect x="${bx - 8}" y="${y + 30}" width="16" height="18" rx="3" fill="${BASEC[BOT[i]]}"/>` + T(bx, y + 43, BOT[i], {fs:11, c:"#fff"});
+      if (gone(i)) continue;
+      const nw = st.newb && i >= st.newb[0] && i <= st.newb[1];
+      if (isD(i)){
+        const rot = i === 3 ? 14 : -14;
+        g += `<g transform="rotate(${rot} ${bx} ${y})"><rect x="${bx - 8}" y="${y + 3}" width="16" height="18" rx="3" fill="${BASEC.T}"/>${T(bx, y + 16, "T", {fs:11, c:"#fff"})}</g>`;
+      } else {
+        g += `<line x1="${bx}" y1="${y + 21}" x2="${bx}" y2="${y + 30}" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="2 2"/>`;
+        g += `<rect x="${bx - 8}" y="${y + 3}" width="16" height="18" rx="3" fill="${BASEC[TOP[i]]}"${nw ? ` stroke="#1b7f4e" stroke-width="3"` : ""}/>` + T(bx, y + 16, TOP[i], {fs:11, c:"#fff"});
+      }
+    }
+    if (st.dimer) g += `<path d="M${cx(3) + 6},${y + 8} L${cx(4) - 6},${y + 8} M${cx(3) + 6},${y + 15} L${cx(4) - 6},${y + 15}" stroke="#1d2433" stroke-width="2.5"/>`;
+    if (st.excised){ const ex0 = cx(st.cut[0]) - 11, ey = y - 46; g += `<line x1="${ex0}" y1="${ey}" x2="${cx(st.cut[1]) + 11}" y2="${ey}" stroke="#6d7686" stroke-width="4" stroke-linecap="round"/>`; for (let i = st.cut[0]; i <= st.cut[1]; i++){ g += `<rect x="${cx(i) - 8}" y="${ey + 3}" width="16" height="16" rx="3" fill="${BASEC[TOP[i]]}" opacity=".9"/>`; } g += `<path d="M${cx(3) + 6},${ey + 9} L${cx(4) - 6},${ey + 9} M${cx(3) + 6},${ey + 14} L${cx(4) - 6},${ey + 14}" stroke="#1d2433" stroke-width="2"/>` + `<path d="M${cx(st.cut[0]) - 11},${y - 8} l0,-24 M${cx(st.cut[1]) + 11},${y - 8} l0,-24" stroke="#b83a34" stroke-width="1.5" stroke-dasharray="3 3"/>`; }
+    if (st.uv) for (let k = 0; k < 3; k++){ const ux = cx(3) - 14 + k * 20; g += `<path d="M${ux - 8},${y - 62} q5,6 0,12 q-5,6 0,12 q5,6 0,12 q-5,6 0,12" fill="none" stroke="#7a5cc8" stroke-width="2.5"/><path d="M${ux - 13},${y - 16} l5,9 l5,-9" fill="none" stroke="#7a5cc8" stroke-width="2.5"/>`; }
+    return g;
+  }
+  const arrowR = (x, y) => `<path d="M${x},${y} l34,0 m-8,-7 l8,7 l-8,7" stroke="#4b2a8a" stroke-width="2.5" fill="none"/>`;
+  const arrowD = (x, y) => `<path d="M${x},${y} l0,22 m-7,-8 l7,8 l7,-8" stroke="#4b2a8a" stroke-width="2.5" fill="none"/>`;
+  const blob = (x, y, w, h, c, label, lc) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="${c}" opacity=".38" stroke="${c}" stroke-width="2"/>` + T(x + w / 2, y - 6, label, {fs:12, c:lc || c});
+  const sun = (x, y) => `<circle cx="${x}" cy="${y}" r="11" fill="#f2d23c" stroke="#d69a12"/>` + ["#8f5bd8", "#3f7bd1", "#3fae5a", "#f08a2e", "#d9443a"].map((c, i) => `<line x1="${x - 8 - i * 3}" y1="${y + 10 + i * 2}" x2="${x - 30 - i * 3}" y2="${y + 34 + i * 2}" stroke="${c}" stroke-width="2.4"/>`).join("") + T(x + 4, y - 16, "visible light", {fs:11, c:"#9a6212"});
+
+  function dnaDamageSVG(narrow){
+    const steps = [
+      [{uv:true}, "1. UV (our lamp: 260 nm) hits the DNA where two thymines (T) sit side by side."],
+      [{dimer:true}, "2. The two neighboring Ts bond to each other: a thymine dimer. The strand kinks, and those Ts no longer pair with their As."],
+      [{breaks:[1, 5], breaks2:[3]}, "For comparison: ionizing radiation (X rays, gamma rays) makes free radicals that BREAK the DNA strands."]];
+    const result = "3. DNA polymerase can't read past the dimer → mutation in a critical gene → cell death unless the cell repairs it.";
+    if (narrow){
+      let v = "", y = 10;
+      v += T(180, y + 16, "UV (nonionizing)", {fs:16, c:"#5b3fb0"}); y += 38;
+      steps.forEach(([st, cap], i) => {
+        if (i === 2){ v += `<rect x="12" y="${y + 6}" width="336" height="94" rx="14" fill="#fde4e8"/>` + wrapT(180, y + 34, result, 40, {fs:13, lh:18}); y += 120; v += T(180, y + 10, "Ionizing (X rays, gamma rays)", {fs:16, c:"#b83a34"}); y += 30; }
+        const top = y + (st.uv ? 70 : 24);
+        v += miniDNA(92, top, st) + wrapT(180, top + 76, cap.replace(/^For comparison: i/, "I"), 42, {fs:13, w:400, lh:17});
+        y = top + 76 + 17 * Math.ceil(cap.length / 40) + 14;
+        if (i === 0){ v += arrowD(180, y - 8); y += 22; }
+      });
+      return `<svg class="gsvg" viewBox="0 0 360 ${y + 6}" role="img" aria-label="UV makes a thymine dimer in DNA; ionizing radiation breaks DNA strands">${v}</svg>`;
+    }
+    let v = `<rect x="0" y="0" width="476" height="326" rx="14" fill="#f3effd"/><rect x="490" y="0" width="270" height="326" rx="14" fill="#fdeef0"/>`;
+    v += T(238, 24, "UV (nonionizing)", {fs:16, c:"#5b3fb0"}) + T(625, 24, "Ionizing (X rays, gamma rays)", {fs:15, c:"#b83a34"});
+    v += miniDNA(30, 108, steps[0][0]) + wrapT(118, 186, steps[0][1], 30, {fs:12.5, w:400});
+    v += arrowR(214, 134);
+    v += miniDNA(266, 108, steps[1][0]) + wrapT(354, 186, steps[1][1], 30, {fs:12.5, w:400});
+    v += `<rect x="20" y="262" width="436" height="52" rx="12" fill="#fde4e8"/>` + wrapT(238, 283, result, 64, {fs:12.5, lh:17});
+    v += miniDNA(537, 108, steps[2][0]) + wrapT(625, 186, "Free radicals break the DNA strands (the sugar-phosphate backbone). UV mainly makes dimers instead.", 34, {fs:12.5, w:400});
+    return `<svg class="gsvg" viewBox="0 0 760 326" role="img" aria-label="UV makes a thymine dimer in DNA; ionizing radiation breaks DNA strands">${v}</svg>`;
+  }
+
+  function repairSVG(narrow){
+    const LIGHT = [
+      [{dimer:true}, "", "UV made a thymine dimer."],
+      [{dimer:true}, "photolyase", "Visible light activates photolyase, which splits the dimer."],
+      [{}, "", "The DNA is restored to its undamaged state."]];
+    const DARK = [
+      [{cut:[2, 5], excised:true}, "endo", "Endonuclease cuts out the damaged section with the dimer."],
+      [{newb:[2, 5], nick:5}, "pol", "DNA polymerase replaces the missing nucleotides (green)."],
+      [{newb:[2, 5]}, "ligase", "DNA ligase seals the sugar-phosphate backbone. Repaired!"]];
+    const extra = (kind, x, y) => kind === "photolyase" ? blob(x + 50, y - 12, 76, 40, "#7a5cc8", "photolyase") + sun(x + 168, y - 52)
+      : kind === "endo" ? T(x + 88, y - 66, "✂ endonuclease", {fs:12, c:"#b83a34"})
+      : kind === "pol" ? blob(x + 34, y - 10, 108, 36, "#1b7f4e", "DNA polymerase")
+      : kind === "ligase" ? blob(x + 112, y - 10, 34, 36, "#1f4f86", "DNA ligase") : "";
+    if (narrow){
+      let v = "", y = 8;
+      [["Light repair (photoreactivation)", "#7a4b00", "#fff2cf", LIGHT], ["Dark repair: no light needed", "#1f4f86", "#dfeefb", DARK]].forEach(([title, tc, bg, rows]) => {
+        const y0 = y; let inner = T(180, y + 22, title, {fs:16, c:tc}); y += 40;
+        rows.forEach(([st, kind, cap], i) => { const top = y + (st.excised || kind === "photolyase" ? 66 : 30); inner += miniDNA(92, top, st) + extra(kind, 92, top) + wrapT(180, top + 76, cap, 40, {fs:13, w:400, lh:17}); y = top + 76 + 17 * Math.ceil(cap.length / 38) + 6; if (i < rows.length - 1){ inner += arrowD(180, y - 4); y += 22; } });
+        v += `<rect x="6" y="${y0}" width="348" height="${y - y0 + 6}" rx="14" fill="${bg}"/>` + inner; y += 18;
+      });
+      return `<svg class="gsvg" viewBox="0 0 360 ${y}" role="img" aria-label="Light repair: photolyase splits the dimer. Dark repair: endonuclease, DNA polymerase, DNA ligase.">${v}</svg>`;
+    }
+    let v = "";
+    [["Light repair (photoreactivation)", "#7a4b00", "#fff2cf", LIGHT, 0], ["Dark repair: no light needed", "#1f4f86", "#dfeefb", DARK, 232]].forEach(([title, tc, bg, rows, oy]) => {
+      v += `<rect x="0" y="${oy}" width="760" height="220" rx="14" fill="${bg}"/>` + T(380, oy + 24, title, {fs:16, c:tc});
+      rows.forEach(([st, kind, cap], i) => { const x = 20 + i * 262, y = oy + 104; v += miniDNA(x, y, st) + extra(kind, x, y) + wrapT(x + 88, y + 78, cap, 32, {fs:12.5, w:400}); if (i < 2) v += arrowR(x + 196, y + 26); });
+    });
+    return `<svg class="gsvg" viewBox="0 0 760 452" role="img" aria-label="Light repair: photolyase splits the dimer. Dark repair: endonuclease, DNA polymerase, DNA ligase.">${v}</svg>`;
+  }
+
   function renderUV(body){
     body.innerHTML = `
       <div class="parthead first">Main ideas</div>
       <div class="sect">The electromagnetic spectrum: tap a band</div><div id="uvSpec"></div>
+      <div class="sect">How UV damages DNA</div><div class="panel tight" style="max-width:none" id="uvDmg"></div>
+      <div class="sect">How cells repair it</div><div class="panel tight" style="max-width:none" id="uvRep"></div>
       ${ideas("", [
-        ["Ionizing radiation", "<b>Gamma rays and X rays.</b> High energy, short wavelength. They make free radicals that break DNA strands."],
-        ["Nonionizing radiation", "<b>UV</b>, visible light, and longer wavelengths. Less energy. UV damages DNA directly by making thymine dimers."],
-        ["Thymine dimers", "UV links neighboring thymines in DNA. That causes a mutation in a critical gene, and the cell dies unless it repairs the damage."],
-        ["Light repair vs. dark repair", "<b>Light repair:</b> visible light activates photolyases, which split the dimers. <b>Dark repair:</b> endonuclease cuts out the dimers, DNA polymerase fills in, and DNA ligase seals the backbone."],
-        ["Uses and limit", "Used on heat-labile solutions, operating rooms, food-processing areas, and water. Its limit: <b>poor penetrating ability</b>. It can't get through foil or the plate lid."]], {vocab:true})}
+        ["Ionizing radiation", "<b>Gamma rays and X rays.</b> High energy, short wavelength. Free radicals break DNA strands."],
+        ["Nonionizing radiation", "<b>UV</b>, visible light, and longer wavelengths. Less energy. UV damages DNA by making thymine dimers."],
+        ["Light vs. dark repair", "<b>Light:</b> photolyase + visible light splits the dimer. <b>Dark:</b> endonuclease, then DNA polymerase, then DNA ligase."],
+        ["Uses and limit", "Used on heat-labile solutions, operating rooms, food-processing areas, and water. Limit: <b>poor penetrating ability</b>. It can't get through foil or the plate lid."]])}
       <div class="parthead">Try the experiment <small>Exercise 23</small></div>
       <div class="note"><b>Safety:</b> do not look at the UV light, do not leave your hand exposed to it, and wear safety glasses.</div>
       <div class="sect">1. Expose your plate</div>
@@ -305,6 +406,8 @@
     };
     $("uvReset").onclick = reset;
     reset();
+    $("uvDmg").innerHTML = dnaDamageSVG($("uvDmg").clientWidth < 560);
+    $("uvRep").innerHTML = repairSVG($("uvRep").clientWidth < 560);
     explore($("uvSpec"), spectrumSVG, EMINFO, "Tap any band, top or bottom. Shorter wavelengths carry more energy. Gamma rays and X rays are <b>ionizing</b>; UV and everything longer is <b>nonionizing</b>.");
     const dk = uvPlateSVG({lines:true}, {growth:[4, 1, 0], tag:"Dark plate"}), both = `<svg class="gsvg" viewBox="0 0 600 296">${dk.replace(/<svg[^>]*>|<\/svg>/g, "")}<g transform="translate(300 0)">${uvPlateSVG({lines:true}, {growth:[4, 2, 1], tag:"Light plate"}).replace(/<svg[^>]*>|<\/svg>/g, "")}</g></svg>`;
     pictureGame($("uvRead"), [
@@ -677,6 +780,8 @@
 
   /* ================================================================= theory pictures */
   const PICS = {
+    dnadmg:() => dnaDamageSVG(innerWidth < 600),
+    repair:() => repairSVG(innerWidth < 600),
     spectrum:() => {
       let s = "";
       [["Below 200 nm", "absorbed by air", "#eef1f5"], ["UVC 200 to 290", "most lethal: 260 nm", "#fbe8e7"], ["UVB 290 to 320", "can damage DNA", "#fff4d6"], ["UVA 320 to 400", "less active", "#f3effd"]].forEach(([a, b, c], i) => { s += `<rect x="${10 + i * 185}" y="10" width="175" height="70" rx="8" fill="${c}" stroke="#b9a8e0"/>` + T(97 + i * 185, 40, a, {fs:14}) + T(97 + i * 185, 62, b, {fs:12, w:400}); });
@@ -730,7 +835,7 @@
         "UV makes <b>thymine dimers</b> in DNA → mutation in a critical gene → cell death unless repaired.",
         "<b>Light repair (photoreactivation):</b> visible light activates <b>photolyases</b>, which split the dimers. <b>Dark repair</b> needs no light: <b>endonuclease</b> removes the dimers, <b>DNA polymerase</b> replaces the nucleotides, and <b>DNA ligase</b> seals the backbone.",
         "UV is used to sterilize heat-labile solutions, decontaminate hospital operating rooms and food-processing areas, and disinfect water. Its limit: <b>poor penetrating ability</b>."],
-      more:[["The UV spectrum", "spectrum", []], ["How UV kills", "dimer", ["This is why the Light plate matters: if light repair works, the Light plate should grow more than the Dark plate."]],
+      more:[["The UV spectrum", "spectrum", []], ["How UV kills", "dnadmg", ["UV mainly makes thymine dimers. Ionizing radiation (X rays, gamma rays) breaks the DNA strands instead."]], ["Light repair vs. dark repair", "repair", ["This is why the Light plate matters: if light repair works, the Light plate should grow more than the Dark plate."]],
         ["What your two plates test", null, ["<b>C vs. 30 and 60:</b> did UV penetrate the foil? <b>30 vs. 60:</b> does more UV kill more? <b>Dark vs. Light:</b> does light after UV help survival (light repair)?", "Your hypotheses: \"UV radiation ___ bacteria. Incubation in light will increase/decrease/not affect survival.\" and \"The bacterial species that will survive UV radiation the best is ___.\""]]],
       quiz:[
         q("Which UV range is the most lethal?", ["UVC, 200 to 290 nm", "UVA, 320 to 400 nm", "UVB, 290 to 320 nm", "Below 200 nm"], 0, "DNA absorbs it best. Our lamp: 260 nm."),
