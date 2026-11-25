@@ -692,20 +692,25 @@
   }
 
   /* ================================================================= EXERCISE 26: hand scrubbing */
-  const WATER = [24, 19, 16, 14], SOAP = [26, 15, 9, 6, 4];
-  function handPlate(counts, o){
+  /* Practice counts that follow the class pattern: rinsing alone barely changes anything, scrubbing takes off more,
+     drying takes off a lot, and the sanitizer gel usually isn't as effective as scrubbing and drying.
+     The soap plate has the control; the water plate shares it. */
+  const SOAP_L = ["Control", "Rinse", "Scrub", "Scrub + dry", "Gel"], WATER_L = ["Rinse", "Scrub", "Scrub + dry", "Gel"];
+  const STEP_N = ["Control (unwashed)", "Rinse only (no scrubbing)", "Scrub + rinse (no drying)", "Scrub + rinse + dry", "Sanitizer gel"];
+  const SOAP = [30, 28, 16, 6, 13], WATER = [29, 21, 10, 14];
+  function handPlate(counts, labels, o){
     o = o || {};
     const cx = 150, cy = 150, r = 118, sl = pie(cx, cy, r, counts.length), cols = ["#fbf3dc", "#f6f1e6", "#f2d23c", "#efe1c4"];
     let s = plateSVG(cx, cy, r, AGAR);
     sl.forEach((p, i) => {
       for (let k = 0; k < counts[i]; k++){
-        const a = p.a0 + .14 + rnd(i * 53 + k) * (p.a1 - p.a0 - .28), d = r * (.2 + rnd(i * 71 + k + 9) * .7);
+        const a = p.a0 + .14 + rnd(i * 53 + k + o.seed) * (p.a1 - p.a0 - .28), d = r * (.2 + rnd(i * 71 + k + 9 + o.seed) * .72);
         s += `<circle cx="${f1(cx + Math.cos(a) * d)}" cy="${f1(cy + Math.sin(a) * d)}" r="${f1(2.6 + rnd(k + i) * 2.4)}" fill="${cols[Math.floor(rnd(i * 13 + k * 3) * 4)]}" stroke="#b8a067" stroke-width=".7"/>`;
       }
       s += `<line x1="${cx}" y1="${cy}" x2="${f1(cx + Math.cos(p.a0) * r)}" y2="${f1(cy + Math.sin(p.a0) * r)}" stroke="#4b2a8a" stroke-width="2"/>`;
     });
-    sl.forEach((p, i) => { const [mx, my] = p.mid; s += `<circle cx="${f1(mx)}" cy="${f1(my)}" r="13" fill="#fff" opacity=".9"/>` + T(mx, my + 5, i + 1, {fs:15, c:"#4b2a8a"}); if (o.click) s += `<path d="${p.path}" fill="transparent" class="svgbtn" data-hs="${o.key}:${i}"/>`; });
-    return `<svg class="gsvg" viewBox="0 0 300 322" role="img" aria-label="${o.tag}">${s}${T(150, 316, o.tag, {fs:15, c:"#4b2a8a"})}</svg>`;
+    sl.forEach((p, i) => { const [mx, my] = p.mid, w = labels[i].length * 7.4 + 14; s += `<rect x="${f1(mx - w / 2)}" y="${f1(my - 11)}" width="${f1(w)}" height="21" rx="10" fill="#fff" opacity=".92"/>` + T(mx, my + 4, labels[i], {fs:12, c:"#4b2a8a"}); if (o.click) s += `<path d="${p.path}" fill="transparent" class="svgbtn" data-hs="${o.key}:${i}"/>`; });
+    return `<svg class="gsvg" viewBox="0 0 300 330" role="img" aria-label="${o.tag}">${s}${T(150, 316, o.tag, {fs:14, c:"#4b2a8a"})}</svg>`;
   }
   function renderHands(body){
     body.innerHTML = `
@@ -715,66 +720,81 @@
         ["Transient microbiota", "Picked up from contact with the environment. They sit on the surface and wash off more easily."],
         ["Degerming", "Removing microbes from a small area mostly by scrubbing them off, like handwashing or an alcohol swab before a shot."],
         ["Skin is never sterile", "Even a long scrub leaves resident microbiota behind. That's why surgeons also wear gloves."]], {vocab:true})}
+      ${ideas("What each step does", [
+        ["Rinse only", "Barely takes anything off. Water running over your hands without scrubbing leaves most bacteria in place.", "small drop"],
+        ["Scrub + rinse", "Takes off more. Friction loosens bacteria (degerming), and soap lifts the oils and debris that hold them.", "bigger drop"],
+        ["Scrub + rinse + dry", "Drying takes off <b>a lot</b>. The towel wipes away bacteria the scrubbing loosened.", "biggest drop"],
+        ["Sanitizer gel", "Usually <b>not as effective</b> as scrubbing and drying. It doesn't remove anything; it has to kill microbes where they sit.", "less effective"],
+        ["Soap vs. water", "Both plates were scrubbed the same way. The extra drop on the soap plate shows what soap adds beyond degerming.", "compare the plates"]], {shift:2})}
       ${ideas("Why handwashing matters", [
         ["Semmelweis, 1846", "Handwashing cut deaths from puerperal fever from <b>12% to 1.2%</b>."],
         ["The CDC", "Handwashing is the <b>single most important way</b> to prevent infection."],
-        ["Clinical scrub", "<b>3 to 5 minutes</b> with antimicrobial soap removes transient microbiota, but not all resident microbiota."],
-        ["Water vs. soap", "Water alone rinses off some transient bacteria with each wash. Soap usually drops counts faster, because it lifts the oils and debris that hold bacteria."]])}
+        ["Clinical scrub", "<b>3 to 5 minutes</b> with antimicrobial soap removes transient microbiota, but not all resident microbiota."]], {shift:4})}
       <div class="parthead">Try the experiment <small>Exercise 26</small></div>
       <div class="sect">1. Count your plates</div>
-      <p class="labq" style="margin:0 0 6px">Read the sections <b>in the order you touched them</b>. Tap a section to zoom in, then tap each colony to mark it, the way you'd dot the bottom of the plate with a marker. These are practice plates.</p>
-      <div class="row" style="justify-content:center;gap:16px"><div class="panel tight" style="width:290px">${handPlate(WATER, {click:true, key:"w", tag:"Water plate (4 sections)"})}</div><div class="panel tight" style="width:290px">${handPlate(SOAP, {click:true, key:"s", tag:"Soap plate (5 sections)"})}</div></div>
+      <p class="labq" style="margin:0 0 6px"><b>Soap plate:</b> control, then each step scrubbing with soap and water. <b>Water plate:</b> the same steps scrubbing with water only. It has no control of its own; it shares the soap plate's. Tap a section to zoom in, then tap each colony to mark it, the way you'd dot the bottom of the plate with a marker. These are practice plates.</p>
+      <div class="row" style="justify-content:center;gap:16px"><div class="panel tight" style="width:300px">${handPlate(SOAP, SOAP_L, {click:true, key:"s", seed:0, tag:"Soap plate: scrub with soap + water"})}</div><div class="panel tight" style="width:300px">${handPlate(WATER, WATER_L, {click:true, key:"w", seed:400, tag:"Water plate: scrub with water only"})}</div></div>
       <div id="hsZoom"></div>
-      <div class="benchhint" id="hsMsg" role="status">Tap any numbered section to start counting.</div>
-      <div class="sect">2. Compare the trends</div><div class="panel" id="hsGraph"></div><div id="hsAsk" style="margin-top:10px"></div>
+      <div class="benchhint" id="hsMsg" role="status">Tap any section to start counting. Start with the soap plate's <b>Control</b>.</div>
+      <div class="sect">2. Compare the steps</div><div class="panel" style="max-width:none" id="hsGraph"></div><div id="hsAsk" style="margin-top:10px"></div>
       <div class="sect">3. Resident or transient?</div><div id="hsSort"></div>`;
     const got = {w:[null, null, null, null], s:[null, null, null, null, null]};
     let cur = null, marks = new Set();
+    const countsOf = k => k === "w" ? WATER : SOAP, labelOf = (k, i) => (k === "w" ? WATER_L : SOAP_L)[i];
     const graph = () => {
-      const X = i => 60 + i * 120, Y = v => 200 - v * 6;
-      let s = `<line x1="50" y1="200" x2="590" y2="200" stroke="#8b93a3"/><line x1="50" y1="30" x2="50" y2="200" stroke="#8b93a3"/>`;
-      [0, 10, 20, 30].forEach(v => { s += T(42, Y(v) + 4, v, {a:"end", fs:11, w:400}) + `<line x1="50" y1="${Y(v)}" x2="590" y2="${Y(v)}" stroke="#eef1f5"/>`; });
-      [1, 2, 3, 4, 5].forEach(i => { s += T(X(i - 1), 218, "Section " + i, {fs:11, w:400}); });
-      [["w", "#3f7bd1", "Water"], ["s", "#1b7f4e", "Soap"]].forEach(([k, c, n]) => {
-        const pts = got[k].map((v, i) => v === null ? null : [X(i), Y(v)]);
-        for (let i = 1; i < pts.length; i++) if (pts[i] && pts[i - 1]) s += `<line x1="${pts[i - 1][0]}" y1="${pts[i - 1][1]}" x2="${pts[i][0]}" y2="${pts[i][1]}" stroke="${c}" stroke-width="3"/>`;
-        pts.forEach((p, i) => { if (p) s += `<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="${c}"/>` + T(p[0], p[1] - 10, got[k][i], {fs:11, c}); });
+      const X = i => 90 + i * 120, Y = v => 210 - v * 5.5;
+      let s = `<line x1="50" y1="210" x2="650" y2="210" stroke="#8b93a3"/><line x1="50" y1="30" x2="50" y2="210" stroke="#8b93a3"/>`;
+      [0, 10, 20, 30].forEach(v => { s += T(42, Y(v) + 4, v, {a:"end", fs:11, w:400}) + `<line x1="50" y1="${Y(v)}" x2="650" y2="${Y(v)}" stroke="#eef1f5"/>`; });
+      ["Control", "Rinse only", "Scrub + rinse", "Scrub + rinse", "Sanitizer"].forEach((l, i) => { s += T(X(i), 228, l, {fs:11.5, w:400}); });
+      s += T(X(3), 243, "+ dry", {fs:11.5, w:400}) + T(X(1), 243, "(no scrub)", {fs:11.5, w:400}) + T(X(2), 243, "(no dry)", {fs:11.5, w:400}) + T(X(4), 243, "gel", {fs:11.5, w:400});
+      const series = [["s", "#1b7f4e", got.s.map((v, i) => [i, v])], ["w", "#3f7bd1", got.w.map((v, i) => [i + 1, v])]];
+      if (got.s[0] !== null && got.w[0] !== null) s += `<line x1="${X(0)}" y1="${Y(got.s[0])}" x2="${X(1)}" y2="${Y(got.w[0])}" stroke="#3f7bd1" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+      series.forEach(([k, c, pts]) => {
+        const P = pts.map(([i, v]) => v === null ? null : [X(i), Y(v), v]);
+        for (let i = 1; i < P.length; i++) if (P[i] && P[i - 1]) s += `<line x1="${P[i - 1][0]}" y1="${P[i - 1][1]}" x2="${P[i][0]}" y2="${P[i][1]}" stroke="${c}" stroke-width="3"/>`;
+        P.forEach(p => { if (p) s += `<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="${c}"/>` + T(p[0] + (k === "w" ? 14 : -14), p[1] - 8, p[2], {fs:11.5, c}); });
       });
-      s += `<rect x="440" y="24" width="12" height="12" fill="#3f7bd1"/>` + T(458, 34, "Water", {a:"start", fs:12}) + `<rect x="510" y="24" width="12" height="12" fill="#1b7f4e"/>` + T(528, 34, "Soap", {a:"start", fs:12});
-      s += T(16, 115, "Colonies", {fs:11, w:400}).replace("<text", `<text transform="rotate(-90 16 115)"`);
-      $("hsGraph").innerHTML = `<svg class="gsvg" viewBox="0 0 600 228" role="img" aria-label="Colony counts per section, water vs soap">${s}</svg><div class="row"><button class="btn hint sm" id="hsFill">💡 Count the rest for me</button></div>`;
+      s += `<rect x="430" y="18" width="12" height="12" fill="#1b7f4e"/>` + T(448, 28, "Soap plate", {a:"start", fs:12}) + `<rect x="530" y="18" width="12" height="12" fill="#3f7bd1"/>` + T(548, 28, "Water plate", {a:"start", fs:12});
+      s += T(16, 120, "Colonies", {fs:11, w:400}).replace("<text", `<text transform="rotate(-90 16 120)"`);
+      $("hsGraph").innerHTML = `<svg class="gsvg" viewBox="0 0 660 252" role="img" aria-label="Colony counts for each step, soap plate vs water plate">${s}</svg><p class="mini" style="margin:2px 0 6px">The dashed line: the water plate shares the soap plate's control.</p><div class="row"><button class="btn hint sm" id="hsFill">💡 Count the rest for me</button></div>`;
       $("hsFill").onclick = () => { WATER.forEach((v, i) => got.w[i] = v); SOAP.forEach((v, i) => got.s[i] = v); graph(); ask(); };
       if (got.w.every(v => v !== null) && got.s.every(v => v !== null)) ask();
     };
     const ask = () => {
       if ($("hsAsk").dataset.on) return; $("hsAsk").dataset.on = "1";
+      const g = () => $("hsGraph").querySelector("svg").outerHTML;
       pictureGame($("hsAsk"), [
-        {svg:$("hsGraph").querySelector("svg").outerHTML, ask:"What happened on the water plate?", opts:["Counts dropped some with each wash, as transient bacteria rinsed off", "Counts went up with each wash", "Counts dropped to zero right away", "Nothing changed"], a:0, why:"Water alone rinses off some transient bacteria."},
-        {svg:$("hsGraph").querySelector("svg").outerHTML, ask:"How does the soap trend compare?", opts:["Counts usually drop faster: soap lifts oils and debris that hold bacteria", "Soap kills every bacterium on the skin", "Soap counts drop slower than water", "Soap adds bacteria"], a:0, why:"Soap helps remove the oils and debris that bacteria stick to."},
-        {svg:$("hsGraph").querySelector("svg").outerHTML, ask:"Even the last soap section isn't zero. Why?", opts:["Expected: resident microbiota live deeper in skin layers and hair follicles", "The soap was contaminated", "The plate was too old", "You didn't touch the plate"], a:0, why:"Skin is never sterile, which is why surgeons also wear gloves."}], {picW:520, keepOrder:true});
+        {svg:g(), ask:"Compare <b>Rinse only</b> to the <b>Control</b>. What happened?", opts:["Barely any change: rinsing without scrubbing doesn't take much off", "A huge drop: rinsing removes most bacteria", "Counts went up", "Counts dropped to zero"], a:0, why:"Water running over your hands without friction leaves most bacteria in place."},
+        {svg:g(), ask:"What did <b>scrubbing</b> add?", opts:["More bacteria came off: friction loosens them (degerming)", "Nothing changed", "Scrubbing added bacteria", "Scrubbing sterilized the hands"], a:0, why:"Scrubbing physically removes bacteria. That's degerming."},
+        {svg:g(), ask:"What did <b>drying</b> add?", opts:["A big drop: the towel wiped off a lot of the loosened bacteria", "Nothing: drying doesn't matter", "Counts went up", "Drying killed every bacterium"], a:0, why:"Don't skip drying!"},
+        {svg:g(), ask:"How did the <b>sanitizer gel</b> compare to scrubbing + drying?", opts:["Usually not as effective: it doesn't scrub anything off, so it has to kill microbes where they sit", "Much more effective: it sterilized the hands", "Exactly the same", "It added bacteria"], a:0, why:"Gels also work less well on dirty or oily hands, or when they aren't rubbed in long enough."},
+        {svg:g(), ask:"At the scrub steps, the <b>soap plate</b> is lower than the <b>water plate</b>. What does that show?", opts:["Soap helps beyond degerming: it lifts the oils and debris that hold bacteria", "Water is more effective than soap", "The plates were mixed up", "Nothing: both scrubbed differently"], a:0, why:"Both plates were scrubbed the same way, so the extra drop is the soap's effect."},
+        {svg:g(), ask:"Even the cleanest section isn't zero. Why?", opts:["Expected: resident microbiota live deeper in skin layers and hair follicles", "The soap was contaminated", "The plate was too old", "You didn't touch the plate"], a:0, why:"Skin is never sterile, which is why surgeons also wear gloves."}], {picW:560, keepOrder:true});
     };
     const zoom = () => {
       if (!cur) { $("hsZoom").innerHTML = ""; return; }
-      const n = (cur.k === "w" ? WATER : SOAP)[cur.i];
+      const n = countsOf(cur.k)[cur.i], off = cur.k === "w" ? 500 : 0;
       let s = `<rect width="520" height="200" rx="14" fill="${AGAR}"/>`;
+      /* jittered grid, so colonies never cover each other and every one can be tapped */
+      const cells = Array.from({length:15 * 6}, (_, c) => c).sort((a, b) => rnd(cur.i * 31 + a + off) - rnd(cur.i * 31 + b + off));
       for (let k = 0; k < n; k++){
-        const x = 30 + rnd(cur.i * 53 + k + (cur.k === "s" ? 500 : 0)) * 460, y = 24 + rnd(cur.i * 71 + k + 9 + (cur.k === "s" ? 500 : 0)) * 150, on = marks.has(k);
-        s += `<g class="svgbtn" data-col="${k}"><circle cx="${f1(x)}" cy="${f1(y)}" r="13" fill="${["#fbf3dc", "#f6f1e6", "#f2d23c", "#efe1c4"][Math.floor(rnd(cur.i * 13 + k * 3) * 4)]}" stroke="#b8a067"/>${on ? `<circle cx="${f1(x)}" cy="${f1(y)}" r="5" fill="#1d2433"/>` : ""}</g>`;
+        const c = cells[k], x = 26 + (c % 15) * 33.5 + (rnd(k + off + 7) - .5) * 8, y = 22 + Math.floor(c / 15) * 31 + (rnd(k + off + 19) - .5) * 6, on = marks.has(k);
+        s += `<g class="svgbtn" data-col="${k}"><circle cx="${f1(x)}" cy="${f1(y)}" r="12" fill="${["#fbf3dc", "#f6f1e6", "#f2d23c", "#efe1c4"][Math.floor(rnd(cur.i * 13 + k * 3) * 4)]}" stroke="#b8a067"/>${on ? `<circle cx="${f1(x)}" cy="${f1(y)}" r="5" fill="#1d2433"/>` : ""}</g>`;
       }
-      $("hsZoom").innerHTML = `<div class="panel tight" style="margin-top:10px"><svg class="gsvg" viewBox="0 0 520 200" role="img" aria-label="Zoomed section: tap each colony">${s}</svg></div><p class="mini" style="margin:4px 0">${cur.k === "w" ? "Water" : "Soap"} plate, section ${cur.i + 1}. Marked: <b>${marks.size}</b>. Notice the different colony types (color and size).</p>`;
+      $("hsZoom").innerHTML = `<div class="panel tight" style="margin-top:10px;max-width:none"><svg class="gsvg" viewBox="0 0 520 200" role="img" aria-label="Zoomed section: tap each colony">${s}</svg></div><p class="mini" style="margin:4px 0">${cur.k === "w" ? "Water" : "Soap"} plate, <b>${STEP_N[cur.k === "w" ? cur.i + 1 : cur.i]}</b>. Marked: <b>${marks.size}</b>. Notice the different colony types (color and size).</p>`;
     };
     body.onclick = e => {
       const h = e.target.closest("[data-hs]");
-      if (h){ const [k, i] = h.dataset.hs.split(":"); cur = {k, i:+i}; marks = new Set(); zoom(); $("hsMsg").className = "benchhint"; $("hsMsg").innerHTML = `Counting ${k === "w" ? "water" : "soap"} section ${+i + 1}. Tap every colony once.`; return; }
+      if (h){ const [k, i] = h.dataset.hs.split(":"); cur = {k, i:+i}; marks = new Set(); zoom(); $("hsMsg").className = "benchhint"; $("hsMsg").innerHTML = `Counting the ${k === "w" ? "water" : "soap"} plate, <b>${labelOf(k, +i)}</b> section. Tap every colony once.`; return; }
       const c = e.target.closest("[data-col]");
       if (c && cur){
         marks.add(+c.dataset.col); zoom();
-        const n = (cur.k === "w" ? WATER : SOAP)[cur.i];
-        if (marks.size === n){ got[cur.k][cur.i] = n; $("hsMsg").className = "benchhint good"; $("hsMsg").innerHTML = `<b>${n} colonies</b> in ${cur.k === "w" ? "water" : "soap"} section ${cur.i + 1}. Recorded. Tap another section.`; graph(); }
+        const n = countsOf(cur.k)[cur.i];
+        if (marks.size === n){ got[cur.k][cur.i] = n; $("hsMsg").className = "benchhint good"; $("hsMsg").innerHTML = `<b>${n} colonies</b> on the ${cur.k === "w" ? "water" : "soap"} plate, ${labelOf(cur.k, cur.i)} section. Recorded. Tap another section.`; graph(); }
       }
     };
     graph();
-    const STM = [["Permanent residents of the skin (the skin microbiome)", 0], ["Picked up from contact with the environment", 1], ["Removed by a 3 to 5 minute clinical scrub with antimicrobial soap", 1], ["Live deeper in skin layers and hair follicles", 0], ["Rinse off a little more with each water wash", 1], ["The reason colony counts never reach zero", 0]];
+    const STM = [["Permanent residents of the skin (the skin microbiome)", 0], ["Picked up from contact with the environment", 1], ["Removed by a 3 to 5 minute clinical scrub with antimicrobial soap", 1], ["Live deeper in skin layers and hair follicles", 0], ["Loosened by scrubbing and wiped off by drying", 1], ["The reason colony counts never reach zero", 0]];
     pictureGame($("hsSort"), STM.map(([t, a]) => ({svg:`<svg class="gsvg" viewBox="0 0 300 120"><rect width="300" height="120" rx="14" fill="#f3effd"/>${T(150, 52, "Resident or transient?", {fs:16, c:"#5b3fb0"})}${T(150, 80, "microbiota", {fs:14, w:400, c:"#5b3fb0"})}</svg>`, ask:`"${t}"`, opts:["Resident (normal) microbiota", "Transient microbiota"], a, why:a ? "Transient microbiota come from the environment and wash off." : "Resident microbiota are permanent and live deeper in the skin."})), {picW:240});
   }
 
@@ -903,20 +923,24 @@
         q("When should cultures for a C&S be collected?", ["Before the first antibiotic dose", "After a week of antibiotics", "Only after symptoms go away", "It doesn't matter"], 0, "Otherwise results can be wrong."),
         q("Antimicrobial drugs vs. disinfectants: which goes into the patient?", ["Antimicrobial drugs", "Disinfectants", "Antiseptics", "Both disinfectants and antiseptics"], 0, "Disinfectants and antiseptics go on surfaces and skin.")]},
     hands:{tab:"26: Hand scrubbing", title:"Effectiveness of Hand Scrubbing", ex:"Exercise 26", render:renderHands,
-      question:"How well do water and soap remove bacteria from your hands, and why never all of them?",
+      question:"How much does each handwashing step (rinsing, scrubbing, drying, sanitizer) remove, what does soap add, and why never all of them?",
       how:["<b>Normal (resident) microbiota:</b> permanent residents of the skin (the skin microbiome). <b>Transient microbiota:</b> picked up from contact with the environment.",
         "<b>Semmelweis, 1846:</b> handwashing cut puerperal fever deaths from 12% to 1.2%. The <b>CDC</b>: handwashing is the single most important way to prevent infection.",
         "A clinical scrub of <b>3 to 5 minutes</b> with antimicrobial soap removes transient microbiota, but <b>not all resident</b> microbiota. Skin is never sterile, which is why surgeons also wear gloves.",
-        "<b>Water only:</b> colony counts drop some with each wash as transient bacteria rinse off. <b>Soap:</b> counts usually drop faster, because soap lifts oils and debris that hold bacteria. <b>Never zero?</b> Expected! Resident microbiota live deeper in skin layers and hair follicles."],
-      more:[["Reading your plates", null, ["Water plate: 4 sections. Soap plate: 5 sections. Read the sections in the order you touched them, count colonies in each (or estimate if crowded), note different colony types (color, size, shape), and compare the water trend to the soap trend.", "In your notebook: record colony counts for every section of both plates, then answer the Exercise 26 Conclusions and Questions from your lab manual."]]],
+        "<b>Rinse only:</b> barely takes anything off. <b>Scrub + rinse:</b> takes off more, because friction loosens bacteria (degerming). <b>Scrub + rinse + dry:</b> drying takes off a lot. <b>Sanitizer gel:</b> usually not as effective as scrubbing and drying.",
+        "<b>Soap vs. water:</b> both plates are scrubbed the same way, so comparing them shows what soap adds beyond degerming: it lifts the oils and debris that hold bacteria. <b>Never zero?</b> Expected! Resident microbiota live deeper in skin layers and hair follicles."],
+      more:[["Reading your plates", null, ["<b>Soap plate, 5 sections:</b> control (unwashed), rinse only, scrub with soap + rinse, scrub with soap + rinse + dry, sanitizer gel. <b>Water plate, 4 sections:</b> the same steps, scrubbing with water only. It shares the soap plate's control.", "Count colonies in each section (or estimate if crowded), note different colony types (color, size, shape), and compare the two plates step by step.", "In your notebook: record colony counts for every section of both plates, then answer the Exercise 26 Conclusions and Questions from your lab manual."]]],
       quiz:[
         q("What are transient microbiota?", ["Microbes picked up from contact with the environment", "Permanent residents of the skin", "Bacteria inside hair follicles only", "Endospores"], 0, "Resident microbiota are the permanent skin microbiome."),
         q("What did Semmelweis show in 1846?", ["Handwashing cut puerperal fever deaths from 12% to 1.2%", "Penicillin kills staph", "UV kills bacteria", "Soap sterilizes skin"], 0, "One of the first proofs that hand hygiene saves lives."),
         q("According to the CDC, what is the single most important way to prevent infection?", ["Handwashing", "Antibiotics", "Masks", "Vaccines"], 0, "From the class slides."),
         q("A 3 to 5 minute clinical scrub with antimicrobial soap removes…", ["Transient microbiota, but not all resident microbiota", "All microbes on the skin", "Only resident microbiota", "Nothing"], 0, "That's why surgeons also wear gloves."),
-        q("Why do soap counts usually drop faster than water counts?", ["Soap lifts oils and debris that hold bacteria", "Soap is hotter", "Water adds bacteria", "Soap sterilizes the hands"], 0, "Soap helps remove what bacteria cling to."),
+        q("At the scrub steps, why is the soap plate lower than the water plate?", ["Soap lifts the oils and debris that hold bacteria, adding to the scrubbing", "Soap is hotter", "Water adds bacteria", "Soap sterilizes the hands"], 0, "Both plates were scrubbed the same way, so the difference is the soap."),
+        q("Rinse only (no scrubbing) compared to the control…", ["Barely any change", "A huge drop", "Zero colonies", "More colonies than the control"], 0, "Rinsing without friction leaves most bacteria in place."),
+        q("Which step took off a LOT of bacteria?", ["Drying after scrubbing and rinsing", "Rinsing only", "The control", "Nothing did"], 0, "The towel wipes away bacteria the scrubbing loosened."),
+        q("How did the sanitizer gel usually compare to scrubbing + rinsing + drying?", ["Not as effective", "More effective: it sterilizes", "Exactly the same", "It added bacteria"], 0, "A gel doesn't remove anything; it has to kill microbes where they sit."),
         q("Why do counts never reach zero?", ["Resident microbiota live deeper in skin layers and hair follicles", "The plates were contaminated", "Water adds bacteria", "You need 30 minutes of scrubbing"], 0, "Skin is never sterile."),
-        q("How many sections are on the water plate and the soap plate?", ["Water: 4, soap: 5", "Water: 5, soap: 4", "Both: 4", "Both: 5"], 0, "Read them in the order you touched them."),
+        q("Why does the water plate have only 4 sections?", ["It has no control: it shares the soap plate's control", "One step was skipped by mistake", "Water doesn't need a sanitizer section", "It's half the size"], 0, "Soap plate: 5 sections, water plate: 4."),
         q("Why do surgeons wear gloves even after scrubbing?", ["Skin is never sterile", "Gloves are warmer", "Scrubbing adds bacteria", "Gloves replace scrubbing"], 0, "Resident microbiota survive the scrub."),
         q("What should you note besides the number of colonies?", ["Different colony types: color, size, and shape", "The smell", "The plate's weight", "Nothing else"], 0, "Different types suggest different organisms.")]}
   };
