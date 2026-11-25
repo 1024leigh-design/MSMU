@@ -17,7 +17,7 @@
 <script src="lab.js"></script>
 <script>
 (function(){
-  const {$, f1, clamp, rnd, esc, shuffle, q, T, plateSVG, pie, sliceGrowth, tubeSVG, scoreTxt, orderGame, pictureGame, onCleanup} = MicroLab;
+  const {$, f1, clamp, rnd, esc, shuffle, q, T, plateSVG, pie, sliceGrowth, tubeSVG, scoreTxt, orderGame, pictureGame, onCleanup, ideas, explore} = MicroLab;
   const AGAR = "#efe0b0";
   const SCORE_TBL = `<table class="tbl" style="max-width:320px;min-width:0"><tr><th>Score</th><th>Growth</th></tr>${[["−", "none"], ["+", "minimum"], ["2+", "moderate"], ["3+", "heavy"], ["4+", "maximum"]].map(r => `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join("")}</table>`;
 
@@ -56,31 +56,71 @@
     sepi:{t0:[4, 4, 4, 4, 4], t4:[4, 4, 4, 4, 4], t65:[4, 3, 1, 0, 0], t75:[4, 2, 0, 0, 0], t88:[4, 1, 0, 0, 0]}};
   const TDT_OPTS = ["Killed in under 30 sec", "Killed between 30 sec and 2 min", "Killed between 2 and 5 min", "Killed between 5 and 15 min", "Survived all 15 min"];
 
-  function tempScaleSVG(){
+  /* temperature bar: tap a growth range or one of our test temperatures */
+  const TZINFO = {
+    psy:["Psychrophiles (0 to 20°C)", "Cold-loving microbes. They can grow even at 0°C and are found in cold places like polar oceans. They can't grow at body temperature."],
+    meso:["Mesophiles (25 to 40°C)", "Moderate-temperature lovers. Most bacteria are mesophiles, including the ones that live in and on us (body temperature is 37°C) and most pathogens. All three of our Ex 22 bacteria are mesophiles."],
+    thermo:["Thermophiles (45 to 65°C)", "Heat-loving microbes, found in places like compost piles and hot springs."],
+    hyper:["Hyperthermophiles (above 80°C)", "Extreme heat lovers, found in places like deep-sea hydrothermal vents. Most of them are archaea, not bacteria."],
+    cold:["0°C ice and 4°C fridge", "Below a mesophile's growth range. Cold <b>slows</b> growth but does <b>not kill</b>, so it is bacteriostatic. That's why the 0°C and 4°C plates grew 4+ in every section."],
+    hot:["63 to 70°C, about 75°C, about 88°C", "Above a mesophile's growth range, so the heat <b>kills</b>. Hotter or longer = fewer survivors. Endospores (<i>B. subtilis</i>) survive the longest."]};
+  function tempScaleSVG(narrow){
+    if (narrow){
+      const y = c => 440 - c * 4;
+      let v = `<line x1="80" y1="${y(100)}" x2="80" y2="${y(0)}" stroke="#4b2a8a" stroke-width="3"/>` + T(180, 18, "°C", {fs:14, c:"#4b2a8a"});
+      for (let c = 0; c <= 100; c += 20) v += `<line x1="72" y1="${y(c)}" x2="88" y2="${y(c)}" stroke="#4b2a8a" stroke-width="2"/>` + T(64, y(c) + 5, c + "°", {a:"end", fs:14, w:400});
+      [["psy", 0, 20, "Psychrophiles", "0 to 20°C", "#e7e9fb"], ["meso", 25, 40, "Mesophiles", "25 to 40°C", "#fff4d6"], ["thermo", 45, 65, "Thermophiles", "45 to 65°C", "#fbe8e7"], ["hyper", 80, 100, "Hyperthermophiles", "above 80°C", "#e1f3ef"]].forEach(([k, a, b, n, r, c]) => {
+        const top = y(b), h = y(a) - y(b), mid = top + h / 2;
+        v += `<g data-x="${k}"><rect class="xhit" x="150" y="${top + 2}" width="200" height="${h - 4}" rx="8" fill="${c}" stroke="#b9a8e0"/>` + T(250, mid - 2, n, {fs:16}) + T(250, mid + 17, r, {fs:14, w:400}) + `</g>`;
+      });
+      v += `<g data-x="cold"><rect class="xhit" x="90" y="${y(4) - 14}" width="52" height="${y(0) - y(4) + 28}" rx="8" fill="#3f4cc0" fill-opacity=".08" stroke="none"/><circle cx="80" cy="${y(0)}" r="7" fill="#3f7bd1"/><circle cx="80" cy="${y(4)}" r="7" fill="#3f7bd1"/>` + T(96, y(2) + 5, "0, 4", {a:"start", fs:14, c:"#3f7bd1"}) + `</g>`;
+      v += `<g data-x="hot"><rect class="xhit" x="90" y="${y(88) - 14}" width="52" height="${y(63) - y(88) + 28}" rx="8" fill="#b83a34" fill-opacity=".08" stroke="none"/><rect x="74" y="${y(70)}" width="12" height="${y(63) - y(70)}" rx="3" fill="#b83a34"/><circle cx="80" cy="${y(75)}" r="7" fill="#b83a34"/><circle cx="80" cy="${y(88)}" r="7" fill="#b83a34"/>` + T(96, y(88) + 5, "88", {a:"start", fs:14, c:"#b83a34"}) + T(96, y(75) + 5, "75", {a:"start", fs:14, c:"#b83a34"}) + T(96, y(66) + 5, "63-70", {a:"start", fs:13, c:"#b83a34"}) + `</g>`;
+      v += T(180, 470, "Dots = our test temperatures", {fs:14, w:400, c:"#5a6376"});
+      return `<svg class="gsvg" viewBox="0 0 360 480" role="img" aria-label="Temperature scale with growth ranges and our test temperatures. Tap one to learn more.">${v}</svg>`;
+    }
     const x = c => 40 + c * 6.8;
     let s = "";
-    [[0, 20, "Psychrophiles", "0 to 20°C", "#e7e9fb"], [25, 40, "Mesophiles", "25 to 40°C", "#fff4d6"], [45, 65, "Thermophiles", "45 to 65°C", "#fbe8e7"], [80, 100, "Hyperthermophiles", "above 80°C", "#e1f3ef"]].forEach(([a, b, n, r, c], i) => {
-      s += `<rect x="${x(a)}" y="${i % 2 ? 60 : 18}" width="${x(b) - x(a)}" height="36" rx="6" fill="${c}" stroke="#b9a8e0"/>` + T((x(a) + x(b)) / 2, (i % 2 ? 60 : 18) + 16, n, {fs:12}) + T((x(a) + x(b)) / 2, (i % 2 ? 60 : 18) + 30, r, {fs:11, w:400});
+    [["psy", 0, 20, "Psychrophiles", "0 to 20°C", "#e7e9fb"], ["meso", 25, 40, "Mesophiles", "25 to 40°C", "#fff4d6"], ["thermo", 45, 65, "Thermophiles", "45 to 65°C", "#fbe8e7"], ["hyper", 80, 100, "Hyperthermophiles", "above 80°C", "#e1f3ef"]].forEach(([k, a, b, n, r, c], i) => {
+      const y = i % 2 ? 60 : 18;
+      s += `<g data-x="${k}"><rect class="xhit" x="${x(a)}" y="${y}" width="${x(b) - x(a)}" height="36" rx="6" fill="${c}" stroke="#b9a8e0"/>` + T((x(a) + x(b)) / 2, y + 16, n, {fs:12}) + T((x(a) + x(b)) / 2, y + 30, r, {fs:11, w:400}) + `</g>`;
     });
     s += `<line x1="${x(0)}" y1="118" x2="${x(100)}" y2="118" stroke="#4b2a8a" stroke-width="2.5"/>`;
     for (let c = 0; c <= 100; c += 20) s += `<line x1="${x(c)}" y1="112" x2="${x(c)}" y2="124" stroke="#4b2a8a" stroke-width="2"/>` + T(x(c), 140, c + "°C", {fs:12, w:400});
-    [[0, "0"], [4, "4"], [75, "75"], [88, "88"]].forEach(([c, l]) => { s += `<circle cx="${x(c)}" cy="118" r="7" fill="#4b2a8a"/>` + T(x(c) + (c === 0 ? -6 : c === 4 ? 8 : 0), 162, l, {fs:12, c:"#4b2a8a"}); });
-    s += `<rect x="${x(63)}" y="112" width="${x(70) - x(63)}" height="12" rx="3" fill="#4b2a8a"/>` + T(x(66.5), 162, "63 to 70", {fs:12, c:"#4b2a8a"});
-    s += T(380, 186, "Our test temperatures (dots). All three of our bacteria are mesophiles.", {fs:12, w:400, c:"#5a6376"});
-    return `<svg class="gsvg" viewBox="0 0 760 196" role="img" aria-label="Temperature scale with growth ranges and our test temperatures">${s}</svg>`;
+    s += `<g data-x="cold"><rect class="xhit" x="${x(0) - 14}" y="104" width="${x(4) - x(0) + 28}" height="66" rx="8" fill="#3f4cc0" fill-opacity=".06" stroke="none"/>`;
+    [[0, "0"], [4, "4"]].forEach(([c, l]) => { s += `<circle cx="${x(c)}" cy="118" r="7" fill="#3f7bd1"/>` + T(x(c) + (c === 0 ? -6 : 8), 162, l, {fs:12, c:"#3f7bd1"}); });
+    s += `</g><g data-x="hot"><rect class="xhit" x="${x(63) - 10}" y="104" width="${x(88) - x(63) + 20}" height="66" rx="8" fill="#b83a34" fill-opacity=".06" stroke="none"/>`;
+    [[75, "75"], [88, "88"]].forEach(([c, l]) => { s += `<circle cx="${x(c)}" cy="118" r="7" fill="#b83a34"/>` + T(x(c), 162, l, {fs:12, c:"#b83a34"}); });
+    s += `<rect x="${x(63)}" y="112" width="${x(70) - x(63)}" height="12" rx="3" fill="#b83a34"/>` + T(x(66.5), 162, "63 to 70", {fs:12, c:"#b83a34"}) + `</g>`;
+    s += T(380, 188, "Dots = our test temperatures. Tap a group or a set of dots.", {fs:12, w:400, c:"#5a6376"});
+    return `<svg class="gsvg" viewBox="0 0 760 198" role="img" aria-label="Temperature scale with growth ranges and our test temperatures. Tap one to learn more.">${s}</svg>`;
   }
 
   function renderHeat(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      ${ideas("Key vocab", [
+        ["Sterilization", "Kills <b>all</b> microbial life, including endospores. The autoclave, the hot-air oven, and incineration sterilize."],
+        ["Thermal death time (TDT)", "The shortest <b>time</b> to kill all cells in a culture at a given temperature. Your Ex 22 plates estimate TDT."],
+        ["Thermal death point (TDP)", "The lowest <b>temperature</b> that kills all bacteria in a liquid culture in <b>10 minutes</b>."],
+        ["Decimal reduction time (D-value)", "The time to kill <b>90%</b> of the population at a given temperature."],
+        ["Endospores", "The most heat-resistant form of bacterial life. Boiling doesn't kill them, but the autoclave does."]], {vocab:true})}
+      ${ideas("Types of heat (and cold)", [
+        ["Autoclave (moist heat + pressure)", "Steam under pressure. The pressure lets the steam get hotter than boiling water (121°C instead of 100°C), which kills endospores. <b>Sterilizes.</b>", "121°C · 15 psi · 15 min"],
+        ["Boiling (moist)", "Kills vegetative cells, but <b>not endospores</b>, so it does not sterilize.", "100°C"],
+        ["Pasteurization (moist)", "Kills pathogens in a liquid, like milk, <b>without sterilizing</b> it.", "63°C for 30 min, or 72°C for 15 sec"],
+        ["Hot-air oven (dry)", "Dry heat is less effective, so it needs a higher temperature for longer than the autoclave. <b>Sterilizes.</b>", "170°C · 2 hours"],
+        ["Incineration (dry)", "Burns contaminated materials. Flaming your loop red-hot is incineration. <b>Sterilizes.</b>", "open flame"],
+        ["Fridge and freezer (cold)", "Cold <b>slows growth but does not kill</b> (bacteriostatic). Warm things back up and the bacteria grow again.", "4°C fridge · 0°C and below"]],
+        {lead:"<b>Moist heat</b> denatures (coagulates) proteins and works better than dry heat. <b>Dry heat</b> kills by oxidation and dehydration, so it needs higher temperatures and more time."})}
+      <div class="sect">Where do microbes grow? Tap the bar</div><div id="hZones"></div>
+      <div class="parthead">Try the experiment <small>Exercise 22</small></div>
       <div class="sect">1. Run the heat test</div>
       <p class="labq" style="margin:0 0 6px">You get one organism and two temperatures, so you make two plates. Here you run one plate at a time. Pick an organism and a temperature, then streak each section at the right moment.</p>
       <div class="row"><span class="lbl">Organism</span><span id="hOrg"></span></div>
       <div class="row"><span class="lbl">Temperature</span><span id="hTemp"></span></div>
       <div class="bench2"><div class="panel tight" id="hPlate" style="max-width:400px;justify-self:center;width:100%"></div>
         <div><div class="clock" id="hClock"></div><div class="benchhint" id="hMsg" role="status"></div><div class="row" id="hBtns"></div><div id="hAsk"></div></div></div>
-      <div class="sect">2. Where do our temperatures fall?</div>
-      <div class="panel">${tempScaleSVG()}</div>
-      <div class="sect">3. What does this plate mean?</div>
+      <div class="sect">2. What does this plate mean?</div>
       <p class="labq" style="margin:0 0 6px">These are the patterns from the "what your pattern means" slide. Read each plate and pick what it means.</p>
       <div class="row" style="align-items:flex-start;gap:16px"><div style="flex:1;min-width:260px" id="hRead"></div></div>
       <div class="sect">Scoring growth</div>${SCORE_TBL}`;
@@ -140,6 +180,7 @@
       }
     };
     chips(); start();
+    explore($("hZones"), tempScaleSVG, TZINFO, "Tap <b>Psychrophiles</b>, <b>Mesophiles</b>, <b>Thermophiles</b>, or <b>Hyperthermophiles</b> for a definition, or tap our test temperatures (the dots).");
     const RP = [[[4, 4, 4, 4, 4], 0, "Heavy growth everywhere, and this plate sat on ice (0°C)."], [[4, 3, 1, 0, 0], 1, ""], [[0, 3, 2, 1, 0], 2, ""], [[4, 2, 0, 0, 2], 3, ""], [[4, 3, 3, 2, 2], 4, "This plate came out of the 88°C bath."]];
     const MEAN = ["Cold did not kill. It only slows growth", "Killed between the last growth and the first no growth section: your TDT estimate", "Control failed. Check your streak and ask your instructor", "Uneven loopful or contamination. Note it in your results", "Survived 15 min at that temperature (endospores?)"];
     pictureGame($("hRead"), RP.map(([g, a, ctx], k) => ({svg:sectPlate(HSECT, g, {seed:k + 11}), ask:(ctx ? ctx + " " : "") + "What does this pattern mean?", opts:MEAN, a, why:MEAN[a] + "."})), {picW:300});
@@ -177,8 +218,63 @@
     {p:"Foil covers only C. What now?", c:[["Lamp on for 30 more sec, then off", 1, s => { s.dose[1] += 30; s.dose[2] += 30; s.on = true; }, "30 got 30 sec total, 60 got 60 sec total, and C got none."], ["Leave the plate under the lamp until the next class", 0, null, "Exposure is timed: 30 sec, then off."]]},
     {p:"Remove the foil and replace the lid. This is your Dark plate. Where does it go?", c:[["The back room, at room temperature", 1, s => { s.foil = null; s.lid = true; s.on = false; s.done = true; }, "Repeat everything with your second plate. The Light plate goes on the tray labeled \"Light,\" also at room temperature."], ["The tray labeled \"Light\"", 0, null, "That's where the Light plate goes. The Dark plate goes to the back room."], ["The 37°C incubator", 0, null, "Both plates stay at room temperature until the next period."]]}];
 
+  /* the electromagnetic spectrum, with a zoom into UV and visible light */
+  const EMINFO = {
+    gamma:["Gamma rays (shorter than about 0.01 nm)", "The shortest wavelength and the most energy. <b>Ionizing</b>: they make free radicals that break DNA strands. Used to sterilize things like medical supplies."],
+    xray:["X rays (about 0.01 to 10 nm)", "<b>Ionizing</b>, like gamma rays: they make free radicals that break DNA strands."],
+    uv:["Ultraviolet (about 10 to 400 nm)", "<b>Nonionizing</b>: less energy than X rays, but enough to damage DNA directly by making thymine dimers. Look at the zoom below for UVC, UVB, and UVA."],
+    vis:["Visible light (about 400 to 700 nm)", "The light we see, violet to red. <b>Nonionizing</b>, and not harmful to most bacteria. It powers <b>light repair</b>: photolyases use visible light to split thymine dimers. That's why the Light plate can grow more than the Dark plate."],
+    ir:["Infrared (about 700 nm to 1 mm)", "Felt as heat. <b>Nonionizing.</b>"],
+    micro:["Microwaves (about 1 mm to 1 m)", "<b>Nonionizing.</b> They don't kill microbes directly. A microwave oven kills them only by heating the food or water they're in."],
+    radio:["Radio waves (longer than about 1 m)", "The longest wavelength and the least energy. <b>Nonionizing.</b>"],
+    air:["Below 200 nm", "Absorbed by air, so it doesn't reach living organisms."],
+    uvc:["UVC (200 to 290 nm)", "The <b>most lethal</b> UV: DNA absorbs it best. <b>Our lamp is 260 nm.</b>"],
+    uvb:["UVB (290 to 320 nm)", "Can also damage DNA."],
+    uva:["UVA (320 to 400 nm)", "Not readily absorbed. Less active on living organisms."],
+    vis2:["Visible light (400 to 700 nm)", "Just past UVA. Visible light drives light repair (photoreactivation) by photolyases."]};
+  function spectrumSVG(narrow){
+    const B = [["gamma", "Gamma rays", "< 0.01 nm", "#4b2a8a", "#fff"], ["xray", "X rays", "0.01 to 10 nm", "#6a4cc0", "#fff"], ["uv", "Ultraviolet", "10 to 400 nm", "#9c86f0", "#fff"], ["vis", "Visible", "400 to 700 nm", "url(#visG)", "#1d2433"], ["ir", "Infrared", "700 nm to 1 mm", "#d9694a", "#fff"], ["micro", "Microwaves", "1 mm to 1 m", "#d8a24a", "#1d2433"], ["radio", "Radio", "> 1 m", "#b7c3cf", "#1d2433"]];
+    const GRAD = `<defs><linearGradient id="visG" x1="0" x2="1"><stop offset="0" stop-color="#8f5bd8"/><stop offset=".2" stop-color="#3f7bd1"/><stop offset=".45" stop-color="#3fae5a"/><stop offset=".65" stop-color="#f2d23c"/><stop offset=".82" stop-color="#f08a2e"/><stop offset="1" stop-color="#d9443a"/></linearGradient></defs>`;
+    if (narrow){
+      const ZN = [["air", "Below 200 nm", "absorbed by air", "#eef1f5", "#343b4a"], ["uvc", "UVC", "200 to 290 nm", "#fbe8e7", "#343b4a"], ["uvb", "UVB", "290 to 320 nm", "#fff4d6", "#343b4a"], ["uva", "UVA", "320 to 400 nm", "#f3effd", "#343b4a"], ["vis2", "Visible", "400 to 700 nm", "url(#visG)", "#1d2433"]];
+      let v = GRAD + T(200, 22, "↑ shorter wavelength, MORE energy", {fs:14, w:400});
+      const row = (k, n, r, c, tc, yy) => `<g data-x="${k}"><rect class="xhit" x="44" y="${yy}" width="190" height="36" rx="7" fill="${c}" stroke="#fff"/>` + T(139, yy + 24, n, {fs:15, c:tc}) + T(242, yy + 24, r, {a:"start", fs:13, w:400}) + `</g>`;
+      B.forEach(([k, n, r, c, tc], i) => { v += row(k, n, r, c, tc, 36 + i * 42); });
+      v += `<path d="M34,40 L24,40 L24,114 L34,114" fill="none" stroke="#b83a34" stroke-width="2.5"/>` + `<text x="16" y="77" font-size="13" font-weight="700" fill="#b83a34" text-anchor="middle" transform="rotate(-90 16 77)">IONIZING</text>`;
+      v += `<path d="M34,124 L24,124 L24,324 L34,324" fill="none" stroke="#1b7f4e" stroke-width="2.5"/>` + `<text x="16" y="224" font-size="13" font-weight="700" fill="#1b7f4e" text-anchor="middle" transform="rotate(-90 16 224)">NONIONIZING</text>`;
+      v += T(200, 352, "↓ longer wavelength, less energy", {fs:14, w:400});
+      v += T(200, 390, "Zoom in on UV and visible light", {fs:15, c:"#5b3fb0"});
+      ZN.forEach(([k, n, r, c, tc], i) => { v += row(k, n, r, c, tc, 402 + i * 42); });
+      v += T(139, 642, "our lamp: 260 nm (UVC)", {fs:14, c:"#b83a34"});
+      return `<svg class="gsvg" viewBox="0 0 400 652" role="img" aria-label="The electromagnetic spectrum from gamma rays to radio waves, with a zoom into UV and visible light. Tap a band to learn more.">${v}</svg>`;
+    }
+    const x0 = 20, w = 102, y = 52;
+    let s = `<defs><linearGradient id="visG" x1="0" x2="1"><stop offset="0" stop-color="#8f5bd8"/><stop offset=".2" stop-color="#3f7bd1"/><stop offset=".45" stop-color="#3fae5a"/><stop offset=".65" stop-color="#f2d23c"/><stop offset=".82" stop-color="#f08a2e"/><stop offset="1" stop-color="#d9443a"/></linearGradient></defs>`;
+    s += `<path d="M${x0 + 4},40 L${x0 + 4},30 L${x0 + 2 * w - 4},30 L${x0 + 2 * w - 4},40" fill="none" stroke="#b83a34" stroke-width="2"/>` + T(x0 + w, 22, "IONIZING", {fs:13, c:"#b83a34"});
+    s += `<path d="M${x0 + 2 * w + 4},40 L${x0 + 2 * w + 4},30 L${x0 + 7 * w - 4},30 L${x0 + 7 * w - 4},40" fill="none" stroke="#1b7f4e" stroke-width="2"/>` + T(x0 + 4.5 * w, 22, "NONIONIZING", {fs:13, c:"#1b7f4e"});
+    B.forEach(([k, n, r, c, tc], i) => { const x = x0 + i * w; s += `<g data-x="${k}"><rect class="xhit" x="${x}" y="${y}" width="${w - 3}" height="46" rx="6" fill="${c}" stroke="#fff"/>` + T(x + w / 2 - 1.5, y + 28, n, {fs:13, c:tc}) + T(x + w / 2 - 1.5, y + 66, r, {fs:11, w:400}) + `</g>`; });
+    s += `<path d="M${x0},140 L${x0 + 7 * w},140" stroke="#5a6376" stroke-width="1.5"/><path d="M${x0},140 l10,-5 l0,10 Z" fill="#5a6376"/><path d="M${x0 + 7 * w},140 l-10,-5 l0,10 Z" fill="#5a6376"/>`;
+    s += T(x0 + 14, 158, "shorter wavelength, MORE energy", {a:"start", fs:12, w:400}) + T(x0 + 7 * w - 14, 158, "longer wavelength, less energy", {a:"end", fs:12, w:400});
+    /* zoom */
+    const Z = [["air", "Below 200 nm", "absorbed by air", 120, "#eef1f5", "#343b4a"], ["uvc", "UVC", "200 to 290 nm", 170, "#fbe8e7", "#343b4a"], ["uvb", "UVB", "290 to 320 nm", 110, "#fff4d6", "#343b4a"], ["uva", "UVA", "320 to 400 nm", 130, "#f3effd", "#343b4a"], ["vis2", "Visible", "400 to 700 nm", 160, "url(#visG)", "#1d2433"]];
+    const zy = 200; let zx = x0 + 12;
+    s += `<path d="M${x0 + 2 * w},${y + 46} L${x0 + 12},${zy - 4} M${x0 + 4 * w - 3},${y + 46} L${zx + Z.reduce((t, z) => t + z[3], 0)},${zy - 4}" stroke="#9c86f0" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>`;
+    s += T(x0 + 3 * w, 188, "zoom in on UV and visible light", {fs:12, w:400, c:"#5b3fb0"});
+    Z.forEach(([k, n, r, wd, c, tc]) => { s += `<g data-x="${k}"><rect class="xhit" x="${zx}" y="${zy}" width="${wd - 3}" height="50" rx="6" fill="${c}" stroke="#b9a8e0"/>` + T(zx + wd / 2 - 1.5, zy + 22, n, {fs:13, c:tc}) + T(zx + wd / 2 - 1.5, zy + 40, r, {fs:11, w:400, c:tc}) + `</g>`; if (k === "uvc"){ const lx = zx + wd * .6; s += `<path d="M${lx},${zy + 52} l0,14" stroke="#b83a34" stroke-width="2"/>` + T(lx, zy + 80, "our lamp: 260 nm", {fs:12, c:"#b83a34"}); } zx += wd; });
+    return `<svg class="gsvg" viewBox="0 0 754 290" role="img" aria-label="The electromagnetic spectrum from gamma rays to radio waves, with a zoom into UV and visible light. Tap a band to learn more.">${s}</svg>`;
+  }
+
   function renderUV(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      <div class="sect">The electromagnetic spectrum: tap a band</div><div id="uvSpec"></div>
+      ${ideas("", [
+        ["Ionizing radiation", "<b>Gamma rays and X rays.</b> High energy, short wavelength. They make free radicals that break DNA strands."],
+        ["Nonionizing radiation", "<b>UV</b>, visible light, and longer wavelengths. Less energy. UV damages DNA directly by making thymine dimers."],
+        ["Thymine dimers", "UV links neighboring thymines in DNA. That causes a mutation in a critical gene, and the cell dies unless it repairs the damage."],
+        ["Light repair vs. dark repair", "<b>Light repair:</b> visible light activates photolyases, which split the dimers. <b>Dark repair:</b> endonuclease cuts out the dimers, DNA polymerase fills in, and DNA ligase seals the backbone."],
+        ["Uses and limit", "Used on heat-labile solutions, operating rooms, food-processing areas, and water. Its limit: <b>poor penetrating ability</b>. It can't get through foil or the plate lid."]], {vocab:true})}
+      <div class="parthead">Try the experiment <small>Exercise 23</small></div>
       <div class="note"><b>Safety:</b> do not look at the UV light, do not leave your hand exposed to it, and wear safety glasses.</div>
       <div class="sect">1. Expose your plate</div>
       <div class="bench2"><div class="panel tight" id="uvPlate" style="max-width:400px;justify-self:center;width:100%"></div><div><div class="benchsteps" id="uvSteps"></div><div class="benchhint" id="uvMsg" role="status"></div><div class="ans" id="uvAns" style="flex-direction:column;align-items:stretch"></div><div class="row"><button class="btn secondary" id="uvReset">↺ Start over</button></div></div></div>
@@ -209,6 +305,7 @@
     };
     $("uvReset").onclick = reset;
     reset();
+    explore($("uvSpec"), spectrumSVG, EMINFO, "Tap any band, top or bottom. Shorter wavelengths carry more energy. Gamma rays and X rays are <b>ionizing</b>; UV and everything longer is <b>nonionizing</b>.");
     const dk = uvPlateSVG({lines:true}, {growth:[4, 1, 0], tag:"Dark plate"}), both = `<svg class="gsvg" viewBox="0 0 600 296">${dk.replace(/<svg[^>]*>|<\/svg>/g, "")}<g transform="translate(300 0)">${uvPlateSVG({lines:true}, {growth:[4, 2, 1], tag:"Light plate"}).replace(/<svg[^>]*>|<\/svg>/g, "")}</g></svg>`;
     pictureGame($("uvRead"), [
       {svg:both, ask:"C grew 4+. The 30 and 60 strips grew less. What does C vs. 30 and 60 tell you?", opts:["UV killed the exposed cells, and the foil blocked the UV", "UV went right through the foil", "The swabbing was uneven", "Light repair happened"], a:0, why:"C was under foil the whole time and grew 4+, so the foil blocked the UV."},
@@ -220,6 +317,20 @@
   const DLAB = ["0", "D-2.5", "D-5", "D-10", "D-20"], TLAB = ["2.5", "5", "10", "20"];
   function renderDis(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      ${ideas("Key vocab", [
+        ["Disinfectant", "Used on <b>inanimate objects</b> (like your lab bench) to lower the level of microbes on their surfaces."],
+        ["Antiseptic", "Used on <b>living tissue</b> (like skin) to decrease the number of microbes."],
+        ["Bactericidal (-cidal)", "<b>Kills</b> bacteria. Bacterial death."],
+        ["Bacteriostatic (-static)", "<b>Temporarily inhibits</b> growth. Remove the chemical and the bacteria can grow again."]], {vocab:true})}
+      ${ideas("Choosing a chemical", [
+        ["Concentration", "Use the strength the manufacturer recommends."],
+        ["Length of contact", "Chemicals need time to work. Some kill in seconds, some need many minutes."],
+        ["Other factors", "pH, solubility, toxicity, organic material present (like blood or dirt), and cost."],
+        ["Decimal reduction time (DRT)", "The time to kill <b>90%</b> of the population. Hospitals determine it for their most common, persistent microbes before choosing a disinfectant."],
+        ["The use-dilution test", "Metal rings dipped in culture sit in the disinfectant for 10 min at 20°C, then go into growth medium. Growth = survivors. It can only test <b>-cidal</b> compounds, not -static ones."]],
+        {lead:"<b>No single chemical is best in all situations.</b> It has to match the organism and the environment."})}
+      <div class="parthead">Try the experiment <small>Exercise 24: a modified use-dilution test</small></div>
       <div class="sect">1. Get set up</div>
       <p class="labq" style="margin:0 0 6px">Work with another group: same disinfectant or antiseptic, two different bacteria. Put the setup in order.</p><div id="dOrder"></div>
       <div class="sect">2. Start the clock</div>
@@ -297,6 +408,21 @@
 
   function renderKB(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      ${ideas("Key vocab", [
+        ["Antibiotic", "A substance <b>produced by a microorganism</b> that inhibits other microorganisms."],
+        ["Antimicrobial drug", "Any chemical, natural or synthetic, used <b>in the body</b> to kill or inhibit microbes."],
+        ["MIC", "<b>Minimum inhibitory concentration</b>: the lowest concentration of a drug that inhibits growth."],
+        ["Zone of inhibition", "The clear ring around a disk, where the drug is above the MIC and bacteria can't grow."]], {vocab:true})}
+      ${ideas("How Kirby-Bauer works", [
+        ["Diffusion", "Each paper disk holds a known amount of one drug. The drug diffuses into the agar and is most concentrated next to the disk."],
+        ["Standardized method", "Zone size also depends on how fast the drug diffuses and how fast the organism grows. So: <b>Mueller-Hinton agar</b> every time (the drug diffuses freely) and a complete lawn."],
+        ["S, I, R", "<b>S</b> susceptible: a standard dose should work. <b>I</b> intermediate: may work at a higher dose. <b>R</b> resistant: not likely to work."],
+        ["Bigger isn't always better", "Every drug diffuses differently, so every drug has its own cutoffs. The same zone can be S for one drug and R for another."],
+        ["History", "<b>1928:</b> Fleming sees <i>Penicillium</i> inhibit <i>Staphylococcus</i>. <b>1940:</b> Waksman isolates streptomycin. Today, <i>Streptomyces</i> make nearly 70% of all antibiotics."],
+        ["Bench to bedside", "Culture and sensitivity (C&S) reports use S, I, R. Collect the culture <b>before</b> the first dose, then switch to the right, narrowest drug to slow resistance."]],
+        {lead:"Disinfectants and antiseptics (Ex 24) go <b>on</b> surfaces and skin. Antimicrobial drugs go <b>into</b> the patient."})}
+      <div class="parthead">Try the experiment <small>Exercise 25</small></div>
       <div class="sect">1. Make a lawn, place the disks, read the zones</div>
       <div class="row"><span class="lbl">Culture</span><span id="kOrg"></span></div>
       <div class="bench2"><div class="panel tight" id="kStage" style="touch-action:none;max-width:440px;justify-self:center;width:100%"></div>
@@ -480,6 +606,18 @@
   }
   function renderHands(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      ${ideas("Key vocab", [
+        ["Resident (normal) microbiota", "Permanent residents of the skin: the skin microbiome. They live deeper, in skin layers and hair follicles."],
+        ["Transient microbiota", "Picked up from contact with the environment. They sit on the surface and wash off more easily."],
+        ["Degerming", "Removing microbes from a small area mostly by scrubbing them off, like handwashing or an alcohol swab before a shot."],
+        ["Skin is never sterile", "Even a long scrub leaves resident microbiota behind. That's why surgeons also wear gloves."]], {vocab:true})}
+      ${ideas("Why handwashing matters", [
+        ["Semmelweis, 1846", "Handwashing cut deaths from puerperal fever from <b>12% to 1.2%</b>."],
+        ["The CDC", "Handwashing is the <b>single most important way</b> to prevent infection."],
+        ["Clinical scrub", "<b>3 to 5 minutes</b> with antimicrobial soap removes transient microbiota, but not all resident microbiota."],
+        ["Water vs. soap", "Water alone rinses off some transient bacteria with each wash. Soap usually drops counts faster, because it lifts the oils and debris that hold bacteria."]])}
+      <div class="parthead">Try the experiment <small>Exercise 26</small></div>
       <div class="sect">1. Count your plates</div>
       <p class="labq" style="margin:0 0 6px">Read the sections <b>in the order you touched them</b>. Tap a section to zoom in, then tap each colony to mark it, the way you'd dot the bottom of the plate with a marker. These are practice plates.</p>
       <div class="row" style="justify-content:center;gap:16px"><div class="panel tight" style="width:290px">${handPlate(WATER, {click:true, key:"w", tag:"Water plate (4 sections)"})}</div><div class="panel tight" style="width:290px">${handPlate(SOAP, {click:true, key:"s", tag:"Soap plate (5 sections)"})}</div></div>

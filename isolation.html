@@ -23,7 +23,7 @@
 <script src="lab.js"></script>
 <script>
 (function(){
-  const {$, f1, clamp, rnd, esc, q, T, pictureGame, orderGame} = MicroLab;
+  const {$, f1, clamp, rnd, esc, q, T, pictureGame, orderGame, ideas} = MicroLab;
   const CX = 230, CY = 220, R = 180, AGAR = "#efe0b0";
 
   /* ---------- geometry (plate frame: center at 0,0; quadrant 1 top-left, then clockwise) ---------- */
@@ -108,6 +108,14 @@
   /* ================================================================= the bench */
   function renderStreak(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      ${ideas("", [
+        ["Pure culture", "Contains only <b>one kind</b> of organism. Every stain and biochemical test assumes your culture is pure."],
+        ["Colony", "A population of cells that grew from a <b>single cell</b>, or a small clump called a colony-forming unit (CFU)."],
+        ["Streak plate = dilution", "Each quadrant only gets the few cells dragged out of the quadrant before it, so each one has fewer cells than the last."],
+        ["Flame between quadrants", "Kills the leftover cells on the loop. Skip it and you carry too many cells forward, so the colonies never separate."],
+        ["Isolated colonies", "Separate colonies in the last quadrants. Pick one to subculture for a <b>pure culture</b>."]], {vocab:true})}
+      <div class="parthead">Try the experiment <small>Exercise 11</small></div>
       <div class="sect">1. Streak for isolation</div>
       <p class="labq" style="margin:0 0 6px">Use the buttons for the loop and the plate, and <b>draw your streaks on the agar</b> with your mouse or finger. The quadrant you're working on is highlighted.</p>
       <div class="bench2"><div class="panel tight drawpad" id="sPad" style="max-width:480px;justify-self:center;width:100%"></div>

@@ -126,3 +126,15 @@
 .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .card h4{margin:0 0 4px;font-size:1rem}
 .card p{margin:0;font-size:.95rem;line-height:1.45}
+
+/* main ideas blocks and tap-to-learn pictures */
+.parthead{font-size:1.15rem;font-weight:700;color:var(--ink);margin:22px 0 2px;padding-top:14px;border-top:2px dashed var(--line)}
+.parthead.first{margin-top:6px;padding-top:0;border-top:0}
+.parthead small{font-weight:400;color:var(--muted);font-size:.92rem;margin-left:6px}
+.card.vocab{border-top:4px solid var(--accent)}
+.card .tagline{font-size:.86rem;font-weight:700;color:#9a6212;margin:0 0 4px}
+.lead{margin:0 0 8px;font-size:1rem;line-height:1.5;color:var(--ink)}
+[data-x]{cursor:pointer}
+[data-x]:hover{filter:brightness(.96)}
+[data-x].xsel .xhit{stroke:#f2b134;stroke-width:4}
+.xinfo{min-height:3.2em}

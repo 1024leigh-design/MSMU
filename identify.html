@@ -26,7 +26,7 @@
 <script src="lab.js"></script>
 <script>
 (function(){
-  const {$, f1, clamp, rnd, esc, shuffle, q, T, plateSVG, tubeSVG, orderGame, pictureGame} = MicroLab;
+  const {$, f1, clamp, rnd, esc, shuffle, q, T, plateSVG, tubeSVG, orderGame, pictureGame, ideas} = MicroLab;
   const C_RED = "#d9443a", C_YEL = "#f2d23c";
 
   /* ================================================================= result pictures */
@@ -96,6 +96,16 @@
   const OXI = [["Pseudomonas aeruginosa", 1], ["Alcaligenes faecalis", 1], ["Escherichia coli", 0], ["Enterobacter aerogenes", 0], ["Proteus vulgaris", 0]];
   function renderResp(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      ${ideas("Three ways to make energy", [
+        ["Aerobic respiration", "Electrons travel down the electron transport chain (ETC) to the final electron acceptor: <b>O₂</b>."],
+        ["Anaerobic respiration", "Still uses an ETC, but the final electron acceptor is something else, like <b>nitrate</b> (the nitrate reduction test)."],
+        ["Fermentation", "<b>No ETC.</b> An organic molecule is the final electron acceptor, and much less ATP is made."]], {vocab:true})}
+      ${ideas("The enzymes we test for", [
+        ["Catalase", "Breaks down toxic hydrogen peroxide: 2 H₂O₂ → 2 H₂O + O₂. Add 3% H₂O₂: <b>bubbles = positive</b>.", "first split for gram-positive cocci"],
+        ["Oxidase", "Cytochrome c oxidase, the ETC enzyme that hands electrons to O₂. Rub a colony on the strip: <b>dark purple = positive</b>.", "first split for gram-negative rods"],
+        ["Nitrate reductase", "Reduces nitrate to nitrite. Reagents A + B: <b>red = positive</b>. No color? Add zinc: red = negative.", "anaerobic respiration"]])}
+      <div class="parthead">Try the experiment <small>Exercise 17</small></div>
       <div class="note">You streaked a TSA plate for isolation on Oct 13 so you'd have <b>isolated colonies</b> for these two tests, and a nitrate broth to read after the midterm.</div>
       <div class="sect">1. Catalase test</div>
       <div class="row"><span class="lbl">Colony from</span><span id="cOrg"></span></div>
@@ -297,9 +307,17 @@
   }
   function renderSkin(body){
     body.innerHTML = `
+      <div class="parthead first">Main ideas</div>
+      ${ideas("Key vocab", [
+        ["Normal skin microbiota", "Bacteria that live on healthy skin. Most are gram-positive and salt-tolerant, like <i>Staphylococcus</i>."],
+        ["Selective (MSA)", "High salt lets only <b>salt-tolerant</b> organisms grow."],
+        ["Differential (MSA)", "Mannitol fermenters make acid, so phenol red turns <b>yellow</b> around the colony."],
+        ["Pigment", "A color made by the <b>cells themselves</b>, not a change in the agar."],
+        ["Coagulase", "An enzyme that <b>clots fibrin</b> in blood. Coagulase-positive staph = <i>S. aureus</i>."]], {vocab:true})}
       <div class="sect">Why is skin a tough place to live?</div>
       <div class="cards">${[["Dry keratin layers", "Epidermis cells are not easily colonized."], ["Sebum", "Oil gland secretions inhibit bacterial growth."], ["Salty sweat", "Creates a hypertonic environment."], ["Low pH (3 to 5)", "<i>Propionibacterium</i> makes propionic acid from sebum."]].map(([h, p]) => `<div class="card"><h4>${h}</h4><p>${p}</p></div>`).join("")}</div>
       <p class="mini"><b>Who survives?</b> Most skin bacteria are gram-positive and salt-tolerant. Moist areas (axilla, sides of the nose) have more bacteria than dry arms and legs.</p>
+      <div class="parthead">Try the experiment <small>Exercise 45</small></div>
       <div class="sect">Day 1: swab and streak</div><div id="sOrder"></div>
       <div class="sect">Day 2: read your MSA plate and pick a colony</div>
       <p class="labq" style="margin:0 0 6px">Record colony appearance, <b>pigment</b> (a color made by the cells), and <b>mannitol fermentation</b> (yellow change in the indicator around colonies). Then pick a colony with a yellow halo.</p>

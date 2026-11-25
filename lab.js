@@ -103,6 +103,25 @@ window.MicroLab = (function(){
     start();
   }
 
+  /* ---------- main ideas: boxes side by side. cards = [[heading, text, tagline?]] ---------- */
+  function ideas(title, cards, o){
+    o = o || {};
+    return (title ? `<div class="sect">${title}</div>` : "") + (o.lead ? `<p class="lead">${o.lead}</p>` : "") +
+      `<div class="cards">${cards.map(([h, p, tag]) => `<div class="card${o.vocab ? " vocab" : ""}"><h4>${h}</h4>${tag ? `<div class="tagline">${tag}</div>` : ""}<p>${p}</p></div>`).join("")}</div>`;
+  }
+  /* ---------- tap-to-learn picture: any element with data-x="key" shows INFO[key] = [title, text] ---------- */
+  function explore(host, svg, INFO, intro){
+    host.innerHTML = `<div class="panel tight" style="max-width:none">${typeof svg === "function" ? svg(host.clientWidth < 560) : svg}</div><div class="benchhint xinfo" role="status">${intro}</div>`;
+    const info = host.querySelector(".xinfo");
+    host.onclick = e => {
+      const g = e.target.closest("[data-x]"); if (!g || !INFO[g.dataset.x]) return;
+      host.querySelectorAll("[data-x].xsel").forEach(x => x.classList.remove("xsel"));
+      g.classList.add("xsel");
+      const [h, p] = INFO[g.dataset.x];
+      info.className = "benchhint xinfo good"; info.innerHTML = `<b>${h}:</b> ${p}`;
+    };
+  }
+
   /* ---------- page shell ---------- */
   function page(cfg){
     const TABS = cfg.tabs, PICS = cfg.pics || {};
@@ -168,5 +187,5 @@ window.MicroLab = (function(){
     renderTab();
   }
 
-  return {$, f1, clamp, rnd, esc, shuffle, q, T, id, onCleanup, plateSVG, pie, sliceGrowth, tubeSVG, scoreTxt, orderGame, pictureGame, page};
+  return {$, f1, clamp, rnd, esc, shuffle, q, T, id, onCleanup, plateSVG, pie, sliceGrowth, tubeSVG, scoreTxt, orderGame, pictureGame, ideas, explore, page};
 })();
